@@ -1,12 +1,12 @@
 {
-  "name": "openalternative",
+  "name": "hexwagon",
   "private": true,
   "type": "module",
   "scripts": {
     "email": "cp .env ../../node_modules/react-email/dist/preview && email dev",
     "dev": "next dev -p 5173 --turbopack",
     "start": "next start -p 5173",
-    "build": "next build --turbopack",
+    "build": "next build --webpack",
     "lint": "bun biome check --write .",
     "format": "bun biome format --write .",
     "typecheck": "tsc --noEmit",
@@ -36,6 +36,7 @@
     "@octokit/graphql": "^9.0.1",
     "@primoui/utils": "^1.1.8",
     "@prisma/client": "6.5.0",
+    "@radix-ui/react-tabs": "^1.1.13",
     "@react-email/components": "0.0.28",
     "@t3-oss/env-nextjs": "^0.13.8",
     "@tanstack/react-table": "^8.21.3",
@@ -72,7 +73,8 @@
     "wretch": "^2.11.0",
     "zod": "^3.25.67",
     "zsa": "^0.6.0",
-    "zsa-react": "^0.2.3"
+    "zsa-react": "^0.2.3",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

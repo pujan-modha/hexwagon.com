@@ -6,3 +6,11 @@ export const { signIn, signOut, useSession, admin } = createAuthClient({
   baseURL: env.NEXT_PUBLIC_SITE_URL,
   plugins: [adminClient(), magicLinkClient()],
 })
+
+/**
+ * @deprecated Use useSession from ~/lib/auth-client instead.
+ */
+export const useAuth = () => {
+  const { data: session } = useSession()
+  return { user: session?.user }
+}

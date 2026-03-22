@@ -38,7 +38,7 @@ export const POST = async (req: Request) => {
           case "payment": {
             // Handle tool expedited payment
             if (metadata?.tool) {
-              const tool = await db.tool.findUniqueOrThrow({
+              const tool = await db.port.findUniqueOrThrow({
                 where: { slug: metadata.tool },
               })
 
@@ -57,13 +57,13 @@ export const POST = async (req: Request) => {
 
             // Handle tool featured listing
             if (subscription.metadata?.tool) {
-              const tool = await db.tool.update({
+              const tool = await db.port.update({
                 where: { slug: subscription.metadata.tool },
                 data: { isFeatured: true },
               })
 
               // Revalidate the cache
-              revalidateTag("tools")
+              revalidateTag("ports", "max")
 
               // Notify the submitter of the premium tool
               after(async () => await notifySubmitterOfPremiumTool(tool))
@@ -85,13 +85,13 @@ export const POST = async (req: Request) => {
 
         // Handle tool featured listing
         if (metadata?.tool) {
-          await db.tool.update({
+          await db.port.update({
             where: { slug: metadata?.tool },
             data: { isFeatured: false },
           })
 
           // Revalidate the cache
-          revalidateTag("tools")
+          revalidateTag("ports", "max")
         }
 
         // TODO: THIS IS NOT WORKING  because the metadata is set on the checkout session, not the subscription
@@ -100,12 +100,12 @@ export const POST = async (req: Request) => {
           // Update the ad for the subscription
           await db.ad.update({
             where: { subscriptionId: subscription.id },
-            data: { endsAt: new Date(), alternatives: { set: [] } },
+            data: { endsAt: new Date(), themes: { set: [] } },
           })
 
           // Revalidate the cache
-          revalidateTag("ads")
-          revalidateTag("alternatives")
+          revalidateTag("ads", "max")
+          revalidateTag("themes", "max")
         }
 
         break

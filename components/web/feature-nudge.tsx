@@ -1,4 +1,4 @@
-import type { Tool } from "@prisma/client"
+import type { Port as Tool } from "@prisma/client"
 import type { ComponentProps } from "react"
 import { toast } from "sonner"
 import { Button } from "~/components/common/button"

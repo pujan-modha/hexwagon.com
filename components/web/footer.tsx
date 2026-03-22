@@ -44,7 +44,7 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
 
             <p className="-mt-2 px-0.5 text-xs text-muted-foreground first:mt-0">
               Join {formatNumber(config.stats.subscribers + config.stats.stars, "standard")}+ other
-              members and get updates on new open source tools.
+              members and get updates on new theme ports and platform listings.
             </p>
 
             <NewsletterForm medium="footer_form" />
@@ -110,12 +110,10 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
         <Stack direction="column" className="text-sm md:col-span-3 md:col-start-8">
           <H6 as="strong">Browse:</H6>
 
-          <NavLink href="/alternatives">Alternatives</NavLink>
-          <NavLink href="/categories">Categories</NavLink>
-          <NavLink href="/self-hosted">Self-hosted</NavLink>
-          <NavLink href="/stacks">Tech Stacks</NavLink>
-          <NavLink href="/topics">Topics</NavLink>
+          <NavLink href="/themes">Themes</NavLink>
+          <NavLink href="/platforms">Platforms</NavLink>
           <NavLink href="/licenses">Licenses</NavLink>
+          <NavLink href="/coming-soon">Coming Soon</NavLink>
         </Stack>
 
         <Stack direction="column" className="text-sm md:col-span-3">
@@ -124,7 +122,7 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
           <NavLink href="/about">About Us</NavLink>
           <NavLink href="/blog">Blog</NavLink>
           <NavLink href="/advertise">Advertise</NavLink>
-          <NavLink href="/submit">Add a Free Listing</NavLink>
+          <NavLink href="/submit">Submit a Port</NavLink>
         </Stack>
 
         <Stack direction="column" className="text-sm md:col-span-3">

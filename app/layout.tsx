@@ -7,7 +7,7 @@ import { Toaster } from "~/components/common/toaster"
 import { TooltipProvider } from "~/components/common/tooltip"
 import { config } from "~/config"
 import { SearchProvider } from "~/contexts/search-context"
-import { fontDisplay, fontSans } from "~/lib/fonts"
+import { fontDisplay } from "~/lib/fonts"
 
 export const metadata: Metadata = {
   metadataBase: new URL(config.site.url),
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html
       lang="en"
-      className={`${fontSans.variable} ${fontDisplay.variable} scroll-smooth`}
+      className={`${fontDisplay.variable} scroll-smooth`}
       suppressHydrationWarning
     >
       <body className="min-h-dvh flex flex-col bg-background text-foreground">

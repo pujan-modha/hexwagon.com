@@ -1,23 +1,23 @@
 "use server"
 
 import { createServerAction } from "zsa"
-import { findAlternatives } from "~/server/web/alternatives/queries"
-import { findCategories } from "~/server/web/categories/queries"
 import { findLicenses } from "~/server/web/licenses/queries"
-import { findStacks } from "~/server/web/stacks/queries"
+import { findPlatforms } from "~/server/web/platforms/queries"
+import { findTags } from "~/server/web/tags/queries"
+import { findThemes } from "~/server/web/themes/queries"
 
 export const findFilterOptions = createServerAction().handler(async () => {
-  const filters = await Promise.all([
-    findAlternatives({}),
-    findCategories({}),
-    findStacks({}),
+  const [themes, platforms, tags, licenses] = await Promise.all([
+    findThemes({}),
+    findPlatforms({}),
+    findTags({}),
     findLicenses({}),
   ])
 
-  // Map the filters to the expected format
-  const [alternative, category, stack, license] = filters.map(r =>
-    r.map(({ slug, name, _count }) => ({ slug, name, count: _count.tools })),
-  )
+  const themeOptions = themes.map(({ slug, name }) => ({ slug, name, count: 0 }))
+  const platformOptions = platforms.map(({ slug, name }) => ({ slug, name, count: 0 }))
+  const tagOptions = tags.map(({ slug }) => ({ slug, name: slug, count: 0 }))
+  const licenseOptions = licenses.map(({ slug, name }) => ({ slug, name, count: 0 }))
 
-  return { alternative, category, stack, license } as const
+  return { theme: themeOptions, platform: platformOptions, tag: tagOptions, license: licenseOptions } as const
 })

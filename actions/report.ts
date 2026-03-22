@@ -11,15 +11,14 @@ import { feedbackSchema, reportSchema } from "~/server/web/shared/schema"
 import { db } from "~/services/db"
 import { tryCatch } from "~/utils/helpers"
 
-export const reportTool = userProcedure
+export const reportPort = userProcedure
   .createServerAction()
-  .input(reportSchema.extend({ toolSlug: z.string() }))
-  .handler(async ({ input: { toolSlug, type, message }, ctx: { user } }) => {
+  .input(reportSchema.extend({ portId: z.string() }))
+  .handler(async ({ input: { portId, type, message }, ctx: { user } }) => {
     const ip = await getIP()
     const rateLimitKey = `report:${ip}`
 
     if (await isRateLimited(rateLimitKey, "report")) {
-      // Rate limiting check
       throw new Error("Too many requests. Please try again later.")
     }
 
@@ -28,15 +27,105 @@ export const reportTool = userProcedure
         data: {
           type,
           message,
-          tool: { connect: { slug: toolSlug } },
+          port: { connect: { id: portId } },
           user: { connect: { id: user.id } },
         },
       }),
     )
 
     if (result.error) {
-      console.error("Failed to report tool:", result.error)
-      return { success: false, error: "Failed to report tool. Please try again later." }
+      console.error("Failed to report port:", result.error)
+      return { success: false, error: "Failed to report port. Please try again later." }
+    }
+
+    return { success: true }
+  })
+
+export const reportTheme = userProcedure
+  .createServerAction()
+  .input(reportSchema.extend({ themeId: z.string() }))
+  .handler(async ({ input: { themeId, type, message }, ctx: { user } }) => {
+    const ip = await getIP()
+    const rateLimitKey = `report:${ip}`
+
+    if (await isRateLimited(rateLimitKey, "report")) {
+      throw new Error("Too many requests. Please try again later.")
+    }
+
+    const result = await tryCatch(
+      db.report.create({
+        data: {
+          type,
+          message,
+          theme: { connect: { id: themeId } },
+          user: { connect: { id: user.id } },
+        },
+      }),
+    )
+
+    if (result.error) {
+      console.error("Failed to report theme:", result.error)
+      return { success: false, error: "Failed to report theme. Please try again later." }
+    }
+
+    return { success: true }
+  })
+
+export const reportPlatform = userProcedure
+  .createServerAction()
+  .input(reportSchema.extend({ platformId: z.string() }))
+  .handler(async ({ input: { platformId, type, message }, ctx: { user } }) => {
+    const ip = await getIP()
+    const rateLimitKey = `report:${ip}`
+
+    if (await isRateLimited(rateLimitKey, "report")) {
+      throw new Error("Too many requests. Please try again later.")
+    }
+
+    const result = await tryCatch(
+      db.report.create({
+        data: {
+          type,
+          message,
+          platform: { connect: { id: platformId } },
+          user: { connect: { id: user.id } },
+        },
+      }),
+    )
+
+    if (result.error) {
+      console.error("Failed to report platform:", result.error)
+      return { success: false, error: "Failed to report platform. Please try again later." }
+    }
+
+    return { success: true }
+  })
+
+export const reportComment = userProcedure
+  .createServerAction()
+  .input(reportSchema.extend({ commentId: z.string() }))
+  .handler(async ({ input: { commentId, type, message }, ctx: { user } }) => {
+    const ip = await getIP()
+    const rateLimitKey = `report:${ip}`
+
+    if (await isRateLimited(rateLimitKey, "report")) {
+      throw new Error("Too many requests. Please try again later.")
+    }
+
+    const result = await tryCatch(
+      db.report.create({
+        data: {
+          type,
+          message,
+          comment: { connect: { id: commentId } },
+          user: { connect: { id: user.id } },
+        },
+      }),
+    )
+
+    if (result.error) {
+      console.error("Failed to report comment:", result.error)
+      return { success: false, error: "Failed to report comment. Please try again later." }
     }
 
     return { success: true }
@@ -49,7 +138,6 @@ export const reportFeedback = createServerAction()
     const ip = await getIP()
     const rateLimitKey = `report:${ip}`
 
-    // Rate limiting check
     if (await isRateLimited(rateLimitKey, "report")) {
       throw new Error("Too many requests. Please try again later.")
     }
@@ -71,3 +159,8 @@ export const reportFeedback = createServerAction()
 
     return { success: true }
   })
+
+/**
+ * @deprecated Use reportPort instead.
+ */
+export const reportTool = reportPort

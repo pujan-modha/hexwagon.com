@@ -1,33 +1,34 @@
 "use server"
 
-import { ToolStatus } from "@prisma/client"
+import { PortStatus } from "@prisma/client"
 import { revalidateTag } from "next/cache"
-import { indexAlternatives, indexCategories, indexTools } from "~/lib/indexing"
-import { recalculatePrices } from "~/lib/pricing"
-import { getToolRepositoryData } from "~/lib/repositories"
+import { indexPorts, indexThemes, indexPlatforms } from "~/lib/indexing"
+import { getPortRepositoryData } from "~/lib/repositories"
 import { adminProcedure } from "~/lib/safe-actions"
 import { db } from "~/services/db"
 import { tryCatch } from "~/utils/helpers"
 
 export const fetchRepositoryData = adminProcedure.createServerAction().handler(async () => {
-  const tools = await db.tool.findMany({
+  const ports = await db.port.findMany({
     where: {
-      status: { in: [ToolStatus.Scheduled, ToolStatus.Published] },
+      status: { in: [PortStatus.Scheduled, PortStatus.Published] },
     },
   })
 
-  if (tools.length === 0) {
-    return { success: false, message: "No tools found" }
+  if (ports.length === 0) {
+    return { success: false, message: "No ports found" }
   }
 
   await Promise.allSettled(
-    tools.map(async tool => {
-      const result = await tryCatch(getToolRepositoryData(tool.repositoryUrl))
+    ports.map(async port => {
+      if (!port.repositoryUrl) return null
+
+      const result = await tryCatch(getPortRepositoryData(port.repositoryUrl))
 
       if (result.error) {
-        console.error(`Failed to fetch repository data for ${tool.name}`, {
+        console.error(`Failed to fetch repository data for ${port.slug}`, {
           error: result.error,
-          slug: tool.slug,
+          slug: port.slug,
         })
 
         return null
@@ -37,28 +38,20 @@ export const fetchRepositoryData = adminProcedure.createServerAction().handler(a
         return null
       }
 
-      await db.tool.update({
-        where: { id: tool.id },
+      await db.port.update({
+        where: { id: port.id },
         data: result.data,
       })
     }),
   )
 
-  // Revalidate cache
-  revalidateTag("tools")
-  revalidateTag("tool")
+  revalidateTag("ports", "max")
 })
 
 export const indexAllData = adminProcedure.createServerAction().handler(async () => {
-  await Promise.all([indexTools({}), indexAlternatives({}), indexCategories({})])
+  await Promise.all([indexPorts({}), indexThemes({}), indexPlatforms({})])
 })
 
 export const recalculatePricesData = adminProcedure.createServerAction().handler(async () => {
-  const alternatives = await db.alternative.findMany()
-
-  await recalculatePrices(alternatives, async ({ id, adPrice }) => {
-    await db.alternative.update({ where: { id }, data: { adPrice } })
-  })
-
-  revalidateTag("alternatives")
+  return { success: true, message: "Price recalculation is no longer required for ports." }
 })

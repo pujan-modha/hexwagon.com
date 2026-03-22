@@ -5,7 +5,7 @@ import posthog from "posthog-js"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useServerAction } from "zsa-react"
-import { createStripeAlternativeAdsCheckout } from "~/actions/stripe"
+import { createStripeThemeAdsCheckout } from "~/actions/stripe"
 import { RelationSelector } from "~/components/admin/relation-selector"
 import { Button } from "~/components/common/button"
 import { Card } from "~/components/common/card"
@@ -13,32 +13,30 @@ import { H5 } from "~/components/common/heading"
 import { Note } from "~/components/common/note"
 import { Stack } from "~/components/common/stack"
 import { ExternalLink } from "~/components/web/external-link"
-import { Price } from "~/components/web/price"
 import { config } from "~/config"
-import type { AlternativeMany } from "~/server/web/alternatives/payloads"
+import type { ThemeMany } from "~/server/web/themes/payloads"
 
-type AdsPickerAlternativesProps = {
-  alternatives: AlternativeMany[]
+type AdsPickerThemesProps = {
+  themes: ThemeMany[]
   selectedId?: string
   relatedIds?: string[]
 }
 
-export const AdsPickerAlternatives = ({
-  alternatives,
+export const AdsPickerThemes = ({
+  themes,
   selectedId,
   relatedIds,
-}: AdsPickerAlternativesProps) => {
+}: AdsPickerThemesProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>(selectedId ? [selectedId] : [])
-  const [selectedAlternatives, setSelectedAlternatives] = useState<AlternativeMany[]>([])
+  const [selectedThemes, setSelectedThemes] = useState<ThemeMany[]>([])
   const [totalPrice, setTotalPrice] = useState(0)
 
   useEffect(() => {
-    const alts = alternatives.filter(({ id }) => selectedIds.includes(id))
-    setSelectedAlternatives(alts)
-    setTotalPrice(alts.reduce((sum, alt) => sum + (alt.adPrice || 0), 0))
-  }, [alternatives, selectedIds])
+    const thms = themes.filter(({ id }) => selectedIds.includes(id))
+    setSelectedThemes(thms)
+  }, [themes, selectedIds])
 
-  const { execute, isPending } = useServerAction(createStripeAlternativeAdsCheckout, {
+  const { execute, isPending } = useServerAction(createStripeThemeAdsCheckout, {
     onSuccess: ({ data }) => {
       posthog.capture("stripe_checkout_ad", { totalPrice })
 
@@ -52,11 +50,10 @@ export const AdsPickerAlternatives = ({
 
   const handleCheckout = () => {
     execute({
-      type: AdType.AlternativePage,
-      alternatives: selectedAlternatives.map(({ slug, name, adPrice }) => ({
+      type: AdType.ThemePage,
+      themes: selectedThemes.map(({ slug, name }) => ({
         slug,
-        name: `${name} Alternatives Ad`,
-        price: adPrice ?? 0,
+        name: `${name} Theme Ad`,
       })),
     })
   }
@@ -64,14 +61,14 @@ export const AdsPickerAlternatives = ({
   return (
     <Stack size="lg" direction="column" className="w-full max-w-md mx-auto">
       <Card hover={false}>
-        <H5 className="w-full">Select the alternatives to advertise on:</H5>
+        <H5 className="w-full">Select the themes to advertise on:</H5>
 
         <RelationSelector
-          relations={alternatives}
+          relations={themes}
           selectedIds={selectedIds}
           setSelectedIds={setSelectedIds}
           suggestedIds={relatedIds}
-          mapFunction={({ id, name, faviconUrl, adPrice }) => {
+          mapFunction={({ id, name, faviconUrl }) => {
             return {
               id,
               name: (
@@ -86,8 +83,6 @@ export const AdsPickerAlternatives = ({
                   )}
 
                   <span className="truncate">{name}</span>
-
-                  {adPrice && `($${adPrice}/mo)`}
                 </Stack>
               ),
             }
@@ -95,13 +90,13 @@ export const AdsPickerAlternatives = ({
         />
 
         <Stack className="w-full justify-between">
-          {selectedAlternatives.length > 0 ? (
+          {selectedThemes.length > 0 ? (
             <Stack size="sm" className="mr-auto">
-              <Note>Total:</Note>
-              <Price price={totalPrice} interval="month" />
+              <Note>Selected:</Note>
+              <Note>{selectedThemes.length} theme(s)</Note>
             </Stack>
           ) : (
-            <Note>Please select at least one alternative</Note>
+            <Note>Please select at least one theme</Note>
           )}
 
           <Button

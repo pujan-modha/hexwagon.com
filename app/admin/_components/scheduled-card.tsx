@@ -6,19 +6,19 @@ import { findScheduledTools } from "~/server/admin/tools/queries"
 import { Calendar } from "./calendar"
 
 const ScheduledCard = async ({ ...props }: ComponentProps<typeof Card>) => {
-  const tools = await findScheduledTools()
+  const ports = await findScheduledTools()
 
   return (
     <Card hover={false} focus={false} {...props}>
       <CardHeader direction="column">
-        <CardDescription>Scheduled Tools</CardDescription>
-        <H2>{tools.length}</H2>
+        <CardDescription>Scheduled Ports</CardDescription>
+        <H2>{ports.length}</H2>
       </CardHeader>
 
-      {tools.length ? (
-        <Calendar tools={tools} className="w-full h-full" />
+      {ports.length ? (
+        <Calendar tools={ports} className="w-full h-full" />
       ) : (
-        <Note>No scheduled tools at the moment.</Note>
+        <Note>No scheduled ports at the moment.</Note>
       )}
     </Card>
   )

@@ -28,16 +28,16 @@ export default async function VerifyPage({ searchParams }: PageProps) {
       icon: "/outlook.svg",
       link: "ms-outlook://",
     },
-    {
-      provider: "Gmail",
-      icon: "/gmail.svg",
-      link: "https://mail.google.com/#search/openalternative%20login",
-    },
-    {
-      provider: "Superhuman",
-      icon: "/superhuman.svg",
-      link: "superhuman://mail.superhuman.com/search/openalternative%20login",
-    },
+      {
+        provider: "Gmail",
+        icon: "/gmail.svg",
+        link: "https://mail.google.com/#search/hexwagon%20login",
+      },
+      {
+        provider: "Superhuman",
+        icon: "/superhuman.svg",
+        link: "superhuman://mail.superhuman.com/search/hexwagon%20login",
+      },
   ]
 
   return (

@@ -72,7 +72,7 @@ export const ToolReportDialog = ({ tool, isOpen, setIsOpen }: ToolReportDialogPr
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(data => execute({ toolSlug: tool.slug, ...data }))}
+            onSubmit={form.handleSubmit(data => execute({ portId: tool.id, ...data }))}
             className="grid gap-6"
             noValidate
           >

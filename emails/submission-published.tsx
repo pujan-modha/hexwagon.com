@@ -1,4 +1,4 @@
-import type { Tool } from "@prisma/client"
+import type { Port as Tool } from "@prisma/client"
 import { Text } from "@react-email/components"
 import { config } from "~/config"
 import { EmailButton } from "~/emails/components/button"
@@ -15,7 +15,7 @@ const EmailSubmissionPublished = ({ tool, ...props }: EmailProps) => {
       <Text>Hey {tool.submitterName?.trim()}!</Text>
 
       <Text>
-        Great news! Your submitted tool,{" "}
+        Great news! Your submitted port,{" "}
         <strong>
           {tool.name}, is now live on {config.site.name}
         </strong>
@@ -25,7 +25,7 @@ const EmailSubmissionPublished = ({ tool, ...props }: EmailProps) => {
       <Text>
         We'd love it if you could spread the word. A quick post on your favorite social platform or
         community about {tool.name} would mean a lot to us. It helps other people discover cool
-        tools like yours!
+        theme ports like yours!
       </Text>
 
       <EmailButton href={`${config.site.url}/${tool.slug}`}>

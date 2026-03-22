@@ -14,6 +14,8 @@ import { config } from "~/config"
 import { env } from "~/env"
 import { getServerSession } from "~/lib/auth"
 
+export const dynamic = "force-dynamic"
+
 export default async function RootLayout({ children }: PropsWithChildren) {
   const url = config.site.url
   const jsonLd: Graph = {

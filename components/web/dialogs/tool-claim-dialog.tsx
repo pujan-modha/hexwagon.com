@@ -106,6 +106,15 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
   })
 
   const handleSendOtp = ({ email }: z.infer<typeof emailSchema>) => {
+    if (!tool.websiteUrl) {
+      emailForm.setError("email", {
+        type: "manual",
+        message: "This listing does not have a website URL yet.",
+      })
+
+      return
+    }
+
     const toolDomain = getUrlHostname(tool.websiteUrl)
     const emailDomain = email.split("@")[1]
 
@@ -118,17 +127,17 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
       return
     }
 
-    sendOtp({ toolSlug: tool.slug, email })
+    sendOtp({ portSlug: tool.slug, email })
   }
 
   const handleVerifyOtp = (data: z.infer<typeof otpSchema>) => {
-    verifyOtp({ toolSlug: tool.slug, otp: data.otp })
+    verifyOtp({ portSlug: tool.slug, otp: data.otp })
   }
 
   const handleResendOtp = () => {
     if (cooldownRemaining > 0 || isSendingOtp) return
 
-    sendOtp({ toolSlug: tool.slug, email: verificationEmail })
+    sendOtp({ portSlug: tool.slug, email: verificationEmail })
   }
 
   const getResendButtonText = () => {
@@ -147,7 +156,7 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Claim {tool.name}</DialogTitle>
+          <DialogTitle>Claim listing</DialogTitle>
         </DialogHeader>
 
         {step === "email" ? (
@@ -156,18 +165,18 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
               <DialogDescription>
                 <p>
                   To claim this listing, you need to verify the ownership of the{" "}
-                  <strong>{getUrlHostname(tool.websiteUrl)}</strong> domain. This helps us to ensure
+                  <strong>{getUrlHostname(tool.websiteUrl ?? siteConfig.url)}</strong> domain. This helps us to ensure
                   that you represent the organization.
                 </p>
 
                 <p>
-                  By claiming this tool, it will get a <strong>verified badge</strong> and you'll be
+                  By claiming this port, it will get a <strong>verified badge</strong> and you'll be
                   able to:
                 </p>
 
                 <ul className="mt-2 list-disc pl-4">
-                  <li>Update tool information</li>
-                  <li>Manage its categories and alternatives</li>
+                  <li>Update port information</li>
+                  <li>Manage its theme and platform links</li>
                   <li>Promote it on {siteConfig.name}</li>
                 </ul>
               </DialogDescription>
@@ -179,10 +188,10 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
                   <FormItem>
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input
+                  <Input
                         type="email"
                         data-1p-ignore
-                        placeholder={`e.g. hello@${getUrlHostname(tool.websiteUrl)}`}
+                        placeholder={`e.g. hello@${getUrlHostname(tool.websiteUrl ?? siteConfig.url)}`}
                         {...field}
                       />
                     </FormControl>

@@ -1,4 +1,4 @@
-import type { Tool } from "@prisma/client"
+import type { Port as Tool } from "@prisma/client"
 import { Text } from "@react-email/components"
 import { addHours, differenceInDays, format, formatDistanceToNowStrict } from "date-fns"
 import { config } from "~/config"
@@ -20,12 +20,12 @@ const EmailSubmissionScheduled = ({ tool, ...props }: EmailProps) => {
       <Text>Hey {tool.submitterName?.trim()}!</Text>
 
       <Text>
-        Great news! Your submitted tool, <strong>{tool.name}</strong>, was{" "}
+        Great news! Your submitted port, <strong>{tool.name}</strong>, was{" "}
         <strong>accepted and scheduled</strong> for publication on {config.site.name}.
       </Text>
 
       {isLongQueue ? (
-        <EmailExpediteNudge tool={tool}>
+        <EmailExpediteNudge port={tool}>
           on <strong>{dateFormatted}</strong>
         </EmailExpediteNudge>
       ) : (

@@ -8,7 +8,7 @@ import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { metadataConfig } from "~/config/metadata"
 import type { LicenseOne } from "~/server/web/licenses/payloads"
-import { findLicense, findLicenseSlugs } from "~/server/web/licenses/queries"
+import { findLicense } from "~/server/web/licenses/queries"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -29,13 +29,8 @@ const getLicense = cache(async ({ params }: PageProps) => {
 const getMetadata = (license: LicenseOne): Metadata => {
   return {
     title: `${license.name} Licensed Open Source Software`,
-    description: `A curated collection of the ${license._count.tools} best open source software licensed under ${license.name}.`,
+    description: `A curated collection of the ${license._count.ports} best theme ports licensed under ${license.name}.`,
   }
-}
-
-export const generateStaticParams = async () => {
-  const licenses = await findLicenseSlugs({})
-  return licenses.map(({ slug }) => ({ slug }))
 }
 
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
@@ -77,7 +72,7 @@ export default async function LicensePage(props: PageProps) {
         <ToolQuery
           searchParams={props.searchParams}
           where={{ license: { slug: license.slug } }}
-          search={{ placeholder: `Search tools licensed under ${license.name}` }}
+          search={{ placeholder: `Search ports licensed under ${license.name}` }}
         />
       </Suspense>
     </>

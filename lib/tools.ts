@@ -1,17 +1,20 @@
-import { joinAsSentence } from "@primoui/utils"
-import type { Tool } from "@prisma/client"
+import { type Port } from "@prisma/client"
 import { differenceInDays } from "date-fns"
 import { config } from "~/config"
-import type { ToolOne } from "~/server/web/tools/payloads"
+import { isPortPublished, getPortSuffix } from "~/lib/ports"
 
 /**
- * Check if a tool is published.
- *
- * @param tool - The tool to check.
- * @returns Whether the tool is published.
+ * @deprecated Use isPortPublished from ~/lib/ports instead.
  */
-export const isToolPublished = (tool: Pick<Tool, "status">) => {
-  return ["Published"].includes(tool.status)
+export const isToolPublished = (tool: Pick<Port, "status">) => {
+  return isPortPublished(tool)
+}
+
+/**
+ * @deprecated Use getPortSuffix from ~/lib/ports instead.
+ */
+export const getToolSuffix = (port: { theme?: { name: string }; platform?: { name: string } }) => {
+  return getPortSuffix(port)
 }
 
 /**
@@ -20,31 +23,7 @@ export const isToolPublished = (tool: Pick<Tool, "status">) => {
  * @param tool - The tool to check.
  * @returns Whether the tool is within the expedite threshold.
  */
-export const isToolWithinExpediteThreshold = (tool: Pick<Tool, "publishedAt">) => {
+export const isToolWithinExpediteThreshold = (tool: Pick<Port, "publishedAt">) => {
   const threshold = config.submissions.expediteThresholdDays
-
   return tool.publishedAt && differenceInDays(tool.publishedAt, new Date()) < threshold
-}
-
-/**
- * Get the suffix for a tool.
- *
- * @param tool - The tool to get the suffix for.
- * @returns The suffix for the tool.
- */
-export const getToolSuffix = (tool: Pick<ToolOne, "alternatives" | "tagline">) => {
-  let suffix = ""
-
-  switch (tool.alternatives.length) {
-    case 0:
-      suffix = `${tool.tagline}`
-      break
-    case 1:
-      suffix = `Open Source ${tool.alternatives[0].name} Alternative`
-      break
-    default:
-      suffix = `Open Source Alternative to ${joinAsSentence(tool.alternatives.map(({ name }) => name))}`
-  }
-
-  return suffix
 }

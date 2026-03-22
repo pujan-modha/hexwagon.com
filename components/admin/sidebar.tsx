@@ -48,19 +48,19 @@ export const Sidebar = () => {
         undefined, // Separator
 
         {
-          title: "Tools",
-          href: "/admin/tools",
-          prefix: <Icon name="lucide/gem" />,
-        },
-        {
-          title: "Alternatives",
-          href: "/admin/alternatives",
-          prefix: <Icon name="lucide/replace" />,
-        },
-        {
-          title: "Categories",
-          href: "/admin/categories",
+          title: "Ports",
+          href: "/admin/ports",
           prefix: <Icon name="lucide/tags" />,
+        },
+        {
+          title: "Themes",
+          href: "/admin/themes",
+          prefix: <Icon name="lucide/sparkles" />,
+        },
+        {
+          title: "Platforms",
+          href: "/admin/platforms",
+          prefix: <Icon name="lucide/blocks" />,
         },
         {
           title: "Users",
@@ -71,6 +71,21 @@ export const Sidebar = () => {
           title: "Reports",
           href: "/admin/reports",
           prefix: <Icon name="lucide/triangle-alert" />,
+        },
+        {
+          title: "Suggestions",
+          href: "/admin/suggestions",
+          prefix: <Icon name="lucide/smile-plus" />,
+        },
+        {
+          title: "Port Edits",
+          href: "/admin/port-edits",
+          prefix: <Icon name="lucide/pencil" />,
+        },
+        {
+          title: "Comments",
+          href: "/admin/comments",
+          prefix: <Icon name="lucide/inbox" />,
         },
 
         undefined, // Separator

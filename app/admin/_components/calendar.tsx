@@ -58,7 +58,7 @@ const CalendarDay = ({ className, day, tools, currentDate, ...props }: CalendarD
         {publishedTools.map(tool => (
           <Link
             key={tool.slug}
-            href={`/admin/tools/${tool.slug}`}
+            href={`/admin/ports/${tool.slug}`}
             className="font-medium truncate hover:text-primary w-full"
           >
             {tool.name}

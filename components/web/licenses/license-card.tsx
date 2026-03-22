@@ -17,7 +17,7 @@ const LicenseCard = ({ license, ...props }: LicenseCardProps) => {
 
         <TileDivider />
 
-        <TileCaption>{`${license._count.tools} ${plur("tool", license._count.tools)}`}</TileCaption>
+        <TileCaption>{`${license._count.ports} ${plur("port", license._count.ports)}`}</TileCaption>
       </Link>
     </Tile>
   )

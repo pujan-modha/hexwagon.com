@@ -1,5 +1,5 @@
 import { formatNumber } from "@primoui/utils"
-import { ToolStatus } from "@prisma/client"
+import { PortStatus } from "@prisma/client"
 import { subDays } from "date-fns"
 import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from "next/cache"
 import plur from "plur"
@@ -11,16 +11,16 @@ import { db } from "~/services/db"
 const getCounts = async () => {
   "use cache"
 
-  cacheTag("tools-count")
+  cacheTag("ports-count")
   cacheLife("minutes")
 
   return await db.$transaction([
-    db.tool.count({
-      where: { status: ToolStatus.Published },
+    db.port.count({
+      where: { status: PortStatus.Published },
     }),
 
-    db.tool.count({
-      where: { status: ToolStatus.Published, publishedAt: { gte: subDays(new Date(), 7) } },
+    db.port.count({
+      where: { status: PortStatus.Published, publishedAt: { gte: subDays(new Date(), 7) } },
     }),
   ])
 }
@@ -30,10 +30,10 @@ const CountBadge = async () => {
 
   return (
     <Badge prefix={<Ping />} className="order-first" asChild>
-      <Link href="/latest">
+      <Link href="/themes">
         {newCount
-          ? `${formatNumber(newCount)} new ${plur("tool", newCount)} added`
-          : `${formatNumber(count)}+ open source tools`}
+          ? `${formatNumber(newCount)} new ${plur("port", newCount)} added`
+          : `${formatNumber(count)}+ theme ports`}
       </Link>
     </Badge>
   )

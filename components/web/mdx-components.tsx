@@ -48,7 +48,7 @@ type ToolEntryProps = ComponentProps<typeof ToolEntryPrimitive> & {
 }
 
 const ToolEntryRSC = async ({ tool: toolSlug, screenshotUrl, ...props }: ToolEntryProps) => {
-  const tool = await db.tool.findUnique({
+  const tool = await db.port.findUnique({
     where: { slug: toolSlug },
     select: toolOnePayload,
   })

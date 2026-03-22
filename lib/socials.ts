@@ -1,5 +1,5 @@
 import { formatNumber } from "@primoui/utils"
-import type { Tool as PrismaTool } from "@prisma/client"
+import type { Port as PrismaTool } from "@prisma/client"
 import { formatDistanceToNowStrict } from "date-fns"
 import type { Jsonify } from "inngest/helpers/jsonify"
 import { config } from "~/config"
@@ -37,7 +37,7 @@ const getSocialsFromUrl = async (url: string) => {
  */
 export const sendSocialPost = async (template: string, tool: Tool | Jsonify<Tool>) => {
   const url = `${config.site.url}/${tool.slug}`
-  const socials = await getSocialsFromUrl(tool.websiteUrl)
+  const socials = tool.websiteUrl ? await getSocialsFromUrl(tool.websiteUrl) : {}
 
   const twitterHandle = socials.X?.[0]?.user
   const blueskyHandle = socials.Bluesky?.[0]?.user
@@ -70,7 +70,7 @@ const updatePostTemplate = (template: string, handle: string | undefined, url: s
  * @returns Post template with tool details
  */
 export const getPostLaunchTemplate = (tool: Tool | Jsonify<Tool>) => {
-  return `🚀 Just published: ${tool.name} ${socialHandle} — ${tool.tagline}\n\n${tool.description}`
+  return `🚀 Just published: ${tool.name} ${socialHandle}\n\n${tool.description ?? ""}`
 }
 
 /**
@@ -88,7 +88,7 @@ export const getPostTemplate = async (tool: Tool | Jsonify<Tool>) => {
     { label: "First commit", value: formatDate(tool.firstCommitDate as Date), icon: "⌛" },
   ]
 
-  return `${tool.name} ${socialHandle} — ${tool.tagline}\n\n${insights.map(({ label, value, icon }) => `${icon} ${label}: ${value}`).join("\n")}`
+  return `${tool.name} ${socialHandle}\n\n${insights.map(({ label, value, icon }) => `${icon} ${label}: ${value}`).join("\n")}`
 }
 
 /**

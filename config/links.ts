@@ -2,17 +2,16 @@ import { siteConfig } from "~/config/site"
 
 export const linksConfig = {
   builtWith: "https://dirstarter.com",
-  selfHost: "https://easypanel.io",
   author: "https://kulpinski.pl",
-  twitter: "https://x.com/ossalternative",
-  bluesky: "https://bsky.app/profile/openalternative.co",
-  mastodon: "https://mastodon.social/@openalternative",
-  linkedin: "https://linkedin.com/company/openalternative",
-  reddit: "https://www.reddit.com/r/openalternative/",
-  analytics: "https://go.openalternative.co/analytics",
+  twitter: "https://x.com/hexwagon",
+  bluesky: "https://bsky.app/profile/hexwagon.com",
+  mastodon: "https://mastodon.social/@hexwagon",
+  linkedin: "https://linkedin.com/company/hexwagon",
+  reddit: "https://www.reddit.com/r/hexwagon/",
+  analytics: "https://go.hexwagon.com/analytics",
   feeds: [
-    { title: "Open Source Tools", url: `${siteConfig.url}/rss/tools.xml` },
-    { title: "Proprietary Alternatives", url: `${siteConfig.url}/rss/alternatives.xml` },
+    { title: "Theme Ports", url: `${siteConfig.url}/rss/ports.xml` },
+    { title: "Themes", url: `${siteConfig.url}/rss/themes.xml` },
   ],
   family: [
     {
@@ -23,7 +22,7 @@ export const linksConfig = {
     {
       title: "DevSuite",
       href: "https://devsuite.co",
-      description: "Find the perfect developer tools for your next project",
+      description: "Find the perfect developer software for your next project",
     },
     {
       title: "OpenAds",
@@ -61,28 +60,6 @@ export const linksConfig = {
       title: "Screen Studio",
       href: "https://kulp.in/screenstudio",
       description: "Screen recording for marketing videos",
-    },
-  ],
-  featured: [
-    {
-      name: "Hacker News",
-      url: "https://news.ycombinator.com/item?id=39639386",
-      icon: "/hackernews.svg",
-    },
-    {
-      name: "Indie Hackers",
-      url: "https://www.indiehackers.com/post/how-i-grew-a-side-project-to-100k-unique-visitors-in-7-days-with-0-audience-15d48ea192",
-      icon: "/indiehackers.svg",
-    },
-    {
-      name: "Product Hunt",
-      url: "https://www.producthunt.com/posts/openalternative",
-      icon: "/producthunt.svg",
-    },
-    {
-      name: "Twitter",
-      url: "https://twitter.com/steventey/status/1765841867017437599",
-      icon: "/twitter.svg",
     },
   ],
 }

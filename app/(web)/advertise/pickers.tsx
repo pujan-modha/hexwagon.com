@@ -1,41 +1,40 @@
 import { Stack } from "~/components/common/stack"
 import { AdsPicker } from "~/components/web/ads-picker"
-import { AdsPickerAlternatives } from "~/components/web/ads-picker-alternatives"
+import { AdsPickerThemes } from "~/components/web/ads-picker-alternatives"
 import { ExternalLink } from "~/components/web/external-link"
 import { adsConfig } from "~/config/ads"
 import { findAds } from "~/server/web/ads/queries"
-import { findRelatedAlternativeIds } from "~/server/web/alternatives/queries"
+import { findRelatedThemeIds } from "~/server/web/themes/queries"
 
-import { findAlternatives } from "~/server/web/alternatives/queries"
+import { findThemes } from "~/server/web/themes/queries"
 
 type AdvertisePickersProps = {
-  alternative: string | null
+  theme: string | null
 }
 
-export const AdvertisePickers = async ({ alternative }: AdvertisePickersProps) => {
-  if (alternative !== null) {
-    const alternatives = await findAlternatives({
+export const AdvertisePickers = async ({ theme }: AdvertisePickersProps) => {
+  if (theme !== null) {
+    const themes = await findThemes({
       where: {
         pageviews: { gte: adsConfig.minPageviewThreshold },
-        adPrice: { not: null },
         ad: null,
       },
       orderBy: { pageviews: "desc" },
     })
 
-    const relatedIds = alternative
-      ? await findRelatedAlternativeIds({
-          id: alternative,
+    const relatedIds = theme
+      ? await findRelatedThemeIds({
+          id: theme,
           limit: 10,
           rankingScoreThreshold: 0.5,
-          filter: `id IN [${alternatives.map(a => a.id).join(",")}]`,
+          filter: `id IN [${themes.map(a => a.id).join(",")}]`,
         })
       : []
 
     return (
-      <AdsPickerAlternatives
-        alternatives={alternatives}
-        selectedId={alternative}
+      <AdsPickerThemes
+        themes={themes}
+        selectedId={theme}
         relatedIds={relatedIds}
       />
     )

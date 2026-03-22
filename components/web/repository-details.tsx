@@ -56,7 +56,6 @@ export const RepositoryDetails = ({ className, tool, ...props }: RepositoryDetai
       ? {
           label: "Self-hosted",
           value: "Yes",
-          link: "/self-hosted",
           icon: <Icon name="lucide/server" />,
         }
       : undefined,

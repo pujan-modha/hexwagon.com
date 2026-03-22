@@ -1,13 +1,10 @@
-import { ToolStatus } from "@prisma/client"
+import { PortStatus } from "@prisma/client"
 import { NonRetriableError } from "inngest"
 import { revalidateTag } from "next/cache"
 import { config } from "~/config"
-import { fetchAnalyticsInBatches } from "~/lib/analytics"
 import { getMilestoneReached } from "~/lib/milestones"
-import { recalculatePrices } from "~/lib/pricing"
-import { getToolRepositoryData } from "~/lib/repositories"
-import { getPostMilestoneTemplate, getPostTemplate, sendSocialPost } from "~/lib/socials"
-import { isToolPublished } from "~/lib/tools"
+import { getPortRepositoryData } from "~/lib/repositories"
+import { getPostTemplate, sendSocialPost } from "~/lib/socials"
 import { inngest } from "~/services/inngest"
 import { tryCatch } from "~/utils/helpers"
 
@@ -16,97 +13,59 @@ export const fetchData = inngest.createFunction(
   { cron: "TZ=Europe/Warsaw 0 0 * * *" }, // Every day at midnight
 
   async ({ step, db, logger }) => {
-    const [tools, alternatives] = await Promise.all([
-      step.run("fetch-tools", async () => {
-        return await db.tool.findMany({
-          where: { status: { in: [ToolStatus.Published, ToolStatus.Scheduled] } },
+    const [ports, themes, platforms] = await Promise.all([
+      step.run("fetch-ports", async () => {
+        return await db.port.findMany({
+          where: { status: { in: [PortStatus.Published, PortStatus.Scheduled] } },
         })
       }),
 
-      step.run("fetch-alternatives", async () => {
-        return await db.alternative.findMany()
+      step.run("fetch-themes", async () => {
+        return await db.theme.findMany()
+      }),
+
+      step.run("fetch-platforms", async () => {
+        return await db.platform.findMany()
       }),
     ])
 
-    await Promise.all([
-      // Fetch repository data and handle milestones
-      step.run("fetch-repository-data", async () => {
-        return await Promise.allSettled(
-          tools.map(async tool => {
-            const result = await tryCatch(getToolRepositoryData(tool.repositoryUrl))
+    // Fetch repository data and handle milestones
+    await step.run("fetch-repository-data", async () => {
+      return await Promise.allSettled(
+        ports.map(async port => {
+          if (!port.repositoryUrl) return null
 
-            if (result.error) {
-              logger.error(`Failed to fetch repository data for ${tool.name}`, {
-                error: result.error,
-                slug: tool.slug,
-              })
+          const result = await tryCatch(getPortRepositoryData(port.repositoryUrl))
 
-              return null
-            }
-
-            if (!result.data) {
-              return null
-            }
-
-            if (isToolPublished(tool) && result.data.stars > tool.stars) {
-              const milestone = getMilestoneReached(tool.stars, result.data.stars)
-
-              if (milestone) {
-                const template = getPostMilestoneTemplate(tool, milestone)
-                await sendSocialPost(template, tool)
-              }
-            }
-
-            await db.tool.update({
-              where: { id: tool.id },
-              data: result.data,
+          if (result.error) {
+            logger.error(`Failed to fetch repository data for ${port.name}`, {
+              error: result.error,
+              slug: port.slug,
             })
-          }),
-        )
-      }),
 
-      // Fetch tool analytics data
-      step.run("fetch-tool-analytics-data", async () => {
-        await fetchAnalyticsInBatches({
-          data: tools.filter(isToolPublished),
-          pathPrefix: "/",
-          logger,
-          onSuccess: async (id, data) => {
-            await db.tool.update({ where: { id }, data })
-          },
-        })
-      }),
+            return null
+          }
 
-      // Fetch alternative analytics data
-      step.run("fetch-alternative-analytics-data", async () => {
-        await fetchAnalyticsInBatches({
-          data: alternatives,
-          pathPrefix: "/alternatives/",
-          logger,
-          onSuccess: async (id, data) => {
-            await db.alternative.update({ where: { id }, data })
-          },
-        })
-      }),
-    ])
+          if (!result.data) {
+            return null
+          }
 
-    // Calculate advertising prices based on pageviews
-    await step.run("calculate-alternative-prices", async () => {
-      const alternatives = await db.alternative.findMany()
-
-      await recalculatePrices(alternatives, async ({ id, adPrice }) => {
-        await db.alternative.update({ where: { id }, data: { adPrice } })
-      })
+          await db.port.update({
+            where: { id: port.id },
+            data: result.data,
+          })
+        }),
+      )
     })
 
-    // Post on Socials about a random tool
+    // Post on Socials about a random port
     await step.run("post-on-socials", async () => {
-      const publishedTools = tools.filter(isToolPublished)
-      const tool = publishedTools[Math.floor(Math.random() * publishedTools.length)]
+      const publishedPorts = ports.filter(port => port.status === PortStatus.Published)
+      const port = publishedPorts[Math.floor(Math.random() * publishedPorts.length)]
 
-      if (tool) {
-        const template = await getPostTemplate(tool)
-        const result = await tryCatch(sendSocialPost(template, tool))
+      if (port) {
+        const template = await getPostTemplate(port)
+        const result = await tryCatch(sendSocialPost(template, port))
 
         if (result.error) {
           throw new NonRetriableError(
@@ -125,9 +84,10 @@ export const fetchData = inngest.createFunction(
 
     // Revalidate cache
     await step.run("revalidate-cache", async () => {
-      revalidateTag("tools")
-      revalidateTag("tool")
-      revalidateTag("alternatives")
+      revalidateTag("ports", "max")
+      revalidateTag("port", "max")
+      revalidateTag("themes", "max")
+      revalidateTag("platforms", "max")
     })
   },
 )

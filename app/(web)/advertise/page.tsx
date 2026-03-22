@@ -23,8 +23,8 @@ export const metadata: Metadata = {
 }
 
 export default async function AdvertisePage({ searchParams }: PageProps) {
-  const searchParamsLoader = createLoader({ alternative: parseAsString })
-  const { alternative } = await searchParamsLoader(searchParams)
+  const searchParamsLoader = createLoader({ theme: parseAsString })
+  const { theme } = await searchParamsLoader(searchParams)
 
   return (
     <div className="flex flex-col gap-12 md:gap-14 lg:gap-16">
@@ -38,7 +38,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
         </IntroDescription>
       </Intro>
 
-      <AdvertisePickers alternative={alternative} />
+      <AdvertisePickers theme={theme} />
 
       <Stats />
 

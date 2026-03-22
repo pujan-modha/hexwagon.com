@@ -19,3 +19,6 @@ export const TextArea = ({ className, size, ...props }: TextAreaProps) => {
     </Box>
   )
 }
+
+/** @deprecated Use TextArea instead. */
+export const Textarea = TextArea

@@ -28,33 +28,33 @@ const checkRateLimit = async (action: string) => {
 }
 
 /**
- * Get tool by slug and verify it's claimable
+ * Get port by slug and verify it's claimable
  */
-const getClaimableTool = async (slug: string) => {
-  const tool = await db.tool.findUnique({
+const getClaimablePort = async (slug: string) => {
+  const port = await db.port.findUnique({
     where: { slug },
   })
 
-  if (!tool) {
-    throw new Error("Tool not found")
+  if (!port) {
+    throw new Error("Port not found")
   }
 
-  if (tool.ownerId) {
-    throw new Error("This tool has already been claimed")
+  if (port.authorId) {
+    throw new Error("This port has already been claimed")
   }
 
-  return tool
+  return port
 }
 
 /**
- * Verify that email domain matches tool website domain
+ * Verify that email domain matches port website domain
  */
-const verifyEmailDomain = (email: string, toolWebsiteUrl: string) => {
-  const toolDomain = getUrlHostname(toolWebsiteUrl)
+const verifyEmailDomain = (email: string, portWebsiteUrl: string) => {
+  const portDomain = getUrlHostname(portWebsiteUrl)
   const emailDomain = email.split("@")[1]
 
-  if (toolDomain !== emailDomain) {
-    throw new Error("Email domain must match the tool's website domain")
+  if (portDomain !== emailDomain) {
+    throw new Error("Email domain must match the port's website domain")
   }
 }
 
@@ -81,34 +81,38 @@ const generateAndSendOtp = async (email: string) => {
 }
 
 /**
- * Claim tool for a user and revalidate cache
+ * Claim port for a user and revalidate cache
  */
-const claimToolForUser = async (toolId: string, userId: string, slug: string) => {
-  await db.tool.update({
-    where: { id: toolId },
-    data: { ownerId: userId },
+const claimPortForUser = async (portId: string, userId: string, slug: string) => {
+  await db.port.update({
+    where: { id: portId },
+    data: { authorId: userId },
   })
 
-  // Revalidate tools
-  revalidateTag("tools")
-  revalidateTag(`tool-${slug}`)
+  // Revalidate ports
+  revalidateTag("ports", "max")
+  revalidateTag(`port-${slug}`, "max")
 }
 
 /**
  * Send OTP to verify domain ownership
  */
-export const sendToolClaimOtp = userProcedure
+export const sendPortClaimOtp = userProcedure
   .createServerAction()
-  .input(z.object({ toolSlug: z.string(), email: z.string().email() }))
-  .handler(async ({ input: { toolSlug: slug, email } }) => {
+  .input(z.object({ portSlug: z.string(), email: z.string().email() }))
+  .handler(async ({ input: { portSlug: slug, email } }) => {
     // Check rate limiting
     await checkRateLimit("otp")
 
-    // Get and validate tool
-    const tool = await getClaimableTool(slug)
+    // Get and validate port
+    const port = await getClaimablePort(slug)
+
+    if (!port.websiteUrl) {
+      throw new Error("This port cannot be claimed because it does not have a website URL")
+    }
 
     // Verify email domain
-    verifyEmailDomain(email, tool.websiteUrl)
+    verifyEmailDomain(email, port.websiteUrl)
 
     // Generate and send OTP
     await generateAndSendOtp(email)
@@ -117,25 +121,29 @@ export const sendToolClaimOtp = userProcedure
   })
 
 /**
- * Verify OTP and claim tool
+ * Verify OTP and claim port
  */
-export const verifyToolClaimOtp = userProcedure
+export const verifyPortClaimOtp = userProcedure
   .createServerAction()
-  .input(z.object({ toolSlug: z.string(), otp: z.string() }))
-  .handler(async ({ input: { toolSlug: slug, otp } }) => {
+  .input(z.object({ portSlug: z.string(), otp: z.string() }))
+  .handler(async ({ input: { portSlug: slug, otp } }) => {
     // Check rate limiting
     await checkRateLimit("verify")
 
-    // Get and validate tool
-    const tool = await getClaimableTool(slug)
+    // Get and validate port
+    const port = await getClaimablePort(slug)
 
     // Verify otp
     const { user } = await auth.api.verifyOneTimeToken({
       body: { token: otp },
+      headers: await headers(),
     })
 
-    // Claim tool and revalidate
-    await claimToolForUser(tool.id, user.id, slug)
+    // Claim port and revalidate
+    await claimPortForUser(port.id, user.id, slug)
 
     return { success: true }
   })
+
+export const sendToolClaimOtp = sendPortClaimOtp
+export const verifyToolClaimOtp = verifyPortClaimOtp

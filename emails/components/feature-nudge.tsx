@@ -1,4 +1,4 @@
-import type { Tool } from "@prisma/client"
+import type { Port as Tool } from "@prisma/client"
 import { Hr, Link, Text } from "@react-email/components"
 import { config } from "~/config"
 import { EmailButton } from "~/emails/components/button"
@@ -15,7 +15,7 @@ export const EmailFeatureNudge = ({ tool, showButton }: EmailFeatureNudgeProps) 
     "⏱️ Get published within 12 hours",
     "🔗 Get a do-follow link",
     "⭐ Featured on our homepage",
-    "📌 Prominent placement on our category and alternative pages",
+    "📌 Prominent placement on our theme and platform pages",
     "✏️ Unlimited content updates",
   ]
 

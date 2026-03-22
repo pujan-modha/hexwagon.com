@@ -6,9 +6,9 @@ import { after } from "next/server"
 import { createServerAction } from "zsa"
 import { subscribeToNewsletter } from "~/actions/subscribe"
 import { auth } from "~/lib/auth"
-import { notifySubmitterOfToolSubmitted } from "~/lib/notifications"
+import { notifySubmitterOfPortSubmitted } from "~/lib/notifications"
 import { getIP, isRateLimited } from "~/lib/rate-limiter"
-import { submitToolSchema } from "~/server/web/shared/schema"
+import { submitPortSchema } from "~/server/web/shared/schema"
 import { db } from "~/services/db"
 import { isDisposableEmail } from "~/utils/helpers"
 
@@ -21,24 +21,20 @@ const generateUniqueSlug = async (baseName: string): Promise<string> => {
   let suffix = 2
 
   while (true) {
-    // Check if slug exists
-    if (!(await db.tool.findUnique({ where: { slug } }))) {
+    if (!(await db.port.findUnique({ where: { slug } }))) {
       return slug
     }
 
-    // Add/increment suffix and try again
     slug = `${baseSlug}-${suffix}`
     suffix++
   }
 }
 
 /**
- * Submit a tool to the database
- * @param input - The tool data to submit
- * @returns The tool that was submitted
+ * Submit a port to the database
  */
-export const submitTool = createServerAction()
-  .input(submitToolSchema)
+export const submitPort = createServerAction()
+  .input(submitPortSchema)
   .handler(async ({ input: { newsletterOptIn, ...data } }) => {
     const session = await auth.api.getSession({ headers: await headers() })
 
@@ -46,12 +42,10 @@ export const submitTool = createServerAction()
       const ip = await getIP()
       const rateLimitKey = `submission:${ip}`
 
-      // Rate limiting check
       if (await isRateLimited(rateLimitKey, "submission")) {
         throw new Error("Too many submissions. Please try again later.")
       }
 
-      // Disposable email check
       if (await isDisposableEmail(data.submitterEmail)) {
         throw new Error("Invalid email address, please use a real one")
       }
@@ -65,31 +59,36 @@ export const submitTool = createServerAction()
       })
     }
 
-    // Check if the tool already exists
-    const existingTool = await db.tool.findFirst({
-      where: { OR: [{ repositoryUrl: data.repositoryUrl }, { websiteUrl: data.websiteUrl }] },
-    })
+    // Check for duplicate submission (same user + theme + platform with pending status)
+    if (session?.user) {
+      const existingPort = await db.port.findFirst({
+        where: {
+          themeId: data.themeId,
+          platformId: data.platformId,
+          authorId: session.user.id,
+          status: { in: ["Draft", "PendingEdit"] },
+        },
+      })
 
-    // If the tool exists, redirect to the tool or submit page
-    if (existingTool) {
-      return existingTool
+      if (existingPort) {
+        throw new Error("You already have a pending submission for this theme+platform.")
+      }
     }
 
     // Generate a unique slug
     const slug = await generateUniqueSlug(data.name)
 
-    // Check if the email domain matches the tool's website domain
-    const ownerId = session?.user.email.includes(getUrlHostname(data.websiteUrl))
-      ? session?.user.id
-      : undefined
+    // Check if the email domain matches the website domain for ownership
+    const authorId = session?.user.id
 
-    // Save the tool to the database
-    const tool = await db.tool.create({
-      data: { ...data, slug, ownerId },
+    // Save the port to the database
+    const port = await db.port.create({
+      data: { ...data, slug, authorId },
     })
 
-    // Notify the submitter of the tool submitted
-    after(async () => await notifySubmitterOfToolSubmitted(tool))
+    after(async () => await notifySubmitterOfPortSubmitted(port))
 
-    return tool
+    return port
   })
+
+export const submitTool = submitPort

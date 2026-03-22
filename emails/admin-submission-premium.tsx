@@ -1,4 +1,4 @@
-import type { Tool } from "@prisma/client"
+import type { Port as Tool } from "@prisma/client"
 import { Text } from "@react-email/components"
 import { config } from "~/config"
 import { EmailButton } from "~/emails/components/button"
@@ -14,11 +14,11 @@ const EmailAdminSubmissionPremium = ({ tool, ...props }: EmailProps) => {
       <Text>Hi!</Text>
 
       <Text>
-        {tool.submitterName} has opted to {tool.isFeatured ? "feature" : "expedite"} the submission
-        of {tool.name}. You should review and approve it as soon as possible.
+        {tool.submitterName} has opted to {tool.isFeatured ? "feature" : "expedite"} the port of{" "}
+        {tool.name}. You should review and approve it as soon as possible.
       </Text>
 
-      <EmailButton href={`${config.site.url}/admin/tools/${tool.slug}`}>
+      <EmailButton href={`${config.site.url}/admin/ports/${tool.slug}`}>
         Review {tool.name}
       </EmailButton>
     </EmailWrapper>

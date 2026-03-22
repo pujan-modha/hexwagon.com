@@ -1,86 +1,29 @@
 import type { ComponentProps } from "react"
-import { Button } from "~/components/common/button"
-import { H2 } from "~/components/common/heading"
-import { Icon } from "~/components/common/icon"
+import { Card } from "~/components/common/card"
 import { Link } from "~/components/common/link"
-import { Stack } from "~/components/common/stack"
-import { Markdown } from "~/components/web/markdown"
-import { OverlayImage } from "~/components/web/overlay-image"
 import { ToolBadges } from "~/components/web/tools/tool-badges"
-import { FaviconImage } from "~/components/web/ui/favicon"
-import { VerifiedBadge } from "~/components/web/verified-badge"
-import type { ToolManyExtended, ToolOne } from "~/server/web/tools/payloads"
-import { cx } from "~/utils/cva"
+import type { ToolOne } from "~/server/web/tools/payloads"
 
-type ToolEntryProps = ComponentProps<"div"> & {
-  tool: ToolOne | ToolManyExtended
+type ToolEntryProps = ComponentProps<"article"> & {
+  id?: string
+  tool: ToolOne & { screenshotUrl?: string | null }
 }
 
-const ToolEntry = ({ children, className, tool, ...props }: ToolEntryProps) => {
-  const href = `/${tool.slug}`
-
+export const ToolEntry = ({ id, tool, ...props }: ToolEntryProps) => {
   return (
-    <div
-      className={cx(
-        "flex flex-col gap-6 scroll-mt-20 md:gap-8 [counter-increment:entries]",
-        className,
-      )}
-      {...props}
-    >
-      <Stack size="lg" className="not-prose relative justify-between">
-        <Stack
-          className="self-start before:content-['#'_counter(entries)] before:font-semibold before:text-3xl before:opacity-25 xl:before:absolute xl:before:right-full xl:before:mr-4"
-          asChild
-        >
-          <Link href={href} className="group">
-            <FaviconImage src={tool.faviconUrl} title={tool.name} className="size-8" />
+    <Card asChild hover={false} focus={false}>
+      <article id={id} {...props}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <Link href={`/themes/${tool.theme.slug}/${tool.platform.slug}/${tool.id}`} className="font-semibold">
+              {tool.name ?? `${tool.theme.name} for ${tool.platform.name}`}
+            </Link>
+            {tool.description && <p className="text-sm text-muted-foreground">{tool.description}</p>}
+          </div>
 
-            <H2 className="leading-tight! truncate underline decoration-transparent group-hover:decoration-foreground/30">
-              {tool.name}
-            </H2>
-
-            {tool.ownerId && <VerifiedBadge size="lg" />}
-          </Link>
-        </Stack>
-
-        <ToolBadges tool={tool} className="ml-auto" />
-      </Stack>
-
-      {tool.description && (
-        <p className="not-prose -mt-4 w-full text-secondary-foreground text-pretty md:text-lg md:-mt-6">
-          {tool.description}
-        </p>
-      )}
-
-      {tool.screenshotUrl && (
-        <OverlayImage
-          href={href}
-          target="_self"
-          doFollow={true}
-          src={tool.screenshotUrl}
-          alt={`Screenshot of ${tool.name} website`}
-          className="not-prose"
-        >
-          Read more
-        </OverlayImage>
-      )}
-
-      {children ? (
-        <div>{children}</div>
-      ) : (
-        tool.content && (
-          <Markdown
-            code={tool.content}
-            className="relative max-h-72 overflow-hidden mask-b-from-80%"
-          />
-        )
-      )}
-
-      <Button suffix={<Icon name="lucide/arrow-right" />} className="not-prose self-start" asChild>
-        <Link href={href}>Read more</Link>
-      </Button>
-    </div>
+          <ToolBadges tool={tool} />
+        </div>
+      </article>
+    </Card>
   )
 }
-
-export { ToolEntry }

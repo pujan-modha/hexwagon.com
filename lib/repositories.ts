@@ -3,13 +3,13 @@ import type { Prisma } from "@prisma/client"
 import { githubClient } from "~/services/github"
 
 /**
- * Fetches the repository data for a tool and returns the data
- * in a format that can be used to update the tool.
+ * Fetches the repository data for a port and returns the data
+ * in a format that can be used to update the port.
  *
- * @param repository - The repository to fetch the data for.
- * @returns The repository data for the tool.
+ * @param repository - The repository URL to fetch the data for.
+ * @returns The repository data for the port.
  */
-export const getToolRepositoryData = async (repository: string) => {
+export const getPortRepositoryData = async (repository: string) => {
   const repo = await githubClient.queryRepository(repository)
   const selfHostedTopics = ["selfhosted", "self-hosted"]
 
@@ -33,12 +33,17 @@ export const getToolRepositoryData = async (repository: string) => {
         }
       : undefined,
 
-    // Topics
-    topics: {
+    // Tags
+    tags: {
       connectOrCreate: repo.topics.map(slug => ({
         where: { slug: slugify(slug) },
         create: { slug: slugify(slug) },
       })),
     },
-  } satisfies Prisma.ToolUpdateInput
+  } satisfies Prisma.PortUpdateInput
 }
+
+/**
+ * @deprecated Use getPortRepositoryData instead.
+ */
+export const getToolRepositoryData = getPortRepositoryData

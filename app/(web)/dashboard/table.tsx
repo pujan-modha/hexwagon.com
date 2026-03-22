@@ -1,7 +1,7 @@
 "use client"
 
 import { formatDate } from "@primoui/utils"
-import { type Tool, ToolStatus } from "@prisma/client"
+import { PortStatus } from "@prisma/client"
 import type { ColumnDef } from "@tanstack/react-table"
 import { differenceInDays, formatDistanceToNowStrict } from "date-fns"
 import { useQueryStates } from "nuqs"
@@ -20,16 +20,21 @@ import type { findTools } from "~/server/admin/tools/queries"
 import { toolsTableParamsSchema } from "~/server/admin/tools/schema"
 import type { DataTableFilterField } from "~/types"
 
+type DashboardRow = Awaited<ReturnType<typeof findTools>>["ports"][number]
+
 type DashboardTableProps = {
   toolsPromise: ReturnType<typeof findTools>
 }
 
 export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
-  const { tools, pageCount } = use(toolsPromise)
+  const { ports, pageCount } = use(toolsPromise) as {
+    ports: DashboardRow[]
+    pageCount: number
+  }
   const [{ perPage, sort }] = useQueryStates(toolsTableParamsSchema)
 
   // Memoize the columns so they don't re-render on every render
-  const columns = useMemo((): ColumnDef<Tool>[] => {
+  const columns = useMemo((): ColumnDef<DashboardRow>[] => {
     return [
       {
         accessorKey: "name",
@@ -38,11 +43,11 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
         cell: ({ row }) => {
           const { name, slug, status, faviconUrl } = row.original
 
-          if (status === ToolStatus.Draft) {
+          if (status === PortStatus.Draft) {
             return <Note className="font-medium">{name}</Note>
           }
 
-          return <DataTableLink href={`/${slug}`} image={faviconUrl} title={name} />
+          return <DataTableLink href={`/${slug}`} image={faviconUrl} title={name ?? slug} />
         },
       },
       {
@@ -53,7 +58,7 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
           const { status, publishedAt } = row.original
 
           switch (status) {
-            case ToolStatus.Published:
+            case PortStatus.Published:
               return (
                 <Stack size="sm" wrap={false}>
                   <Icon
@@ -63,7 +68,7 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
                   <Note className="font-medium">{formatDate(publishedAt!)}</Note>
                 </Stack>
               )
-            case ToolStatus.Scheduled:
+            case PortStatus.Scheduled:
               return (
                 <Stack size="sm" wrap={false} title={formatDate(publishedAt!)}>
                   <Icon
@@ -80,7 +85,7 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
                   </Note>
                 </Stack>
               )
-            case ToolStatus.Draft:
+            case PortStatus.Draft:
               return (
                 <Stack size="sm" wrap={false}>
                   <Icon name="lucide/circle-dashed" className="stroke-3 text-muted-foreground/75" />
@@ -138,7 +143,7 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
   }, [])
 
   // Search filters
-  const filterFields: DataTableFilterField<Tool>[] = [
+  const filterFields: DataTableFilterField<any>[] = [
     {
       id: "name",
       label: "Name",
@@ -147,7 +152,7 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
   ]
 
   const { table } = useDataTable({
-    data: tools,
+    data: ports as any,
     columns,
     pageCount,
     filterFields,
@@ -163,10 +168,10 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
   })
 
   return (
-    <DataTable table={table} emptyState="No tools found. Submit or claim a tool to get started.">
+    <DataTable table={table} emptyState="No ports found. Submit or claim a port to get started.">
       <DataTableToolbar table={table} filterFields={filterFields}>
         <Button size="md" variant="primary" prefix={<Icon name="lucide/plus" />} asChild>
-          <Link href="/submit">Submit a tool</Link>
+          <Link href="/submit">Submit a port</Link>
         </Button>
       </DataTableToolbar>
     </DataTable>

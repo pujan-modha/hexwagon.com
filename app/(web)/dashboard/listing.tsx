@@ -1,4 +1,4 @@
-import { ToolStatus } from "@prisma/client"
+import { PortStatus } from "@prisma/client"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
@@ -12,7 +12,7 @@ import { toolsTableParamsCache } from "~/server/admin/tools/schema"
 export const DashboardToolListing = async ({ searchParams }: DashboardPageProps) => {
   const parsedParams = toolsTableParamsCache.parse(await searchParams)
   const session = await auth.api.getSession({ headers: await headers() })
-  const status = [ToolStatus.Draft, ToolStatus.Scheduled, ToolStatus.Published]
+  const status = [PortStatus.Draft, PortStatus.Scheduled, PortStatus.Published]
 
   if (!session?.user) {
     throw redirect("/auth/login?next=/dashboard")
@@ -20,7 +20,7 @@ export const DashboardToolListing = async ({ searchParams }: DashboardPageProps)
 
   const toolsPromise = findTools(
     { ...parsedParams, status: status },
-    { OR: [{ submitterEmail: session.user.email }, { ownerId: session.user.id }] },
+    { OR: [{ submitterEmail: session.user.email }, { authorId: session.user.id }] },
   )
 
   return (

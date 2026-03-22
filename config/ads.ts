@@ -16,8 +16,8 @@ export const adsConfig = {
   adSpots: [
     {
       label: "Listing Ad",
-      type: "Tools",
-      description: "Visible on the every tool listing page",
+      type: "Ports",
+      description: "Visible on every port listing page",
       price: 15,
       preview: "https://share.cleanshot.com/7CFqSw0b",
     },
@@ -28,7 +28,7 @@ export const adsConfig = {
     websiteUrl: "/advertise",
     name: "Your brand here",
     description:
-      "Reach out to our audience of professional open source/tech enthusiasts, boost your sales and brand awareness.",
+      "Reach out to our audience of theme enthusiasts and developers, boost your sales and brand awareness.",
     buttonLabel: `Advertise on ${siteConfig.name}`,
     faviconUrl: null,
   } satisfies AdOne,
@@ -36,10 +36,10 @@ export const adsConfig = {
   testimonials: [
     {
       quote:
-        "OpenAlternative has been a solid traffic source for our website since we partnered up with them. Their homepage spot, in particular, delivered great results, giving us a noticeable **10–20% traffic boost**. Piotr has done an excellent job with OpenAlternative and it’s clear from the platform’s traffic, engagement, and audience quality. Highly recommended!",
+        "HexWagon has been a solid traffic source for our theme project since we partnered up with them. Their homepage spot, in particular, delivered great results. Highly recommended!",
       author: {
-        name: "Abdullah Atta",
-        title: "Founder of Notesnook",
+        name: "Theme Developer",
+        title: "Theme Author",
         image: "/authors/abdullahatta.webp",
       },
     },

@@ -41,7 +41,7 @@ export const findReports = async (search: ReportsTableSchema) => {
       skip: offset,
       include: {
         user: { select: { id: true, name: true } },
-        tool: { select: { slug: true, name: true } },
+        port: { select: { slug: true, name: true } },
       },
     }),
 

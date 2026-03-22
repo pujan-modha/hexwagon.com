@@ -15,7 +15,7 @@ type PageProps = {
 const getTool = cache(async ({ params }: PageProps) => {
   const { slug } = await params
 
-  const tool = await db.tool.findFirst({
+  const tool = await db.port.findFirst({
     where: { slug },
     select: toolOnePayload,
   })

@@ -5,9 +5,9 @@ import { db } from "~/services/db"
 
 export const StatsCard = async () => {
   const stats = [
-    { label: "Tools", href: "/admin/tools", query: () => db.tool.count() },
-    { label: "Alternatives", href: "/admin/alternatives", query: () => db.alternative.count() },
-    { label: "Categories", href: "/admin/categories", query: () => db.category.count() },
+    { label: "Ports", href: "/admin/ports", query: () => db.port.count() },
+    { label: "Themes", href: "/admin/themes", query: () => db.theme.count() },
+    { label: "Platforms", href: "/admin/platforms", query: () => db.platform.count() },
     { label: "Users", href: "/admin/users", query: () => db.user.count() },
   ] as const
 

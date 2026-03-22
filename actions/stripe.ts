@@ -93,22 +93,22 @@ export const createStripeAdsCheckout = createServerAction()
     return checkout.url
   })
 
-export const createStripeAlternativeAdsCheckout = createServerAction()
+export const createStripeThemeAdsCheckout = createServerAction()
   .input(
     z.object({
       type: z.nativeEnum(AdType),
-      alternatives: z.array(z.object({ slug: z.string(), name: z.string(), price: z.number() })),
+      themes: z.array(z.object({ slug: z.string(), name: z.string() })),
     }),
   )
-  .handler(async ({ input: { type, alternatives } }) => {
-    const adData = [{ type, alternatives: alternatives.map(({ slug }) => slug) }]
+  .handler(async ({ input: { type, themes } }) => {
+    const adData = [{ type, themes: themes.map(({ slug }) => slug) }]
 
     const checkout = await stripe.checkout.sessions.create({
       mode: "subscription",
-      line_items: alternatives.map(({ name, price }) => ({
+      line_items: themes.map(({ name }) => ({
         price_data: {
           product_data: { name },
-          unit_amount: Math.round(price * 100),
+          unit_amount: 9900, // $99/month default
           currency: "usd",
           recurring: { interval: "month" },
         },
@@ -119,7 +119,7 @@ export const createStripeAlternativeAdsCheckout = createServerAction()
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
       success_url: `${env.NEXT_PUBLIC_SITE_URL}/advertise/success?sessionId={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${env.NEXT_PUBLIC_SITE_URL}/advertise/alternatives?cancelled=true`,
+      cancel_url: `${env.NEXT_PUBLIC_SITE_URL}/advertise/themes?cancelled=true`,
     })
 
     if (!checkout.url) {
@@ -162,8 +162,8 @@ export const createAdFromCheckout = createServerAction()
       })
 
       // Revalidate the cache
-      revalidateTag("ads")
-      revalidateTag("alternatives")
+      revalidateTag("ads", "max")
+      revalidateTag("alternatives", "max")
 
       return { success: true }
     }
@@ -235,8 +235,8 @@ export const createAdFromCheckout = createServerAction()
     )
 
     // Revalidate the cache
-    revalidateTag("ads")
-    revalidateTag("alternatives")
+    revalidateTag("ads", "max")
+    revalidateTag("alternatives", "max")
 
     return { success: true }
   })

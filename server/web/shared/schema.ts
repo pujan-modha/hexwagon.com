@@ -1,5 +1,11 @@
-import { ReportType } from "@prisma/client"
-import { createSearchParamsCache, parseAsArrayOf, parseAsInteger, parseAsString } from "nuqs/server"
+import { PortStatus, ReportType, SuggestionType } from "@prisma/client"
+import {
+  createSearchParamsCache,
+  parseAsArrayOf,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringEnum,
+} from "nuqs/server"
 import { z } from "zod"
 import { config } from "~/config"
 import { githubRegex } from "~/lib/github/utils"
@@ -9,9 +15,9 @@ export const filterParamsSchema = {
   sort: parseAsString.withDefault("default"),
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(35),
-  alternative: parseAsArrayOf(parseAsString).withDefault([]),
-  category: parseAsArrayOf(parseAsString).withDefault([]),
-  stack: parseAsArrayOf(parseAsString).withDefault([]),
+  theme: parseAsArrayOf(parseAsString).withDefault([]),
+  platform: parseAsArrayOf(parseAsString).withDefault([]),
+  tag: parseAsArrayOf(parseAsString).withDefault([]),
   license: parseAsArrayOf(parseAsString).withDefault([]),
 }
 
@@ -29,14 +35,32 @@ export const repositorySchema = z
   .toLowerCase()
   .regex(githubRegex, repositoryMessage)
 
-export const submitToolSchema = z.object({
+export const submitPortSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  websiteUrl: z.string().min(1, "Website is required").url("Invalid URL").trim(),
-  repositoryUrl: repositorySchema,
+  description: z.string().optional(),
+  content: z.string().optional(),
+  websiteUrl: z.string().url("Invalid URL").trim().optional().or(z.literal("")),
+  repositoryUrl: repositorySchema.optional(),
+  installUrl: z.string().url().optional().or(z.literal("")),
   submitterName: z.string().min(1, "Your name is required"),
   submitterEmail: z.string().email("Please enter a valid email address"),
   submitterNote: z.string().max(200),
   newsletterOptIn: z.boolean().optional().default(true),
+  themeId: z.string().min(1, "Theme is required"),
+  platformId: z.string().min(1, "Platform is required"),
+})
+
+export const submitSuggestionSchema = z.object({
+  type: z.nativeEnum(SuggestionType),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  websiteUrl: z.string().url().optional().or(z.literal("")),
+})
+
+export const commentSchema = z.object({
+  content: z.string().min(1, "Comment cannot be empty").max(2000),
+  portId: z.string().min(1),
+  parentId: z.string().optional(),
 })
 
 export const newsletterSchema = z.object({
@@ -67,8 +91,13 @@ export const adDetailsSchema = z.object({
   buttonLabel: z.string().optional(),
 })
 
-export type SubmitToolSchema = z.infer<typeof submitToolSchema>
+export type SubmitPortSchema = z.infer<typeof submitPortSchema>
+export type SubmitSuggestionSchema = z.infer<typeof submitSuggestionSchema>
+export type CommentSchema = z.infer<typeof commentSchema>
 export type NewsletterSchema = z.infer<typeof newsletterSchema>
 export type ReportSchema = z.infer<typeof reportSchema>
 export type FeedbackSchema = z.infer<typeof feedbackSchema>
 export type AdDetailsSchema = z.infer<typeof adDetailsSchema>
+
+export const submitToolSchema = submitPortSchema
+export type SubmitToolSchema = SubmitPortSchema

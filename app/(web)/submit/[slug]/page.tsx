@@ -28,7 +28,7 @@ const searchParamsCache = createSearchParamsCache({
 const getTool = cache(async ({ params, searchParams }: PageProps) => {
   const { slug } = await params
 
-  const tool = await db.tool.findFirst({
+  const tool = await db.port.findFirst({
     where: { slug, isFeatured: false },
     select: toolOnePayload,
   })

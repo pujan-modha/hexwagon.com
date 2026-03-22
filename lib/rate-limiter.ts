@@ -30,6 +30,12 @@ const limiters = {
     analytics: true,
     limiter: Ratelimit.slidingWindow(5, "1 h"), // 5 attempts per hour
   }),
+
+  comment: new Ratelimit({
+    redis,
+    analytics: true,
+    limiter: Ratelimit.slidingWindow(10, "1 h"), // 10 comments per hour
+  }),
 }
 
 /**

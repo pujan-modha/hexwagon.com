@@ -8,7 +8,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import type { inferServerActionReturnData } from "zsa"
 import { useServerAction } from "zsa-react"
-import { fetchRepositoryData, indexAllData, recalculatePricesData } from "~/actions/misc"
+import { fetchRepositoryData, indexAllData } from "~/actions/misc"
 import { searchItems } from "~/actions/search"
 import {
   CommandDialog,
@@ -90,11 +90,6 @@ export const Search = () => {
       label: "Index All Data",
       successMessage: "Data indexed",
     },
-    {
-      action: recalculatePricesData,
-      label: "Recalculate Prices",
-      successMessage: "Prices recalculated",
-    },
   ] as const
 
   const adminActions = actions.map(({ label, action, successMessage }) => ({
@@ -131,18 +126,18 @@ export const Search = () => {
       name: "Create",
       items: [
         {
-          label: "New Tool",
-          path: "/admin/tools/new",
+          label: "New Port",
+          path: "/admin/ports/new",
           shortcut: true,
         },
         {
-          label: "New Alternative",
-          path: "/admin/alternatives/new",
+          label: "New Theme",
+          path: "/admin/themes/new",
           shortcut: true,
         },
         {
-          label: "New Category",
-          path: "/admin/categories/new",
+          label: "New Platform",
+          path: "/admin/platforms/new",
           shortcut: true,
         },
       ],
@@ -157,9 +152,9 @@ export const Search = () => {
     commandSections.push({
       name: "Quick Links",
       items: [
-        { label: "Tools", path: "/" },
-        { label: "Alternatives", path: "/alternatives" },
-        { label: "Categories", path: "/categories" },
+        { label: "Ports", path: "/" },
+        { label: "Themes", path: "/themes" },
+        { label: "Platforms", path: "/platforms" },
       ],
     })
   }
@@ -234,10 +229,10 @@ export const Search = () => {
         )}
 
         <SearchResults
-          name="Tools"
+          name="Ports"
           items={tools?.hits}
           onItemSelect={navigateTo}
-          getHref={({ slug }) => `${isAdminPath ? "/admin/tools" : ""}/${slug}`}
+          getHref={({ slug }) => `${isAdminPath ? "/admin/ports" : ""}/${slug}`}
           renderItemDisplay={({ name, faviconUrl, websiteUrl }) => (
             <>
               {faviconUrl && <img src={faviconUrl} alt="" width={16} height={16} />}
@@ -248,10 +243,10 @@ export const Search = () => {
         />
 
         <SearchResults
-          name="Alternatives"
+          name="Themes"
           items={alternatives?.hits}
           onItemSelect={navigateTo}
-          getHref={({ slug }) => `${isAdminPath ? "/admin" : ""}/alternatives/${slug}`}
+          getHref={({ slug }) => `${isAdminPath ? "/admin" : ""}/themes/${slug}`}
           renderItemDisplay={({ name, faviconUrl }) => (
             <>
               {faviconUrl && <img src={faviconUrl} alt="" width={16} height={16} />}
@@ -261,12 +256,10 @@ export const Search = () => {
         />
 
         <SearchResults
-          name="Categories"
+          name="Platforms"
           items={categories?.hits}
           onItemSelect={navigateTo}
-          getHref={({ slug, fullPath }) =>
-            isAdminPath ? `/admin/categories/${slug}` : `/categories/${fullPath}`
-          }
+          getHref={({ slug }) => (isAdminPath ? `/admin/platforms/${slug}` : `/platforms/${slug}`)}
           renderItemDisplay={({ name }) => name}
         />
       </CommandList>

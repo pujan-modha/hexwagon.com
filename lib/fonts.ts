@@ -1,16 +1,8 @@
-import { Geist } from "next/font/google"
 import localFont from "next/font/local"
 import type { FontWeight } from "satori"
 
-export const fontSans = Geist({
-  variable: "--font-sans",
-  display: "swap",
-  subsets: ["latin"],
-  weight: "variable",
-})
-
 export const fontDisplay = localFont({
-  variable: "--font-display",
+  variable: "--font-display-local",
   display: "swap",
   src: [{ path: "../public/fonts/ABCDiatype-Bold.woff2", weight: "700", style: "normal" }],
 })

@@ -42,8 +42,9 @@
 
   --tracking-micro: -0.0125em;
 
-  --font-sans: var(--font-sans);
-  --font-display: var(--font-display);
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-display-local), var(--font-sans);
 
   --text-5xl: 2.75rem;
   --text-6xl: 3rem;

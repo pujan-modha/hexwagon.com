@@ -5,23 +5,22 @@ import { createServerAction } from "zsa"
 import { getMeiliIndex } from "~/services/meilisearch"
 import { tryCatch } from "~/utils/helpers"
 
-type ToolSearchResult = {
+type PortSearchResult = {
   slug: string
   name: string
   websiteUrl: string
   faviconUrl?: string
 }
 
-type AlternativeSearchResult = {
+type ThemeSearchResult = {
   slug: string
   name: string
   faviconUrl?: string
 }
 
-type CategorySearchResult = {
+type PlatformSearchResult = {
   slug: string
   name: string
-  fullPath: string
 }
 
 export const searchItems = createServerAction()
@@ -31,7 +30,7 @@ export const searchItems = createServerAction()
 
     const { data, error } = await tryCatch(
       Promise.all([
-        getMeiliIndex("tools").search<ToolSearchResult>(query, {
+        getMeiliIndex("ports").search<PortSearchResult>(query, {
           rankingScoreThreshold: 0.5,
           hybrid: { embedder: "openAi", semanticRatio: 0.5 },
           attributesToRetrieve: ["slug", "name", "websiteUrl", "faviconUrl"],
@@ -39,17 +38,17 @@ export const searchItems = createServerAction()
           sort: ["isFeatured:desc", "score:desc"],
         }),
 
-        getMeiliIndex("alternatives").search<AlternativeSearchResult>(query, {
+        getMeiliIndex("themes").search<ThemeSearchResult>(query, {
           rankingScoreThreshold: 0.5,
           hybrid: { embedder: "openAi", semanticRatio: 0.5 },
           attributesToRetrieve: ["slug", "name", "faviconUrl"],
           sort: ["pageviews:desc"],
         }),
 
-        getMeiliIndex("categories").search<CategorySearchResult>(query, {
+        getMeiliIndex("platforms").search<PlatformSearchResult>(query, {
           rankingScoreThreshold: 0.6,
           hybrid: { embedder: "openAi", semanticRatio: 0.5 },
-          attributesToRetrieve: ["slug", "name", "fullPath"],
+          attributesToRetrieve: ["slug", "name"],
         }),
       ]),
     )

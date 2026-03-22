@@ -5,7 +5,7 @@ import { metadataConfig } from "~/config/metadata"
 
 export const metadata: Metadata = {
   title: "Dashboard",
-  description: "Manage your account and tools.",
+  description: "Manage your account and theme port submissions.",
   openGraph: { ...metadataConfig.openGraph, url: "/dashboard" },
   alternates: { ...metadataConfig.alternates, canonical: "/dashboard" },
 }
@@ -15,7 +15,7 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
     <>
       <Intro>
         <IntroTitle>Dashboard</IntroTitle>
-        <IntroDescription>Welcome back! Manage your account and tools.</IntroDescription>
+        <IntroDescription>Welcome back! Manage your account and submissions.</IntroDescription>
       </Intro>
 
       <div className="flex flex-col gap-4">

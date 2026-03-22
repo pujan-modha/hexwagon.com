@@ -1,7 +1,7 @@
 "use client"
 
 import { formatDate } from "@primoui/utils"
-import type { Report, Tool, User } from "@prisma/client"
+import type { Port, Report, User } from "@prisma/client"
 import type { ColumnDef } from "@tanstack/react-table"
 import { ReportActions } from "~/app/admin/reports/_components/report-actions"
 import { RowCheckbox } from "~/components/admin/row-checkbox"
@@ -79,13 +79,17 @@ export const getColumns = (): ColumnDef<Report>[] => {
       },
     },
     {
-      accessorKey: "tool",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Tool" />,
+      accessorKey: "port",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Port" />,
       cell: ({ row }) => {
-        const tool = row.getValue<Pick<Tool, "slug" | "name">>("tool")
+        const tool = row.getValue<Pick<Port, "slug" | "name">>("port")
 
         return (
-          <DataTableLink href={`/admin/tools/${tool?.slug}`} title={tool?.name} isOverlay={false} />
+          <DataTableLink
+            href={`/admin/ports/${tool?.slug}`}
+            title={tool?.name ?? tool?.slug}
+            isOverlay={false}
+          />
         )
       },
     },

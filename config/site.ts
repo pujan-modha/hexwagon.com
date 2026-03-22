@@ -1,15 +1,15 @@
 import { env } from "~/env"
 
 export const siteConfig = {
-  name: "OpenAlternative",
-  slug: "openalternative",
-  tagline: "Open Source Alternatives to Popular Software",
+  name: "HexWagon",
+  slug: "hexwagon",
+  tagline: "Theme Ports for Every Platform",
   description:
-    "A curated collection of the best open source alternatives to everyday SaaS products. Save money with reliable tools hand-picked for you.",
+    "The definitive source for discovering, sharing, and managing color theme ports across applications and platforms.",
   email: env.NEXT_PUBLIC_SITE_EMAIL,
   url: env.NEXT_PUBLIC_SITE_URL,
 
   alphabet: "abcdefghijklmnopqrstuvwxyz",
 
-  affiliateUrl: "https://go.openalternative.co",
+  affiliateUrl: "https://go.hexwagon.com",
 }

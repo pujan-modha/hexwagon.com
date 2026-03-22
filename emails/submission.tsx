@@ -1,4 +1,4 @@
-import type { Tool } from "@prisma/client"
+import type { Port as Tool } from "@prisma/client"
 import { Text } from "@react-email/components"
 import { EmailExpediteNudge } from "~/emails/components/expedite-nudge"
 import { EmailWrapper, type EmailWrapperProps } from "~/emails/components/wrapper"
@@ -14,10 +14,10 @@ const EmailSubmission = ({ tool, queueLength = 100, ...props }: EmailProps) => {
     <EmailWrapper signature {...props}>
       <Text>Hey {tool.submitterName?.trim()}!</Text>
 
-      <Text>Thanks for submitting {tool.name}, it'll be reviewed shortly!</Text>
+      <Text>Thanks for submitting {tool.name}, it will be reviewed shortly!</Text>
 
       {queueLength > 10 && (
-        <EmailExpediteNudge tool={tool}>
+        <EmailExpediteNudge port={tool}>
           in approximately <strong>{getQueueLength(queueLength)}</strong>
         </EmailExpediteNudge>
       )}

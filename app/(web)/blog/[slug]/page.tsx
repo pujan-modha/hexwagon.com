@@ -3,15 +3,10 @@ import { type Post, allPosts } from "content-collections"
 import type { Metadata } from "next"
 import Image from "next/image"
 import { notFound } from "next/navigation"
-import { Suspense, cache } from "react"
+import { cache } from "react"
 import { H6 } from "~/components/common/heading"
 import { Note } from "~/components/common/note"
 import { Stack } from "~/components/common/stack"
-import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
-import {
-  AlternativePreview,
-  AlternativePreviewSkeleton,
-} from "~/components/web/alternatives/alternative-preview"
 import { ExternalLink } from "~/components/web/external-link"
 import { InlineMenu } from "~/components/web/inline-menu"
 import { MDX } from "~/components/web/mdx"
@@ -22,7 +17,7 @@ import { FaviconImage } from "~/components/web/ui/favicon"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { Section } from "~/components/web/ui/section"
 import { metadataConfig } from "~/config/metadata"
-import { findTool } from "~/server/web/tools/queries"
+import { findPort } from "~/server/web/ports/queries"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -63,7 +58,7 @@ export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
 
 export default async function BlogPostPage(props: PageProps) {
   const post = await findPostBySlug(props)
-  const tools = await Promise.all(post.tools?.map(slug => findTool({ where: { slug } })) ?? [])
+  const tools = await Promise.all(post.tools?.map(slug => findPort({ where: { slug } })) ?? [])
 
   return (
     <>
@@ -117,10 +112,6 @@ export default async function BlogPostPage(props: PageProps) {
           </Section.Content>
 
           <Section.Sidebar>
-            <Suspense fallback={<AdCardSkeleton className="max-md:hidden" />}>
-              <AdCard where={{ type: "BlogPost" }} className="max-md:hidden" />
-            </Suspense>
-
             <Stack direction="column" className="lg:mx-5">
               <H6 as="strong" className="text-muted-foreground">
                 Written by
@@ -141,20 +132,16 @@ export default async function BlogPostPage(props: PageProps) {
             {/* <TOC title="On this page" content={post.content} className="flex-1 overflow-y-auto" /> */}
 
             <InlineMenu
-              items={tools.filter(isTruthy).map(({ slug, name, faviconUrl }) => ({
+              items={tools.filter(isTruthy).filter(({ name }) => name !== null).map(({ slug, name, faviconUrl }) => ({
                 id: slug,
-                title: name,
-                prefix: <FaviconImage src={faviconUrl} title={name} className="size-4" />,
+                title: name!,
+                prefix: <FaviconImage src={faviconUrl} title={name!} className="size-4" />,
               }))}
               className="flex-1 mx-5 max-md:hidden"
             />
           </Section.Sidebar>
         </Section>
       </div>
-
-      <Suspense fallback={<AlternativePreviewSkeleton />}>
-        <AlternativePreview />
-      </Suspense>
     </>
   )
 }
