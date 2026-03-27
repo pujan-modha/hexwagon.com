@@ -1,13 +1,14 @@
-import { Prisma, PortStatus } from "@prisma/client"
-import { adOnePayload } from "~/server/web/ads/payloads"
+import { Prisma, PortStatus } from "@prisma/client";
+import { adOnePayload } from "~/server/web/ads/payloads";
 
-export const colorPalettePayload = Prisma.validator<Prisma.ColorPaletteSelect>()({
-  id: true,
-  paletteName: true,
-  label: true,
-  hex: true,
-  order: true,
-})
+export const colorPalettePayload =
+  Prisma.validator<Prisma.ColorPaletteSelect>()({
+    id: true,
+    paletteName: true,
+    label: true,
+    hex: true,
+    order: true,
+  });
 
 export const themeOnePayload = Prisma.validator<Prisma.ThemeSelect>()({
   id: true,
@@ -44,7 +45,7 @@ export const themeOnePayload = Prisma.validator<Prisma.ThemeSelect>()({
       user: { select: { id: true, name: true, image: true } },
     },
   },
-})
+});
 
 export const themeManyPayload = Prisma.validator<Prisma.ThemeSelect>()({
   id: true,
@@ -65,9 +66,11 @@ export const themeManyPayload = Prisma.validator<Prisma.ThemeSelect>()({
       ports: { where: { status: PortStatus.Published } },
     },
   },
-})
+});
 
-export type ThemeOne = Prisma.ThemeGetPayload<{ select: typeof themeOnePayload }>
+export type ThemeOne = Prisma.ThemeGetPayload<{
+  select: typeof themeOnePayload;
+}>;
 export type ThemeMany = Prisma.ThemeGetPayload<{
-  select: typeof themeManyPayload
-}>
+  select: typeof themeManyPayload;
+}>;

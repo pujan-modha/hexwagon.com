@@ -1,15 +1,15 @@
-import Image from "next/image"
-import type { ComponentProps } from "react"
-import { cx } from "~/utils/cva"
+import Image from "next/image";
+import type { ComponentProps } from "react";
+import { cx } from "~/utils/cva";
 
 type FaviconProps = ComponentProps<"div"> & {
-  src: string | null
-  title?: string | null
-  plain?: boolean
-}
+  src: string | null;
+  title?: string | null;
+  plain?: boolean;
+};
 
 const Favicon = ({ className, src, title, plain, ...props }: FaviconProps) => {
-  if (!src) return null
+  if (!src) return null;
 
   return (
     <div
@@ -23,16 +23,21 @@ const Favicon = ({ className, src, title, plain, ...props }: FaviconProps) => {
     >
       <FaviconImage src={src} title={title} className="size-full" />
     </div>
-  )
-}
+  );
+};
 
 type FaviconImageProps = Omit<ComponentProps<typeof Image>, "src" | "alt"> & {
-  src: string | null
-  title?: string | null
-}
+  src: string | null;
+  title?: string | null;
+};
 
-const FaviconImage = ({ className, src, title, ...props }: FaviconImageProps) => {
-  if (!src) return null
+const FaviconImage = ({
+  className,
+  src,
+  title,
+  ...props
+}: FaviconImageProps) => {
+  if (!src) return null;
 
   return (
     <Image
@@ -47,7 +52,7 @@ const FaviconImage = ({ className, src, title, ...props }: FaviconImageProps) =>
       )}
       {...props}
     />
-  )
-}
+  );
+};
 
-export { Favicon, FaviconImage }
+export { Favicon, FaviconImage };

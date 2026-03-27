@@ -1,9 +1,9 @@
-import { Badge } from "~/components/common/badge"
-import { adStatus, type AdStatusValue } from "~/utils/ads"
+import { Badge } from "~/components/common/badge";
+import { adStatus, type AdStatusValue } from "~/utils/ads";
 
 type AdStatusBadgeProps = {
-  status: AdStatusValue
-}
+  status: AdStatusValue;
+};
 
 export const AdStatusBadge = ({ status }: AdStatusBadgeProps) => {
   const variant =
@@ -13,7 +13,7 @@ export const AdStatusBadge = ({ status }: AdStatusBadgeProps) => {
         ? "warning"
         : status === adStatus.Rejected
           ? "danger"
-          : "soft"
+          : "soft";
 
-  return <Badge variant={variant}>{status}</Badge>
-}
+  return <Badge variant={variant}>{status}</Badge>;
+};

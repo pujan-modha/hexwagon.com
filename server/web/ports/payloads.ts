@@ -1,7 +1,7 @@
-import { Prisma } from "@prisma/client"
-import { platformManyPayload } from "~/server/web/platforms/payloads"
-import { tagManyPayload } from "~/server/web/tags/payloads"
-import { themeManyPayload } from "~/server/web/themes/payloads"
+import { Prisma } from "@prisma/client";
+import { platformManyPayload } from "~/server/web/platforms/payloads";
+import { tagManyPayload } from "~/server/web/tags/payloads";
+import { themeManyPayload } from "~/server/web/themes/payloads";
 
 export const portOnePayload = Prisma.validator<Prisma.PortSelect>()({
   id: true,
@@ -35,7 +35,7 @@ export const portOnePayload = Prisma.validator<Prisma.PortSelect>()({
   author: { select: { id: true, name: true, image: true } },
   authorId: true,
   tags: { select: tagManyPayload },
-})
+});
 
 export const portManyPayload = Prisma.validator<Prisma.PortSelect>()({
   id: true,
@@ -66,7 +66,7 @@ export const portManyPayload = Prisma.validator<Prisma.PortSelect>()({
   theme: { select: themeManyPayload },
   platform: { select: platformManyPayload },
   tags: { select: tagManyPayload },
-})
+});
 
 export const portManyExtendedPayload = Prisma.validator<Prisma.PortSelect>()({
   id: true,
@@ -94,8 +94,12 @@ export const portManyExtendedPayload = Prisma.validator<Prisma.PortSelect>()({
   license: true,
   theme: { select: themeManyPayload },
   platform: { select: platformManyPayload },
-})
+});
 
-export type PortOne = Prisma.PortGetPayload<{ select: typeof portOnePayload }>
-export type PortMany = Prisma.PortGetPayload<{ select: typeof portManyPayload }>
-export type PortManyExtended = Prisma.PortGetPayload<{ select: typeof portManyExtendedPayload }>
+export type PortOne = Prisma.PortGetPayload<{ select: typeof portOnePayload }>;
+export type PortMany = Prisma.PortGetPayload<{
+  select: typeof portManyPayload;
+}>;
+export type PortManyExtended = Prisma.PortGetPayload<{
+  select: typeof portManyExtendedPayload;
+}>;

@@ -1,6 +1,6 @@
-import { slugify } from "@primoui/utils"
-import type { Prisma } from "@prisma/client"
-import { githubClient } from "~/services/github"
+import { slugify } from "@primoui/utils";
+import type { Prisma } from "@prisma/client";
+import { githubClient } from "~/services/github";
 
 /**
  * Fetches the repository data for a port and returns the data
@@ -10,10 +10,10 @@ import { githubClient } from "~/services/github"
  * @returns The repository data for the port.
  */
 export const getPortRepositoryData = async (repository: string) => {
-  const repo = await githubClient.queryRepository(repository)
-  const selfHostedTopics = ["selfhosted", "self-hosted"]
+  const repo = await githubClient.queryRepository(repository);
+  const selfHostedTopics = ["selfhosted", "self-hosted"];
 
-  if (!repo) return null
+  if (!repo) return null;
 
   return {
     stars: repo.stars,
@@ -21,22 +21,24 @@ export const getPortRepositoryData = async (repository: string) => {
     score: repo.score,
     firstCommitDate: repo.createdAt,
     lastCommitDate: repo.pushedAt,
-    isSelfHosted: repo.topics.some(topic => selfHostedTopics.includes(topic)) ? true : undefined,
+    isSelfHosted: repo.topics.some((topic) => selfHostedTopics.includes(topic))
+      ? true
+      : undefined,
 
     // License
     license: repo.license || undefined,
 
     // Tags
     tags: {
-      connectOrCreate: repo.topics.map(slug => ({
+      connectOrCreate: repo.topics.map((slug) => ({
         where: { slug: slugify(slug) },
         create: { slug: slugify(slug) },
       })),
     },
-  } satisfies Prisma.PortUpdateInput
-}
+  } satisfies Prisma.PortUpdateInput;
+};
 
 /**
  * @deprecated Use getPortRepositoryData instead.
  */
-export const getToolRepositoryData = getPortRepositoryData
+export const getToolRepositoryData = getPortRepositoryData;

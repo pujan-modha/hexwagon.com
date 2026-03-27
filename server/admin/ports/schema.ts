@@ -1,19 +1,21 @@
-import { type Port, PortStatus } from "@prisma/client"
+import { type Port, PortStatus } from "@prisma/client";
 import {
   createSearchParamsCache,
   parseAsArrayOf,
   parseAsInteger,
   parseAsString,
   parseAsStringEnum,
-} from "nuqs/server"
-import { z } from "zod"
-import { getSortingStateParser } from "~/lib/parsers"
-import { repositorySchema } from "~/server/web/shared/schema"
-import type { PortManyExtended } from "~/server/web/ports/payloads"
+} from "nuqs/server";
+import { z } from "zod";
+import { getSortingStateParser } from "~/lib/parsers";
+import { repositorySchema } from "~/server/web/shared/schema";
+import type { PortManyExtended } from "~/server/web/ports/payloads";
 
 export const portsTableParamsSchema = {
   name: parseAsString.withDefault(""),
-  sort: getSortingStateParser<PortManyExtended>().withDefault([{ id: "createdAt", desc: true }]),
+  sort: getSortingStateParser<PortManyExtended>().withDefault([
+    { id: "createdAt", desc: true },
+  ]),
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(25),
   from: parseAsString.withDefault(""),
@@ -22,10 +24,14 @@ export const portsTableParamsSchema = {
   status: parseAsArrayOf(z.nativeEnum(PortStatus)).withDefault([]),
   themeId: parseAsString.withDefault(""),
   platformId: parseAsString.withDefault(""),
-}
+};
 
-export const portsTableParamsCache = createSearchParamsCache(portsTableParamsSchema)
-export type PortsTableSchema = Awaited<ReturnType<typeof portsTableParamsCache.parse>>
+export const portsTableParamsCache = createSearchParamsCache(
+  portsTableParamsSchema,
+);
+export type PortsTableSchema = Awaited<
+  ReturnType<typeof portsTableParamsCache.parse>
+>;
 
 export const portSchema = z.object({
   id: z.string().optional(),
@@ -53,6 +59,6 @@ export const portSchema = z.object({
   platformId: z.string().optional(),
   license: z.string().trim().max(120).optional().or(z.literal("")),
   notifySubmitter: z.boolean().default(true),
-})
+});
 
-export type PortSchema = z.infer<typeof portSchema>
+export type PortSchema = z.infer<typeof portSchema>;

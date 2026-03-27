@@ -1,16 +1,16 @@
-import type { AdType } from "@prisma/client"
-import { siteConfig } from "~/config/site"
-import type { AdOne } from "~/server/web/ads/payloads"
+import type { AdType } from "@prisma/client";
+import { siteConfig } from "~/config/site";
+import type { AdOne } from "~/server/web/ads/payloads";
 
-export type AdSpotType = Extract<AdType, "Banner" | "Listing" | "Sidebar">
+export type AdSpotType = Extract<AdType, "Banner" | "Listing" | "Sidebar">;
 
 export type AdSpot = {
-  label: string
-  type: AdSpotType
-  description: string
-  price: number
-  preview?: string
-}
+  label: string;
+  type: AdSpotType;
+  description: string;
+  price: number;
+  preview?: string;
+};
 
 export const adsConfig = {
   minPageviewThreshold: 100,
@@ -43,8 +43,7 @@ export const adsConfig = {
     type: "All",
     websiteUrl: "/advertise",
     name: "Your brand here",
-    description:
-      "Reach out to our audience of developers.",
+    description: "Reach out to our audience of developers.",
     buttonLabel: `Advertise on ${siteConfig.name}`,
     faviconUrl: null,
   } satisfies AdOne,
@@ -60,4 +59,4 @@ export const adsConfig = {
       },
     },
   ],
-}
+};

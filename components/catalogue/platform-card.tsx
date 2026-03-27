@@ -1,17 +1,27 @@
-import type { ComponentProps } from "react"
-import plur from "plur"
-import { Card, CardDescription, CardFooter, CardHeader } from "~/components/common/card"
-import { H4 } from "~/components/common/heading"
-import { Link } from "~/components/common/link"
-import { Skeleton } from "~/components/common/skeleton"
-import { Favicon } from "~/components/web/ui/favicon"
-import type { PlatformMany } from "~/server/web/platforms/payloads"
+import type { ComponentProps } from "react";
+import plur from "plur";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+} from "~/components/common/card";
+import { H4 } from "~/components/common/heading";
+import { Link } from "~/components/common/link";
+import { Skeleton } from "~/components/common/skeleton";
+import { Favicon } from "~/components/web/ui/favicon";
+import type { PlatformMany } from "~/server/web/platforms/payloads";
 type PlatformCardProps = Omit<ComponentProps<typeof Card>, "href"> & {
-  platform: PlatformMany
-  showCount?: boolean
-}
+  platform: PlatformMany;
+  showCount?: boolean;
+};
 
-const PlatformCard = ({ platform, showCount, className, ...props }: PlatformCardProps) => {
+const PlatformCard = ({
+  platform,
+  showCount,
+  className,
+  ...props
+}: PlatformCardProps) => {
   return (
     <Card asChild className={className} {...props}>
       <Link href={`/platforms/${platform.slug}`}>
@@ -34,14 +44,18 @@ const PlatformCard = ({ platform, showCount, className, ...props }: PlatformCard
         )}
       </Link>
     </Card>
-  )
-}
+  );
+};
 
 const PlatformCardSkeleton = () => {
   return (
     <Card hover={false} className="items-stretch select-none">
       <CardHeader wrap={false}>
-        <Favicon src="/favicon.png" plain className="animate-pulse opacity-50" />
+        <Favicon
+          src="/favicon.png"
+          plain
+          className="animate-pulse opacity-50"
+        />
 
         <H4 className="w-2/3">
           <Skeleton>&nbsp;</Skeleton>
@@ -58,7 +72,7 @@ const PlatformCardSkeleton = () => {
         <Skeleton className="h-4 w-1/3">&nbsp;</Skeleton>
       </CardFooter>
     </Card>
-  )
-}
+  );
+};
 
-export { PlatformCard, PlatformCardSkeleton }
+export { PlatformCard, PlatformCardSkeleton };

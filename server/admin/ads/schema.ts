@@ -1,16 +1,18 @@
-import { z } from "zod"
-import { adStatus } from "~/utils/ads"
+import { z } from "zod";
+import { adStatus } from "~/utils/ads";
 
-export const adSpotValues = ["Banner", "Listing", "Sidebar"] as const
+export const adSpotValues = ["Banner", "Listing", "Sidebar"] as const;
 
 export const adStatusValues = [
   adStatus.Pending,
   adStatus.Approved,
   adStatus.Rejected,
   adStatus.Cancelled,
-] as const
+] as const;
 
-const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be a valid date (YYYY-MM-DD).")
+const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be a valid date (YYYY-MM-DD).");
 
 const adFormBaseSchema = z.object({
   spot: z.enum(adSpotValues),
@@ -18,7 +20,12 @@ const adFormBaseSchema = z.object({
   name: z.string().min(1, "Ad name is required.").max(255),
   description: z.string().max(500).optional().or(z.literal("")),
   destinationUrl: z.string().url("Must be a valid URL.").max(2048),
-  faviconUrl: z.string().url("Must be a valid image URL.").max(2048).optional().or(z.literal("")),
+  faviconUrl: z
+    .string()
+    .url("Must be a valid image URL.")
+    .max(2048)
+    .optional()
+    .or(z.literal("")),
   startsAt: isoDateSchema,
   endsAt: isoDateSchema,
   priceCents: z.number().int().positive("Price must be greater than zero."),
@@ -29,23 +36,28 @@ const adFormBaseSchema = z.object({
   customHtml: z.string().optional().or(z.literal("")),
   customCss: z.string().optional().or(z.literal("")),
   customJs: z.string().optional().or(z.literal("")),
-})
+});
 
 export const rejectAdSchema = z.object({
   adId: z.string().min(1),
   reason: z.string().min(1, "Rejection reason is required.").max(1000),
-})
+});
 
-export const adFormSchema = adFormBaseSchema.refine(d => new Date(d.endsAt) >= new Date(d.startsAt), {
-  message: "End date must be on or after start date.",
-  path: ["endsAt"],
-})
+export const adFormSchema = adFormBaseSchema.refine(
+  (d) => new Date(d.endsAt) >= new Date(d.startsAt),
+  {
+    message: "End date must be on or after start date.",
+    path: ["endsAt"],
+  },
+);
 
-export const createAdSchema = adFormSchema
+export const createAdSchema = adFormSchema;
 
-export const updateAdSchema = adFormBaseSchema.extend({
-  adId: z.string().min(1),
-}).refine(d => new Date(d.endsAt) >= new Date(d.startsAt), {
-  message: "End date must be on or after start date.",
-  path: ["endsAt"],
-})
+export const updateAdSchema = adFormBaseSchema
+  .extend({
+    adId: z.string().min(1),
+  })
+  .refine((d) => new Date(d.endsAt) >= new Date(d.startsAt), {
+    message: "End date must be on or after start date.",
+    path: ["endsAt"],
+  });

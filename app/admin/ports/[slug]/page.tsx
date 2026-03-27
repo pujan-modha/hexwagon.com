@@ -1,20 +1,20 @@
-import { notFound } from "next/navigation"
-import { Wrapper } from "~/components/admin/wrapper"
-import { withAdminPage } from "~/components/admin/auth-hoc"
-import { PortForm } from "../_components/port-form"
-import { findPlatformList } from "~/server/admin/platforms/queries"
-import { findThemeList } from "~/server/admin/themes/queries"
-import { findPortBySlug } from "~/server/admin/ports/queries"
+import { notFound } from "next/navigation";
+import { Wrapper } from "~/components/admin/wrapper";
+import { withAdminPage } from "~/components/admin/auth-hoc";
+import { PortForm } from "../_components/port-form";
+import { findPlatformList } from "~/server/admin/platforms/queries";
+import { findThemeList } from "~/server/admin/themes/queries";
+import { findPortBySlug } from "~/server/admin/ports/queries";
 
 type PageProps = {
-  params: Promise<{ slug: string }>
-}
+  params: Promise<{ slug: string }>;
+};
 
 const UpdatePortPage = async ({ params }: PageProps) => {
-  const { slug } = await params
-  const port = await findPortBySlug(slug)
+  const { slug } = await params;
+  const port = await findPortBySlug(slug);
 
-  if (!port) notFound()
+  if (!port) notFound();
 
   return (
     <Wrapper size="lg">
@@ -25,7 +25,7 @@ const UpdatePortPage = async ({ params }: PageProps) => {
         themesPromise={findThemeList()}
       />
     </Wrapper>
-  )
-}
+  );
+};
 
-export default withAdminPage(UpdatePortPage)
+export default withAdminPage(UpdatePortPage);

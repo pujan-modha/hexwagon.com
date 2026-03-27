@@ -1,22 +1,26 @@
-import { formatDate, formatNumber, isTruthy } from "@primoui/utils"
-import { formatDistanceToNowStrict, formatISO } from "date-fns"
-import type { ComponentProps } from "react"
-import { Button } from "~/components/common/button"
-import { Card } from "~/components/common/card"
-import { H5 } from "~/components/common/heading"
-import { Icon } from "~/components/common/icon"
-import { Stack } from "~/components/common/stack"
-import { ExternalLink } from "~/components/web/external-link"
-import { ToolBadges } from "~/components/web/tools/tool-badges"
-import { Insights } from "~/components/web/ui/insights"
-import type { ToolOne } from "~/server/web/tools/payloads"
-import { cx } from "~/utils/cva"
+import { formatDate, formatNumber, isTruthy } from "@primoui/utils";
+import { formatDistanceToNowStrict, formatISO } from "date-fns";
+import type { ComponentProps } from "react";
+import { Button } from "~/components/common/button";
+import { Card } from "~/components/common/card";
+import { H5 } from "~/components/common/heading";
+import { Icon } from "~/components/common/icon";
+import { Stack } from "~/components/common/stack";
+import { ExternalLink } from "~/components/web/external-link";
+import { ToolBadges } from "~/components/web/tools/tool-badges";
+import { Insights } from "~/components/web/ui/insights";
+import type { ToolOne } from "~/server/web/tools/payloads";
+import { cx } from "~/utils/cva";
 
 type RepositoryDetailsProps = ComponentProps<"div"> & {
-  tool: ToolOne
-}
+  tool: ToolOne;
+};
 
-export const RepositoryDetails = ({ className, tool, ...props }: RepositoryDetailsProps) => {
+export const RepositoryDetails = ({
+  className,
+  tool,
+  ...props
+}: RepositoryDetailsProps) => {
   const insights = [
     {
       label: "Stars",
@@ -31,7 +35,9 @@ export const RepositoryDetails = ({ className, tool, ...props }: RepositoryDetai
     tool.lastCommitDate
       ? {
           label: "Last commit",
-          value: formatDistanceToNowStrict(tool.lastCommitDate, { addSuffix: true }),
+          value: formatDistanceToNowStrict(tool.lastCommitDate, {
+            addSuffix: true,
+          }),
           title: formatDate(tool.lastCommitDate),
           icon: <Icon name="lucide/timer" />,
         }
@@ -58,7 +64,7 @@ export const RepositoryDetails = ({ className, tool, ...props }: RepositoryDetai
           icon: <Icon name="lucide/server" />,
         }
       : undefined,
-  ]
+  ];
 
   return (
     <Card
@@ -97,11 +103,14 @@ export const RepositoryDetails = ({ className, tool, ...props }: RepositoryDetai
 
       <p className="text-muted-foreground/75 text-[11px]">
         Auto-fetched from GitHub{" "}
-        <time dateTime={formatISO(tool.updatedAt)} className="font-medium text-muted-foreground">
+        <time
+          dateTime={formatISO(tool.updatedAt)}
+          className="font-medium text-muted-foreground"
+        >
           {formatDistanceToNowStrict(tool.updatedAt, { addSuffix: true })}
         </time>
         .
       </p>
     </Card>
-  )
-}
+  );
+};

@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { getRandomString, isValidUrl, slugify } from "@primoui/utils"
-import { type Port, PortStatus } from "@prisma/client"
-import { useRouter } from "next/navigation"
-import type { ComponentProps } from "react"
-import { use, useState } from "react"
-import { useForm } from "react-hook-form"
-import { toast } from "sonner"
-import { useServerAction } from "zsa-react"
-import { generateFavicon, generateScreenshot } from "~/actions/media"
-import { Button } from "~/components/common/button"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { getRandomString, isValidUrl, slugify } from "@primoui/utils";
+import { type Port, PortStatus } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import type { ComponentProps } from "react";
+import { use, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { useServerAction } from "zsa-react";
+import { generateFavicon, generateScreenshot } from "~/actions/media";
+import { Button } from "~/components/common/button";
 import {
   Form,
   FormControl,
@@ -18,58 +18,62 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "~/components/common/form"
-import { H3 } from "~/components/common/heading"
-import { Icon } from "~/components/common/icon"
-import { Input, inputVariants } from "~/components/common/input"
-import { Link } from "~/components/common/link"
-import { Note } from "~/components/common/note"
-import { Stack } from "~/components/common/stack"
-import { Switch } from "~/components/common/switch"
-import { TextArea } from "~/components/common/textarea"
-import { ExternalLink } from "~/components/web/external-link"
-import { Markdown } from "~/components/web/markdown"
-import { LICENSE_SUGGESTIONS } from "~/config/licenses"
-import { siteConfig } from "~/config/site"
-import { useComputedField } from "~/hooks/use-computed-field"
-import { upsertPort } from "~/server/admin/ports/actions"
-import type { findPortBySlug } from "~/server/admin/ports/queries"
-import { portSchema } from "~/server/admin/ports/schema"
-import type { findPlatformList } from "~/server/admin/platforms/queries"
-import type { findThemeList } from "~/server/admin/themes/queries"
-import { PortActions } from "./port-actions"
-import { PortGenerateDescription } from "./port-generate-description"
-import { PortPublishActions } from "./port-publish-actions"
-import { cx } from "~/utils/cva"
+} from "~/components/common/form";
+import { H3 } from "~/components/common/heading";
+import { Icon } from "~/components/common/icon";
+import { Input, inputVariants } from "~/components/common/input";
+import { Link } from "~/components/common/link";
+import { Note } from "~/components/common/note";
+import { Stack } from "~/components/common/stack";
+import { Switch } from "~/components/common/switch";
+import { TextArea } from "~/components/common/textarea";
+import { ExternalLink } from "~/components/web/external-link";
+import { Markdown } from "~/components/web/markdown";
+import { LICENSE_SUGGESTIONS } from "~/config/licenses";
+import { siteConfig } from "~/config/site";
+import { useComputedField } from "~/hooks/use-computed-field";
+import { upsertPort } from "~/server/admin/ports/actions";
+import type { findPortBySlug } from "~/server/admin/ports/queries";
+import { portSchema } from "~/server/admin/ports/schema";
+import type { findPlatformList } from "~/server/admin/platforms/queries";
+import type { findThemeList } from "~/server/admin/themes/queries";
+import { PortActions } from "./port-actions";
+import { PortGenerateDescription } from "./port-generate-description";
+import { PortPublishActions } from "./port-publish-actions";
+import { cx } from "~/utils/cva";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/common/select"
+} from "~/components/common/select";
 
 type PortFormProps = ComponentProps<"form"> & {
-  port?: Awaited<ReturnType<typeof findPortBySlug>>
-  platformsPromise: ReturnType<typeof findPlatformList>
-  themesPromise: ReturnType<typeof findThemeList>
-}
+  port?: Awaited<ReturnType<typeof findPortBySlug>>;
+  platformsPromise: ReturnType<typeof findPlatformList>;
+  themesPromise: ReturnType<typeof findThemeList>;
+};
 
 const PortStatusChange = ({ port }: { port: Port }) => {
   return (
     <>
-      <ExternalLink href={`/${port.slug}`} className="font-semibold underline inline-block">
+      <ExternalLink
+        href={`/${port.slug}`}
+        className="font-semibold underline inline-block"
+      >
         {port.name ?? port.slug}
       </ExternalLink>{" "}
       is now {port.status.toLowerCase()}.{" "}
       {port.status === PortStatus.Scheduled && (
         <>
-          Will be published on {port.publishedAt ? port.publishedAt.toLocaleString() : "soon"}.
+          Will be published on{" "}
+          {port.publishedAt ? port.publishedAt.toLocaleString() : "soon"}.
         </>
       )}
     </>
-  )
-}
+  );
+};
 
 export function PortForm({
   children,
@@ -80,13 +84,15 @@ export function PortForm({
   themesPromise,
   ...props
 }: PortFormProps) {
-  const router = useRouter()
-  const platforms = use(platformsPromise)
-  const themes = use(themesPromise)
+  const router = useRouter();
+  const platforms = use(platformsPromise);
+  const themes = use(themesPromise);
 
-  const [isPreviewing, setIsPreviewing] = useState(false)
-  const [isStatusPending, setIsStatusPending] = useState(false)
-  const [originalStatus, setOriginalStatus] = useState(port?.status ?? PortStatus.Draft)
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isStatusPending, setIsStatusPending] = useState(false);
+  const [originalStatus, setOriginalStatus] = useState(
+    port?.status ?? PortStatus.Draft,
+  );
 
   const form = useForm({
     resolver: zodResolver(portSchema),
@@ -116,7 +122,7 @@ export function PortForm({
       license: port?.license ?? "",
       notifySubmitter: true,
     },
-  })
+  });
 
   useComputedField({
     form,
@@ -124,62 +130,66 @@ export function PortForm({
     computedField: "slug",
     callback: slugify,
     enabled: !port,
-  })
+  });
 
   const [name, slug, websiteUrl, content] = form.watch([
     "name",
     "slug",
     "websiteUrl",
     "content",
-  ])
+  ]);
 
   const upsertAction = useServerAction(upsertPort, {
     onSuccess: ({ data }) => {
       if (data.status !== originalStatus) {
-        toast.success(<PortStatusChange port={data} />)
-        setOriginalStatus(data.status)
+        toast.success(<PortStatusChange port={data} />);
+        setOriginalStatus(data.status);
       } else {
-        toast.success(`Port successfully ${port ? "updated" : "created"}`)
+        toast.success(`Port successfully ${port ? "updated" : "created"}`);
       }
 
       if (!port || data.slug !== port?.slug) {
-        router.push(`/admin/ports/${data.slug}`)
+        router.push(`/admin/ports/${data.slug}`);
       }
     },
     onError: ({ err }) => toast.error(err.message),
     onFinish: () => setIsStatusPending(false),
-  })
+  });
 
   const faviconAction = useServerAction(generateFavicon, {
     onSuccess: ({ data }) => {
-      toast.success("Favicon successfully generated. Please save the port to update.")
-      form.setValue("faviconUrl", data)
+      toast.success(
+        "Favicon successfully generated. Please save the port to update.",
+      );
+      form.setValue("faviconUrl", data);
     },
     onError: ({ err }) => toast.error(err.message),
-  })
+  });
 
   const screenshotAction = useServerAction(generateScreenshot, {
     onSuccess: ({ data }) => {
-      toast.success("Screenshot successfully generated. Please save the port to update.")
-      form.setValue("screenshotUrl", data)
+      toast.success(
+        "Screenshot successfully generated. Please save the port to update.",
+      );
+      form.setValue("screenshotUrl", data);
     },
     onError: ({ err }) => toast.error(err.message),
-  })
+  });
 
   const handleSubmit = form.handleSubmit((data, event) => {
-    const submitter = (event?.nativeEvent as SubmitEvent)?.submitter
-    const isStatusChange = submitter?.getAttribute("name") !== "submit"
+    const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
+    const isStatusChange = submitter?.getAttribute("name") !== "submit";
 
-    if (isStatusChange) setIsStatusPending(true)
+    if (isStatusChange) setIsStatusPending(true);
 
-    upsertAction.execute({ id: port?.id, ...data })
-  })
+    upsertAction.execute({ id: port?.id, ...data });
+  });
 
   const handleStatusSubmit = (status: PortStatus, publishedAt: Date | null) => {
-    form.setValue("status", status)
-    form.setValue("publishedAt", publishedAt)
-    handleSubmit()
-  }
+    form.setValue("status", status);
+    form.setValue("publishedAt", publishedAt);
+    handleSubmit();
+  };
 
   return (
     <Form {...form}>
@@ -199,13 +209,16 @@ export function PortForm({
               href={`/themes/${port.theme.slug}/${port.platform.slug}/${port.slug}`}
               className="text-primary underline"
             >
-              {siteConfig.url}/themes/{port.theme.slug}/{port.platform.slug}/{port.slug}
+              {siteConfig.url}/themes/{port.theme.slug}/{port.platform.slug}/
+              {port.slug}
             </ExternalLink>
             {port.status === PortStatus.Scheduled && port.publishedAt && (
               <>
                 <br />
                 Scheduled to be published on{" "}
-                <strong className="text-foreground">{port.publishedAt.toLocaleString()}</strong>
+                <strong className="text-foreground">
+                  {port.publishedAt.toLocaleString()}
+                </strong>
               </>
             )}
           </Note>
@@ -253,12 +266,15 @@ export function PortForm({
             <FormItem>
               <FormLabel>Theme</FormLabel>
               <FormControl>
-                <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value ?? ""}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a theme" />
                   </SelectTrigger>
                   <SelectContent>
-                    {themes.map(theme => (
+                    {themes.map((theme) => (
                       <SelectItem key={theme.id} value={theme.id}>
                         {theme.name}
                       </SelectItem>
@@ -278,12 +294,15 @@ export function PortForm({
             <FormItem>
               <FormLabel>Platform</FormLabel>
               <FormControl>
-                <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value ?? ""}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a platform" />
                   </SelectTrigger>
                   <SelectContent>
-                    {platforms.map(platform => (
+                    {platforms.map((platform) => (
                       <SelectItem key={platform.id} value={platform.id}>
                         {platform.name}
                       </SelectItem>
@@ -303,10 +322,14 @@ export function PortForm({
             <FormItem>
               <FormLabel>License</FormLabel>
               <FormControl>
-                <Input {...field} list="port-license-suggestions" placeholder="MIT" />
+                <Input
+                  {...field}
+                  list="port-license-suggestions"
+                  placeholder="MIT"
+                />
               </FormControl>
               <datalist id="port-license-suggestions">
-                {LICENSE_SUGGESTIONS.map(option => (
+                {LICENSE_SUGGESTIONS.map((option) => (
                   <option key={option} value={option} />
                 ))}
               </datalist>
@@ -370,8 +393,12 @@ export function PortForm({
                     type="button"
                     size="sm"
                     variant="secondary"
-                    onClick={() => setIsPreviewing(prev => !prev)}
-                    prefix={<Icon name={isPreviewing ? "lucide/pencil" : "lucide/eye"} />}
+                    onClick={() => setIsPreviewing((prev) => !prev)}
+                    prefix={
+                      <Icon
+                        name={isPreviewing ? "lucide/pencil" : "lucide/eye"}
+                      />
+                    }
                     className="-my-1"
                   >
                     {isPreviewing ? "Edit" : "Preview"}
@@ -383,7 +410,10 @@ export function PortForm({
                 {field.value && isPreviewing ? (
                   <Markdown
                     code={field.value}
-                    className={cx(inputVariants(), "max-w-none border leading-normal")}
+                    className={cx(
+                      inputVariants(),
+                      "max-w-none border leading-normal",
+                    )}
                   />
                 ) : (
                   <TextArea {...field} />
@@ -416,7 +446,10 @@ export function PortForm({
               <FormItem>
                 <FormLabel>Official</FormLabel>
                 <FormControl>
-                  <Switch onCheckedChange={field.onChange} checked={field.value} />
+                  <Switch
+                    onCheckedChange={field.onChange}
+                    checked={field.value}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -430,7 +463,10 @@ export function PortForm({
               <FormItem>
                 <FormLabel>Featured</FormLabel>
                 <FormControl>
-                  <Switch onCheckedChange={field.onChange} checked={field.value} />
+                  <Switch
+                    onCheckedChange={field.onChange}
+                    checked={field.value}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -446,7 +482,10 @@ export function PortForm({
               <FormItem>
                 <FormLabel>Self-hosted</FormLabel>
                 <FormControl>
-                  <Switch onCheckedChange={field.onChange} checked={field.value} />
+                  <Switch
+                    onCheckedChange={field.onChange}
+                    checked={field.value}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -460,7 +499,10 @@ export function PortForm({
               <FormItem>
                 <FormLabel>Notify submitter</FormLabel>
                 <FormControl>
-                  <Switch onCheckedChange={field.onChange} checked={field.value} />
+                  <Switch
+                    onCheckedChange={field.onChange}
+                    checked={field.value}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -480,14 +522,19 @@ export function PortForm({
                   type="button"
                   size="sm"
                   variant="secondary"
-                  prefix={<Icon name="lucide/refresh-cw" className={cx(faviconAction.isPending && "animate-spin")} />}
+                  prefix={
+                    <Icon
+                      name="lucide/refresh-cw"
+                      className={cx(faviconAction.isPending && "animate-spin")}
+                    />
+                  }
                   className="-my-1"
                   disabled={!isValidUrl(websiteUrl) || faviconAction.isPending}
                   onClick={() => {
                     faviconAction.execute({
                       url: websiteUrl,
                       path: `ports/${slug || getRandomString(12)}`,
-                    })
+                    });
                   }}
                 >
                   {field.value ? "Regenerate" : "Generate"}
@@ -525,14 +572,23 @@ export function PortForm({
                   type="button"
                   size="sm"
                   variant="secondary"
-                  prefix={<Icon name="lucide/refresh-cw" className={cx(screenshotAction.isPending && "animate-spin")} />}
+                  prefix={
+                    <Icon
+                      name="lucide/refresh-cw"
+                      className={cx(
+                        screenshotAction.isPending && "animate-spin",
+                      )}
+                    />
+                  }
                   className="-my-1"
-                  disabled={!isValidUrl(websiteUrl) || screenshotAction.isPending}
+                  disabled={
+                    !isValidUrl(websiteUrl) || screenshotAction.isPending
+                  }
                   onClick={() => {
                     screenshotAction.execute({
                       url: websiteUrl,
                       path: `ports/${slug || getRandomString(12)}`,
-                    })
+                    });
                   }}
                 >
                   {field.value ? "Regenerate" : "Generate"}
@@ -657,5 +713,5 @@ export function PortForm({
         </div>
       </form>
     </Form>
-  )
+  );
 }

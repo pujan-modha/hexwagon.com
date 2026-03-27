@@ -16,4 +16,4 @@ export const LICENSE_SUGGESTIONS = [
   "Artistic-2.0",
   "WTFPL",
   "Proprietary",
-] as const
+] as const;

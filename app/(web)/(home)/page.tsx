@@ -1,30 +1,41 @@
-import type { SearchParams } from "nuqs/server"
-import { AdType } from "@prisma/client"
-import { Suspense } from "react"
-import { CountBadge, CountBadgeSkeleton } from "~/app/(web)/(home)/count-badge"
-import { BuiltWith } from "~/components/web/built-with"
-import { ContributionGraph } from "~/components/web/contribution-graph"
-import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
-import { NewsletterForm } from "~/components/web/newsletter-form"
-import { NewsletterProof } from "~/components/web/newsletter-proof"
-import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
-import { Card, CardDescription, CardFooter, CardHeader } from "~/components/common/card"
-import { H4 } from "~/components/common/heading"
-import { Link } from "~/components/common/link"
-import { Skeleton } from "~/components/common/skeleton"
-import { Favicon } from "~/components/web/ui/favicon"
-import { config } from "~/config"
-import { findPorts } from "~/server/web/ports/queries"
-import { findFeaturedThemes } from "~/server/web/themes/queries"
-import { findFeaturedPlatforms } from "~/server/web/platforms/queries"
-import { CatalogueGrid } from "~/components/catalogue/catalogue-grid"
-import { ThemeCard, ThemeCardSkeleton } from "~/components/catalogue/theme-card"
-import { PlatformCard, PlatformCardSkeleton } from "~/components/catalogue/platform-card"
-import type { PortMany } from "~/server/web/ports/payloads"
+import type { SearchParams } from "nuqs/server";
+import { AdType } from "@prisma/client";
+import { Suspense } from "react";
+import { CountBadge, CountBadgeSkeleton } from "~/app/(web)/(home)/count-badge";
+import { BuiltWith } from "~/components/web/built-with";
+import { ContributionGraph } from "~/components/web/contribution-graph";
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card";
+import { NewsletterForm } from "~/components/web/newsletter-form";
+import { NewsletterProof } from "~/components/web/newsletter-proof";
+import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+} from "~/components/common/card";
+import { H4 } from "~/components/common/heading";
+import { Link } from "~/components/common/link";
+import { Skeleton } from "~/components/common/skeleton";
+import { Favicon } from "~/components/web/ui/favicon";
+import { config } from "~/config";
+import { findPorts } from "~/server/web/ports/queries";
+import { findFeaturedThemes } from "~/server/web/themes/queries";
+import { findFeaturedPlatforms } from "~/server/web/platforms/queries";
+import { CatalogueGrid } from "~/components/catalogue/catalogue-grid";
+import {
+  ThemeCard,
+  ThemeCardSkeleton,
+} from "~/components/catalogue/theme-card";
+import {
+  PlatformCard,
+  PlatformCardSkeleton,
+} from "~/components/catalogue/platform-card";
+import type { PortMany } from "~/server/web/ports/payloads";
 
 type PageProps = {
-  searchParams: Promise<SearchParams>
-}
+  searchParams: Promise<SearchParams>;
+};
 
 export default function Home(props: PageProps) {
   return (
@@ -39,7 +50,9 @@ export default function Home(props: PageProps) {
             Discover {config.site.tagline}
           </IntroTitle>
 
-          <IntroDescription className="lg:mt-2">{config.site.description}</IntroDescription>
+          <IntroDescription className="lg:mt-2">
+            {config.site.description}
+          </IntroDescription>
 
           <Suspense fallback={<CountBadgeSkeleton />}>
             <CountBadge />
@@ -49,7 +62,11 @@ export default function Home(props: PageProps) {
         <NewsletterForm
           size="lg"
           className="max-w-sm mx-auto items-center text-center"
-          buttonProps={{ children: "Join our community", size: "md", variant: "fancy" }}
+          buttonProps={{
+            children: "Join our community",
+            size: "md",
+            variant: "fancy",
+          }}
         >
           <NewsletterProof />
         </NewsletterForm>
@@ -102,13 +119,19 @@ export default function Home(props: PageProps) {
             </Intro>
             <CatalogueGrid className="gap-5 xl:grid-cols-3">
               {Array.from({ length: 4 }).flatMap((_, index) => {
-                const cards = [<FeaturedPortCardSkeleton key={`featured-port-skeleton-${index}`} />]
+                const cards = [
+                  <FeaturedPortCardSkeleton
+                    key={`featured-port-skeleton-${index}`}
+                  />,
+                ];
 
                 if (index === 1) {
-                  cards.push(<AdCardSkeleton key="home-port-listing-ad-skeleton" />)
+                  cards.push(
+                    <AdCardSkeleton key="home-port-listing-ad-skeleton" />,
+                  );
                 }
 
-                return cards
+                return cards;
               })}
             </CatalogueGrid>
           </section>
@@ -117,13 +140,13 @@ export default function Home(props: PageProps) {
         <FeaturedPorts />
       </Suspense>
     </>
-  )
+  );
 }
 
 const FeaturedThemes = async () => {
-  const themes = await findFeaturedThemes({ take: 4 })
+  const themes = await findFeaturedThemes({ take: 4 });
 
-  if (!themes.length) return null
+  if (!themes.length) return null;
 
   return (
     <section className="flex flex-col gap-8">
@@ -132,23 +155,28 @@ const FeaturedThemes = async () => {
       </Intro>
       <CatalogueGrid className="gap-5 xl:grid-cols-3">
         {themes.flatMap((theme, index) => {
-          const cards = [<ThemeCard key={theme.id} theme={theme} showCount />]
+          const cards = [<ThemeCard key={theme.id} theme={theme} showCount />];
 
           if (index === 0) {
-            cards.push(<AdCard key="home-theme-listing-ad" where={{ type: { in: [AdType.Listing, AdType.Ports] } }} />)
+            cards.push(
+              <AdCard
+                key="home-theme-listing-ad"
+                where={{ type: { in: [AdType.Listing, AdType.Ports] } }}
+              />,
+            );
           }
 
-          return cards
+          return cards;
         })}
       </CatalogueGrid>
     </section>
-  )
-}
+  );
+};
 
 const FeaturedPlatforms = async () => {
-  const platforms = await findFeaturedPlatforms({ take: 4 })
+  const platforms = await findFeaturedPlatforms({ take: 4 });
 
-  if (!platforms.length) return null
+  if (!platforms.length) return null;
 
   return (
     <section className="flex flex-col gap-8">
@@ -157,25 +185,30 @@ const FeaturedPlatforms = async () => {
       </Intro>
       <CatalogueGrid className="gap-5 xl:grid-cols-3">
         {platforms.flatMap((platform, index) => {
-          const cards = [<PlatformCard key={platform.id} platform={platform} showCount />]
+          const cards = [
+            <PlatformCard key={platform.id} platform={platform} showCount />,
+          ];
 
           if (index === 0) {
             cards.push(
-              <AdCard key="home-platform-listing-ad" where={{ type: { in: [AdType.Listing, AdType.Ports] } }} />,
-            )
+              <AdCard
+                key="home-platform-listing-ad"
+                where={{ type: { in: [AdType.Listing, AdType.Ports] } }}
+              />,
+            );
           }
 
-          return cards
+          return cards;
         })}
       </CatalogueGrid>
     </section>
-  )
-}
+  );
+};
 
 const FeaturedPorts = async () => {
-  const ports = await findPorts({ where: { isFeatured: true }, take: 4 })
+  const ports = await findPorts({ where: { isFeatured: true }, take: 4 });
 
-  if (!ports.length) return null
+  if (!ports.length) return null;
 
   return (
     <section className="flex flex-col gap-8">
@@ -184,25 +217,36 @@ const FeaturedPorts = async () => {
       </Intro>
       <CatalogueGrid className="gap-5 xl:grid-cols-3">
         {ports.flatMap((port, index) => {
-          const cards = [<FeaturedPortCard key={port.id} port={port} />]
+          const cards = [<FeaturedPortCard key={port.id} port={port} />];
 
           if (index === 0) {
-            cards.push(<AdCard key="home-port-listing-ad" where={{ type: { in: [AdType.Listing, AdType.Ports] } }} />)
+            cards.push(
+              <AdCard
+                key="home-port-listing-ad"
+                where={{ type: { in: [AdType.Listing, AdType.Ports] } }}
+              />,
+            );
           }
 
-          return cards
+          return cards;
         })}
       </CatalogueGrid>
     </section>
-  )
-}
+  );
+};
 
 const FeaturedPortCard = ({ port }: { port: PortMany }) => {
   return (
     <Card asChild>
-      <Link href={`/themes/${port.theme.slug}/${port.platform.slug}/${port.id}`}>
+      <Link
+        href={`/themes/${port.theme.slug}/${port.platform.slug}/${port.id}`}
+      >
         <CardHeader wrap={false}>
-          <Favicon src={port.faviconUrl} title={port.name ?? port.theme.name} plain />
+          <Favicon
+            src={port.faviconUrl}
+            title={port.name ?? port.theme.name}
+            plain
+          />
 
           <H4 as="h3" className="truncate">
             {port.name ?? port.theme.name}
@@ -218,14 +262,18 @@ const FeaturedPortCard = ({ port }: { port: PortMany }) => {
         </CardFooter>
       </Link>
     </Card>
-  )
-}
+  );
+};
 
 const FeaturedPortCardSkeleton = () => {
   return (
     <Card hover={false} className="items-stretch select-none">
       <CardHeader wrap={false}>
-        <Favicon src="/favicon.png" plain className="animate-pulse opacity-50" />
+        <Favicon
+          src="/favicon.png"
+          plain
+          className="animate-pulse opacity-50"
+        />
 
         <H4 className="w-2/3">
           <Skeleton>&nbsp;</Skeleton>
@@ -242,5 +290,5 @@ const FeaturedPortCardSkeleton = () => {
         <Skeleton className="h-4 w-1/3">&nbsp;</Skeleton>
       </CardFooter>
     </Card>
-  )
-}
+  );
+};

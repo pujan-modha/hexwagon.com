@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import type { ReactNode } from "react"
-import { useState } from "react"
+import type { ReactNode } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,17 +10,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/common/dialog"
-import { Button } from "~/components/common/button"
+} from "~/components/common/dialog";
+import { Button } from "~/components/common/button";
 
 type ConfirmDialogProps = {
-  trigger: ReactNode
-  title: string
-  description: string
-  confirmLabel?: string
-  onConfirm: () => void | Promise<void>
-  pending?: boolean
-}
+  trigger: ReactNode;
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  onConfirm: () => void | Promise<void>;
+  pending?: boolean;
+};
 
 export const ConfirmDialog = ({
   trigger,
@@ -30,7 +30,7 @@ export const ConfirmDialog = ({
   onConfirm,
   pending,
 }: ConfirmDialogProps) => {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -43,7 +43,11 @@ export const ConfirmDialog = ({
         </DialogHeader>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
+          <Button
+            variant="ghost"
+            onClick={() => setOpen(false)}
+            disabled={pending}
+          >
             Cancel
           </Button>
 
@@ -51,8 +55,8 @@ export const ConfirmDialog = ({
             variant="destructive"
             isPending={pending}
             onClick={async () => {
-              await onConfirm()
-              setOpen(false)
+              await onConfirm();
+              setOpen(false);
             }}
           >
             {confirmLabel}
@@ -60,5 +64,5 @@ export const ConfirmDialog = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

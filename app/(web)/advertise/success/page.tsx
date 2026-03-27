@@ -1,58 +1,65 @@
-import type { Metadata } from "next"
-import { notFound } from "next/navigation"
-import { type SearchParams, createLoader, parseAsString } from "nuqs/server"
-import { cache } from "react"
-import { AdDetailsForm } from "~/app/(web)/advertise/success/form"
-import { AdCard } from "~/components/web/ads/ad-card"
-import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
-import { Section } from "~/components/web/ui/section"
-import { metadataConfig } from "~/config/metadata"
-import { adOnePayload } from "~/server/web/ads/payloads"
-import { db } from "~/services/db"
-import { stripe } from "~/services/stripe"
-import { cx } from "~/utils/cva"
-import { tryCatch } from "~/utils/helpers"
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { type SearchParams, createLoader, parseAsString } from "nuqs/server";
+import { cache } from "react";
+import { AdDetailsForm } from "~/app/(web)/advertise/success/form";
+import { AdCard } from "~/components/web/ads/ad-card";
+import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro";
+import { Section } from "~/components/web/ui/section";
+import { metadataConfig } from "~/config/metadata";
+import { adOnePayload } from "~/server/web/ads/payloads";
+import { db } from "~/services/db";
+import { stripe } from "~/services/stripe";
+import { cx } from "~/utils/cva";
+import { tryCatch } from "~/utils/helpers";
 
 type PageProps = {
-  searchParams: Promise<SearchParams>
-}
+  searchParams: Promise<SearchParams>;
+};
 
 const getCheckoutSession = cache(async ({ searchParams }: PageProps) => {
-  const searchParamsLoader = createLoader({ sessionId: parseAsString.withDefault("") })
-  const { sessionId } = await searchParamsLoader(searchParams)
-  const { data, error } = await tryCatch(stripe.checkout.sessions.retrieve(sessionId))
+  const searchParamsLoader = createLoader({
+    sessionId: parseAsString.withDefault(""),
+  });
+  const { sessionId } = await searchParamsLoader(searchParams);
+  const { data, error } = await tryCatch(
+    stripe.checkout.sessions.retrieve(sessionId),
+  );
 
   if (error || data.status !== "complete") {
-    return notFound()
+    return notFound();
   }
 
-  return data
-})
+  return data;
+});
 
 const getMetadata = async () => {
   return {
     title: "Your advertisement is under review",
     description:
       "Please complete your advertisement setup below. Once approved, it will go live during the booked dates.",
-  }
-}
+  };
+};
 
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
   return {
     ...getMetadata(),
-    alternates: { ...metadataConfig.alternates, canonical: "/advertise/success" },
+    alternates: {
+      ...metadataConfig.alternates,
+      canonical: "/advertise/success",
+    },
     openGraph: { ...metadataConfig.openGraph, url: "/advertise/success" },
-  }
-}
+  };
+};
 
 export default async function SuccessPage({ searchParams }: PageProps) {
-  const session = await getCheckoutSession({ searchParams })
-  const metadata = await getMetadata()
+  const session = await getCheckoutSession({ searchParams });
+  const metadata = await getMetadata();
 
   const existingAd = await db.ad.findFirst({
     where: { sessionId: session.id },
     select: adOnePayload,
-  })
+  });
 
   return (
     <>
@@ -77,5 +84,5 @@ export default async function SuccessPage({ searchParams }: PageProps) {
         )}
       </Section>
     </>
-  )
+  );
 }

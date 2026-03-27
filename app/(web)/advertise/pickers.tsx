@@ -1,17 +1,17 @@
-import { Stack } from "~/components/common/stack"
-import { AdsPicker } from "~/components/web/ads-picker"
-import { AdsPickerThemes } from "~/components/web/ads-picker-alternatives"
-import { ExternalLink } from "~/components/web/external-link"
-import { adsConfig } from "~/config/ads"
-import { findAds, getAdPricing, getAdSettings } from "~/server/web/ads/queries"
-import { findPlatforms } from "~/server/web/platforms/queries"
-import { findRelatedThemeIds } from "~/server/web/themes/queries"
+import { Stack } from "~/components/common/stack";
+import { AdsPicker } from "~/components/web/ads-picker";
+import { AdsPickerThemes } from "~/components/web/ads-picker-alternatives";
+import { ExternalLink } from "~/components/web/external-link";
+import { adsConfig } from "~/config/ads";
+import { findAds, getAdPricing, getAdSettings } from "~/server/web/ads/queries";
+import { findPlatforms } from "~/server/web/platforms/queries";
+import { findRelatedThemeIds } from "~/server/web/themes/queries";
 
-import { findThemes } from "~/server/web/themes/queries"
+import { findThemes } from "~/server/web/themes/queries";
 
 type AdvertisePickersProps = {
-  theme: string | null
-}
+  theme: string | null;
+};
 
 export const AdvertisePickers = async ({ theme }: AdvertisePickersProps) => {
   if (theme !== null) {
@@ -21,16 +21,16 @@ export const AdvertisePickers = async ({ theme }: AdvertisePickersProps) => {
         ad: null,
       },
       orderBy: { pageviews: "desc" },
-    })
+    });
 
     const relatedIds = theme
       ? await findRelatedThemeIds({
           id: theme,
           limit: 10,
           rankingScoreThreshold: 0.5,
-          filter: `id IN [${themes.map(a => a.id).join(",")}]`,
+          filter: `id IN [${themes.map((a) => a.id).join(",")}]`,
         })
-      : []
+      : [];
 
     return (
       <AdsPickerThemes
@@ -38,31 +38,32 @@ export const AdvertisePickers = async ({ theme }: AdvertisePickersProps) => {
         selectedId={theme}
         relatedIds={relatedIds}
       />
-    )
+    );
   }
 
-  const [ads, pricing, settings, targetThemes, targetPlatforms] = await Promise.all([
-    findAds({}),
-    getAdPricing(),
-    getAdSettings(),
-    findThemes({
-      where: {
-        ports: { some: { status: { in: ["Published"] } } },
-      },
-      orderBy: { name: "asc" },
-    }),
-    findPlatforms({
-      where: {
-        ports: { some: { status: { in: ["Published"] } } },
-      },
-      orderBy: { name: "asc" },
-    }),
-  ])
+  const [ads, pricing, settings, targetThemes, targetPlatforms] =
+    await Promise.all([
+      findAds({}),
+      getAdPricing(),
+      getAdSettings(),
+      findThemes({
+        where: {
+          ports: { some: { status: { in: ["Published"] } } },
+        },
+        orderBy: { name: "asc" },
+      }),
+      findPlatforms({
+        where: {
+          ports: { some: { status: { in: ["Published"] } } },
+        },
+        orderBy: { name: "asc" },
+      }),
+    ]);
 
-  const adSpots = adsConfig.adSpots.map(spot => ({
+  const adSpots = adsConfig.adSpots.map((spot) => ({
     ...spot,
     price: pricing[spot.type],
-  }))
+  }));
 
   return (
     <div className="flex flex-col items-center gap-4 md:gap-6">
@@ -71,12 +72,12 @@ export const AdvertisePickers = async ({ theme }: AdvertisePickersProps) => {
         adSpots={adSpots}
         maxDiscountPercentage={settings.maxDiscountPercentage}
         targetingUnitPrice={settings.targetingUnitPrice}
-        targetThemes={targetThemes.map(theme => ({
+        targetThemes={targetThemes.map((theme) => ({
           slug: theme.slug,
           name: theme.name,
           faviconUrl: theme.faviconUrl,
         }))}
-        targetPlatforms={targetPlatforms.map(platform => ({
+        targetPlatforms={targetPlatforms.map((platform) => ({
           slug: platform.slug,
           name: platform.name,
           faviconUrl: platform.faviconUrl,
@@ -115,5 +116,5 @@ export const AdvertisePickers = async ({ theme }: AdvertisePickersProps) => {
         </ExternalLink>
       </Stack>
     </div>
-  )
-}
+  );
+};

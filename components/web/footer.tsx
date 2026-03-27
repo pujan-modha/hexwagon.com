@@ -1,36 +1,44 @@
-"use client"
+"use client";
 
-import { formatNumber } from "@primoui/utils"
-import type { ComponentProps } from "react"
+import { formatNumber } from "@primoui/utils";
+import type { ComponentProps } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "~/components/common/dropdown-menu"
-import { H5, H6 } from "~/components/common/heading"
-import { Icon } from "~/components/common/icon"
-import { Stack } from "~/components/common/stack"
-import { Tooltip } from "~/components/common/tooltip"
-import { BuiltWith } from "~/components/web/built-with"
-import { ExternalLink } from "~/components/web/external-link"
-import { NewsletterForm } from "~/components/web/newsletter-form"
-import { NavLink, navLinkVariants } from "~/components/web/ui/nav-link"
-import { config } from "~/config"
-import { cx } from "~/utils/cva"
+} from "~/components/common/dropdown-menu";
+import { H5, H6 } from "~/components/common/heading";
+import { Icon } from "~/components/common/icon";
+import { Stack } from "~/components/common/stack";
+import { Tooltip } from "~/components/common/tooltip";
+import { BuiltWith } from "~/components/web/built-with";
+import { ExternalLink } from "~/components/web/external-link";
+import { NewsletterForm } from "~/components/web/newsletter-form";
+import { NavLink, navLinkVariants } from "~/components/web/ui/nav-link";
+import { config } from "~/config";
+import { cx } from "~/utils/cva";
 
 type FooterProps = ComponentProps<"div"> & {
-  hideNewsletter?: boolean
-}
+  hideNewsletter?: boolean;
+};
 
-export const Footer = ({ children, className, hideNewsletter, ...props }: FooterProps) => {
+export const Footer = ({
+  children,
+  className,
+  hideNewsletter,
+  ...props
+}: FooterProps) => {
   return (
     <footer
       className="flex flex-col gap-y-8 mt-auto pt-8 border-t border-foreground/10 md:pt-10 lg:pt-12"
       {...props}
     >
       <div
-        className={cx("grid grid-cols-3 gap-y-8 gap-x-4 md:gap-x-6 md:grid-cols-16", className)}
+        className={cx(
+          "grid grid-cols-3 gap-y-8 gap-x-4 md:gap-x-6 md:grid-cols-16",
+          className,
+        )}
         {...props}
       >
         <Stack
@@ -43,8 +51,13 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
             </H5>
 
             <p className="-mt-2 px-0.5 text-xs text-muted-foreground first:mt-0">
-              Join {formatNumber(config.stats.subscribers + config.stats.stars, "standard")}+ other
-              members and get updates on new theme ports and platform listings.
+              Join{" "}
+              {formatNumber(
+                config.stats.subscribers + config.stats.stars,
+                "standard",
+              )}
+              + other members and get updates on new theme ports and platform
+              listings.
             </p>
 
             <NewsletterForm medium="footer_form" />
@@ -54,7 +67,10 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
             <DropdownMenu modal={false}>
               <Tooltip tooltip="RSS Feeds">
                 <DropdownMenuTrigger aria-label="RSS Feeds">
-                  <Icon name="lucide/rss" className="text-muted-foreground hover:text-foreground" />
+                  <Icon
+                    name="lucide/rss"
+                    className="text-muted-foreground hover:text-foreground"
+                  />
                 </DropdownMenuTrigger>
               </Tooltip>
 
@@ -70,44 +86,65 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
             </DropdownMenu>
 
             <Tooltip tooltip="Contact us">
-              <ExternalLink href={`mailto:${config.site.email}`} className={navLinkVariants()}>
+              <ExternalLink
+                href={`mailto:${config.site.email}`}
+                className={navLinkVariants()}
+              >
                 <Icon name="lucide/at-sign" />
               </ExternalLink>
             </Tooltip>
 
             <Tooltip tooltip="Follow us on X/Twitter">
-              <ExternalLink href={config.links.twitter} className={navLinkVariants()}>
+              <ExternalLink
+                href={config.links.twitter}
+                className={navLinkVariants()}
+              >
                 <Icon name="tabler/brand-x" />
               </ExternalLink>
             </Tooltip>
 
             <Tooltip tooltip="Follow us on Bluesky">
-              <ExternalLink href={config.links.bluesky} className={navLinkVariants()}>
+              <ExternalLink
+                href={config.links.bluesky}
+                className={navLinkVariants()}
+              >
                 <Icon name="tabler/brand-bluesky" />
               </ExternalLink>
             </Tooltip>
 
             <Tooltip tooltip="Follow us on Mastodon">
-              <ExternalLink href={config.links.mastodon} className={navLinkVariants()}>
+              <ExternalLink
+                href={config.links.mastodon}
+                className={navLinkVariants()}
+              >
                 <Icon name="tabler/brand-mastodon" />
               </ExternalLink>
             </Tooltip>
 
             <Tooltip tooltip="Follow us on LinkedIn">
-              <ExternalLink href={config.links.linkedin} className={navLinkVariants()}>
+              <ExternalLink
+                href={config.links.linkedin}
+                className={navLinkVariants()}
+              >
                 <Icon name="tabler/brand-linkedin" />
               </ExternalLink>
             </Tooltip>
 
             <Tooltip tooltip="Join our community on Reddit">
-              <ExternalLink href={config.links.reddit} className={navLinkVariants()}>
+              <ExternalLink
+                href={config.links.reddit}
+                className={navLinkVariants()}
+              >
                 <Icon name="tabler/brand-reddit" />
               </ExternalLink>
             </Tooltip>
           </Stack>
         </Stack>
 
-        <Stack direction="column" className="text-sm md:col-span-3 md:col-start-8">
+        <Stack
+          direction="column"
+          className="text-sm md:col-span-3 md:col-start-8"
+        >
           <H6 as="strong">Browse:</H6>
 
           <NavLink href="/themes">Themes</NavLink>
@@ -155,5 +192,5 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
 
       {children}
     </footer>
-  )
-}
+  );
+};

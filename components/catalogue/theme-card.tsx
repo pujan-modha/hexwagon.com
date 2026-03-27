@@ -1,18 +1,28 @@
-import type { ComponentProps } from "react"
-import plur from "plur"
-import { Card, CardDescription, CardFooter, CardHeader } from "~/components/common/card"
-import { H4 } from "~/components/common/heading"
-import { Link } from "~/components/common/link"
-import { Skeleton } from "~/components/common/skeleton"
-import { Favicon } from "~/components/web/ui/favicon"
-import type { ThemeMany } from "~/server/web/themes/payloads"
+import type { ComponentProps } from "react";
+import plur from "plur";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+} from "~/components/common/card";
+import { H4 } from "~/components/common/heading";
+import { Link } from "~/components/common/link";
+import { Skeleton } from "~/components/common/skeleton";
+import { Favicon } from "~/components/web/ui/favicon";
+import type { ThemeMany } from "~/server/web/themes/payloads";
 
 type ThemeCardProps = Omit<ComponentProps<typeof Card>, "href"> & {
-  theme: ThemeMany
-  showCount?: boolean
-}
+  theme: ThemeMany;
+  showCount?: boolean;
+};
 
-const ThemeCard = ({ theme, showCount, className, ...props }: ThemeCardProps) => {
+const ThemeCard = ({
+  theme,
+  showCount,
+  className,
+  ...props
+}: ThemeCardProps) => {
   return (
     <Card asChild className={className} {...props}>
       <Link href={`/themes/${theme.slug}`}>
@@ -35,14 +45,18 @@ const ThemeCard = ({ theme, showCount, className, ...props }: ThemeCardProps) =>
         )}
       </Link>
     </Card>
-  )
-}
+  );
+};
 
 const ThemeCardSkeleton = () => {
   return (
     <Card hover={false} className="items-stretch select-none">
       <CardHeader wrap={false}>
-        <Favicon src="/favicon.png" plain className="animate-pulse opacity-50" />
+        <Favicon
+          src="/favicon.png"
+          plain
+          className="animate-pulse opacity-50"
+        />
 
         <H4 className="w-2/3">
           <Skeleton>&nbsp;</Skeleton>
@@ -59,7 +73,7 @@ const ThemeCardSkeleton = () => {
         <Skeleton className="h-4 w-1/3">&nbsp;</Skeleton>
       </CardFooter>
     </Card>
-  )
-}
+  );
+};
 
-export { ThemeCard, ThemeCardSkeleton }
+export { ThemeCard, ThemeCardSkeleton };

@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { addDays, differenceInCalendarDays, parseISO } from "date-fns"
-import { useEffect, useMemo } from "react"
-import { useForm, useWatch } from "react-hook-form"
-import { useServerAction } from "zsa-react"
-import { toast } from "sonner"
-import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
+import { useEffect, useMemo } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { useServerAction } from "zsa-react";
+import { toast } from "sonner";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -14,29 +14,39 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/common/dialog"
-import { Button } from "~/components/common/button"
-import { Input } from "~/components/common/input"
-import { TextArea } from "~/components/common/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/common/select"
-import { Checkbox } from "~/components/common/checkbox"
-import { Label } from "~/components/common/label"
-import { Badge } from "~/components/common/badge"
-import { Card, CardDescription, CardHeader } from "~/components/common/card"
-import { H4 } from "~/components/common/heading"
-import { adsConfig, type AdSpotType } from "~/config/ads"
-import { adStatus, type AdStatusValue } from "~/utils/ads"
-import type { AdAdminMany } from "~/server/admin/ads/payloads"
-import type { AdPricingMap } from "~/server/web/ads/queries"
-import { createAd, updateAd } from "~/server/admin/ads/actions"
-import { AdPreviewBanner, AdPreviewCard, type AdPreviewAd } from "~/components/web/ads/ad-preview"
+} from "~/components/common/dialog";
+import { Button } from "~/components/common/button";
+import { Input } from "~/components/common/input";
+import { TextArea } from "~/components/common/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/common/select";
+import { Checkbox } from "~/components/common/checkbox";
+import { Label } from "~/components/common/label";
+import { Badge } from "~/components/common/badge";
+import { Card, CardDescription, CardHeader } from "~/components/common/card";
+import { H4 } from "~/components/common/heading";
+import { adsConfig, type AdSpotType } from "~/config/ads";
+import { adStatus, type AdStatusValue } from "~/utils/ads";
+import type { AdAdminMany } from "~/server/admin/ads/payloads";
+import type { AdPricingMap } from "~/server/web/ads/queries";
+import { createAd, updateAd } from "~/server/admin/ads/actions";
+import {
+  AdPreviewBanner,
+  AdPreviewCard,
+  type AdPreviewAd,
+} from "~/components/web/ads/ad-preview";
 
 type AdFormDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  pricing: AdPricingMap
-  ad?: AdAdminMany
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  pricing: AdPricingMap;
+  ad?: AdAdminMany;
+};
 
 const formSchema = z
   .object({
@@ -45,16 +55,26 @@ const formSchema = z
     name: z.string().min(1, "Ad name is required.").max(255),
     description: z.string().max(500).optional().or(z.literal("")),
     destinationUrl: z.string().url("Must be a valid URL.").max(2048),
-    faviconUrl: z.string().url("Must be a valid image URL.").max(2048).optional().or(z.literal("")),
+    faviconUrl: z
+      .string()
+      .url("Must be a valid image URL.")
+      .max(2048)
+      .optional()
+      .or(z.literal("")),
     startsAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be a valid date."),
     endsAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be a valid date."),
     priceUsd: z
       .string()
       .min(1, "Required.")
-      .refine(value => !Number.isNaN(Number(value)) && Number(value) > 0, {
+      .refine((value) => !Number.isNaN(Number(value)) && Number(value) > 0, {
         message: "Must be a positive number.",
       }),
-    status: z.enum([adStatus.Pending, adStatus.Approved, adStatus.Rejected, adStatus.Cancelled]),
+    status: z.enum([
+      adStatus.Pending,
+      adStatus.Approved,
+      adStatus.Rejected,
+      adStatus.Cancelled,
+    ]),
     markAsPaid: z.boolean(),
     autoPrice: z.boolean(),
     buttonLabel: z.string().max(80).optional().or(z.literal("")),
@@ -63,22 +83,27 @@ const formSchema = z
     customCss: z.string().optional().or(z.literal("")),
     customJs: z.string().optional().or(z.literal("")),
   })
-  .refine(value => new Date(value.endsAt) >= new Date(value.startsAt), {
+  .refine((value) => new Date(value.endsAt) >= new Date(value.startsAt), {
     message: "End date must be on or after start date.",
     path: ["endsAt"],
-  })
+  });
 
-type FormValues = z.infer<typeof formSchema>
+type FormValues = z.infer<typeof formSchema>;
 
-const toDateInput = (date: Date) => date.toISOString().split("T")[0] ?? ""
+const toDateInput = (date: Date) => date.toISOString().split("T")[0] ?? "";
 
-const centsToUsd = (cents?: number | null) => ((cents ?? 0) / 100).toFixed(2)
+const centsToUsd = (cents?: number | null) => ((cents ?? 0) / 100).toFixed(2);
 
-const usdToCents = (usd: string) => Math.round(Number(usd) * 100)
+const usdToCents = (usd: string) => Math.round(Number(usd) * 100);
 
-const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) => {
-  const isEdit = ad !== undefined
-  const defaultSpot = (ad?.type ?? "Banner") as AdSpotType
+const AdFormDialog = ({
+  open,
+  onOpenChange,
+  pricing,
+  ad,
+}: AdFormDialogProps) => {
+  const isEdit = ad !== undefined;
+  const defaultSpot = (ad?.type ?? "Banner") as AdSpotType;
 
   const defaultValues: FormValues = isEdit
     ? {
@@ -118,76 +143,90 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
         customHtml: "",
         customCss: "",
         customJs: "",
-      }
+      };
 
-  const { register, handleSubmit, setValue, control, reset } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues,
-  })
+  const { register, handleSubmit, setValue, control, reset } =
+    useForm<FormValues>({
+      resolver: zodResolver(formSchema),
+      defaultValues,
+    });
 
   useEffect(() => {
-    reset(defaultValues)
-  }, [ad?.id, open, reset])
+    reset(defaultValues);
+  }, [ad?.id, open, reset]);
 
-  const watchedValues = useWatch({ control }) as Partial<FormValues>
-  const watchedSpot = (watchedValues.spot ?? defaultValues.spot) as AdSpotType
-  const watchedStart = watchedValues.startsAt ?? defaultValues.startsAt
-  const watchedEnd = watchedValues.endsAt ?? defaultValues.endsAt
-  const watchedAutoPrice = watchedValues.autoPrice ?? defaultValues.autoPrice
+  const watchedValues = useWatch({ control }) as Partial<FormValues>;
+  const watchedSpot = (watchedValues.spot ?? defaultValues.spot) as AdSpotType;
+  const watchedStart = watchedValues.startsAt ?? defaultValues.startsAt;
+  const watchedEnd = watchedValues.endsAt ?? defaultValues.endsAt;
+  const watchedAutoPrice = watchedValues.autoPrice ?? defaultValues.autoPrice;
 
   const days = useMemo(() => {
-    const startDate = parseISO(watchedStart)
-    const endDate = parseISO(watchedEnd)
+    const startDate = parseISO(watchedStart);
+    const endDate = parseISO(watchedEnd);
 
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return null
-    if (endDate < startDate) return null
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()))
+      return null;
+    if (endDate < startDate) return null;
 
-    return differenceInCalendarDays(endDate, startDate) + 1
-  }, [watchedStart, watchedEnd])
+    return differenceInCalendarDays(endDate, startDate) + 1;
+  }, [watchedStart, watchedEnd]);
 
-  const dailyRate = pricing[watchedSpot] ?? pricing.Banner
+  const dailyRate = pricing[watchedSpot] ?? pricing.Banner;
 
   useEffect(() => {
-    if (!days) return
+    if (!days) return;
 
-    if (!watchedAutoPrice) return
+    if (!watchedAutoPrice) return;
 
-    const nextPrice = (days * dailyRate).toFixed(2)
+    const nextPrice = (days * dailyRate).toFixed(2);
     if (watchedValues.priceUsd !== nextPrice) {
-      setValue("priceUsd", nextPrice, { shouldValidate: true })
+      setValue("priceUsd", nextPrice, { shouldValidate: true });
     }
-  }, [dailyRate, days, setValue, watchedAutoPrice, watchedValues.priceUsd])
+  }, [dailyRate, days, setValue, watchedAutoPrice, watchedValues.priceUsd]);
 
-  const { execute: createAction, isPending: createPending } = useServerAction(createAd, {
-    onSuccess: () => {
-      toast.success("Ad created.")
-      onOpenChange(false)
+  const { execute: createAction, isPending: createPending } = useServerAction(
+    createAd,
+    {
+      onSuccess: () => {
+        toast.success("Ad created.");
+        onOpenChange(false);
+      },
+      onError: ({ err }) => toast.error(err.message),
     },
-    onError: ({ err }) => toast.error(err.message),
-  })
+  );
 
-  const { execute: updateAction, isPending: updatePending } = useServerAction(updateAd, {
-    onSuccess: () => {
-      toast.success("Ad updated.")
-      onOpenChange(false)
+  const { execute: updateAction, isPending: updatePending } = useServerAction(
+    updateAd,
+    {
+      onSuccess: () => {
+        toast.success("Ad updated.");
+        onOpenChange(false);
+      },
+      onError: ({ err }) => toast.error(err.message),
     },
-    onError: ({ err }) => toast.error(err.message),
-  })
+  );
 
-  const isPending = createPending || updatePending
+  const isPending = createPending || updatePending;
 
   const previewAd: AdPreviewAd = {
     type: watchedSpot,
     websiteUrl: watchedValues.destinationUrl || "https://example.com",
     name: watchedValues.name || "Ad preview",
-    description: watchedValues.description || "Campaign description will appear here.",
+    description:
+      watchedValues.description || "Campaign description will appear here.",
     buttonLabel: watchedValues.buttonLabel || undefined,
     faviconUrl: watchedValues.faviconUrl ?? defaultValues.faviconUrl ?? null,
-  }
+  };
 
-  const PreviewComponent = watchedSpot === "Banner" ? AdPreviewBanner : AdPreviewCard
+  const PreviewComponent =
+    watchedSpot === "Banner" ? AdPreviewBanner : AdPreviewCard;
   const previewPlacement =
-    watchedSpot === "Banner" ? "Banner placement" : watchedSpot === "Sidebar" ? "Sidebar placement" : "Listing placement"
+    watchedSpot === "Banner"
+      ? "Banner placement"
+      : watchedSpot === "Sidebar"
+        ? "Sidebar placement"
+        : "Listing placement";
 
   const onSubmit = (values: FormValues) => {
     const payload = {
@@ -203,18 +242,27 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
       status: values.status,
       markAsPaid: values.markAsPaid,
       buttonLabel: values.buttonLabel !== "" ? values.buttonLabel : undefined,
-      customHtml: values.useCustomCode && values.customHtml !== "" ? values.customHtml : undefined,
-      customCss: values.useCustomCode && values.customCss !== "" ? values.customCss : undefined,
-      customJs: values.useCustomCode && values.customJs !== "" ? values.customJs : undefined,
-    }
+      customHtml:
+        values.useCustomCode && values.customHtml !== ""
+          ? values.customHtml
+          : undefined,
+      customCss:
+        values.useCustomCode && values.customCss !== ""
+          ? values.customCss
+          : undefined,
+      customJs:
+        values.useCustomCode && values.customJs !== ""
+          ? values.customJs
+          : undefined,
+    };
 
     if (isEdit) {
-      updateAction({ adId: ad.id, ...payload })
-      return
+      updateAction({ adId: ad.id, ...payload });
+      return;
     }
 
-    createAction(payload)
-  }
+    createAction(payload);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -222,24 +270,41 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Ad" : "Create Ad"}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "Update the ad details and save changes." : "Create a direct ad deal or house ad."}
+            {isEdit
+              ? "Update the ad details and save changes."
+              : "Create a direct ad deal or house ad."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-          <form id="ad-form" onSubmit={handleSubmit(onSubmit)} className="grid gap-5 sm:grid-cols-2 lg:pr-1">
+          <form
+            id="ad-form"
+            onSubmit={handleSubmit(onSubmit)}
+            className="grid gap-5 sm:grid-cols-2 lg:pr-1"
+          >
             <div className="space-y-4 sm:col-span-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Placement</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Placement
+              </p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="spot">Ad Spot</Label>
-                  <Select value={watchedSpot} onValueChange={value => setValue("spot", value as AdSpotType, { shouldValidate: true })}>
+                  <Select
+                    value={watchedSpot}
+                    onValueChange={(value) =>
+                      setValue("spot", value as AdSpotType, {
+                        shouldValidate: true,
+                      })
+                    }
+                  >
                     <SelectTrigger id="spot">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {adsConfig.adSpots.map(spot => (
-                        <SelectItem key={spot.type} value={spot.type}>{spot.label}</SelectItem>
+                      {adsConfig.adSpots.map((spot) => (
+                        <SelectItem key={spot.type} value={spot.type}>
+                          {spot.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -247,13 +312,22 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
 
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
-                  <Select value={watchedValues.status ?? defaultValues.status} onValueChange={value => setValue("status", value as AdStatusValue, { shouldValidate: true })}>
+                  <Select
+                    value={watchedValues.status ?? defaultValues.status}
+                    onValueChange={(value) =>
+                      setValue("status", value as AdStatusValue, {
+                        shouldValidate: true,
+                      })
+                    }
+                  >
                     <SelectTrigger id="status">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(adStatus).map(status => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                      {Object.values(adStatus).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -262,7 +336,9 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
             </div>
 
             <div className="space-y-4 sm:col-span-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Campaign</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Campaign
+              </p>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="startsAt">Start Date</Label>
@@ -274,47 +350,85 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="priceUsd">Total Price</Label>
-                  <Input id="priceUsd" type="number" step="0.01" min="0.01" {...register("priceUsd")} />
+                  <Input
+                    id="priceUsd"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    {...register("priceUsd")}
+                  />
                 </div>
               </div>
-              {days !== null && <p className="text-xs text-muted-foreground">{days} day{days === 1 ? "" : "s"} · ${dailyRate.toFixed(2)}/day list rate</p>}
+              {days !== null && (
+                <p className="text-xs text-muted-foreground">
+                  {days} day{days === 1 ? "" : "s"} · ${dailyRate.toFixed(2)}
+                  /day list rate
+                </p>
+              )}
 
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="autoPrice"
                   checked={watchedAutoPrice}
-                  onCheckedChange={checked => setValue("autoPrice", checked === true)}
+                  onCheckedChange={(checked) =>
+                    setValue("autoPrice", checked === true)
+                  }
                 />
-                <Label htmlFor="autoPrice">Auto-calculate price from dates and spot rate</Label>
+                <Label htmlFor="autoPrice">
+                  Auto-calculate price from dates and spot rate
+                </Label>
               </div>
               <p className="text-xs text-muted-foreground">
-                When enabled, the total price tracks the selected duration and current spot rate.
+                When enabled, the total price tracks the selected duration and
+                current spot rate.
               </p>
             </div>
 
             <div className="space-y-4 sm:col-span-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Advertiser</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Advertiser
+              </p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
-                  <Input id="name" placeholder="Ad name" {...register("name")} />
+                  <Input
+                    id="name"
+                    placeholder="Ad name"
+                    {...register("name")}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="name@example.com" {...register("email")} />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    {...register("email")}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <TextArea id="description" placeholder="Short description for the ad" {...register("description")} />
+                <TextArea
+                  id="description"
+                  placeholder="Short description for the ad"
+                  {...register("description")}
+                />
               </div>
             </div>
 
             <div className="space-y-4 sm:col-span-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Creative</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Creative
+              </p>
               <div className="space-y-2">
                 <Label htmlFor="destinationUrl">Destination URL</Label>
-                <Input id="destinationUrl" type="url" placeholder="https://example.com" {...register("destinationUrl")} />
+                <Input
+                  id="destinationUrl"
+                  type="url"
+                  placeholder="https://example.com"
+                  {...register("destinationUrl")}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="faviconUrl">Image URL</Label>
@@ -325,26 +439,48 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
                   {...register("faviconUrl")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Leave blank to use the website favicon. If none exists, the ad will render without an image.
+                  Leave blank to use the website favicon. If none exists, the ad
+                  will render without an image.
                 </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="buttonLabel">Button Label</Label>
-                <Input id="buttonLabel" placeholder="Learn more" {...register("buttonLabel")} />
+                <Input
+                  id="buttonLabel"
+                  placeholder="Learn more"
+                  {...register("buttonLabel")}
+                />
               </div>
             </div>
 
             <div className="space-y-4 sm:col-span-2">
               <div className="flex items-center gap-2">
-                <Checkbox id="markAsPaid" checked={watchedValues.markAsPaid} onCheckedChange={checked => setValue("markAsPaid", checked === true)} disabled={isEdit && ad?.paidAt !== null} />
+                <Checkbox
+                  id="markAsPaid"
+                  checked={watchedValues.markAsPaid}
+                  onCheckedChange={(checked) =>
+                    setValue("markAsPaid", checked === true)
+                  }
+                  disabled={isEdit && ad?.paidAt !== null}
+                />
                 <Label htmlFor="markAsPaid">Mark as paid</Label>
-                {isEdit && ad?.paidAt !== null && <span className="text-xs text-muted-foreground">Already paid</span>}
+                {isEdit && ad?.paidAt !== null && (
+                  <span className="text-xs text-muted-foreground">
+                    Already paid
+                  </span>
+                )}
               </div>
             </div>
 
             <div className="space-y-4 sm:col-span-2">
               <div className="flex items-center gap-2">
-                <Checkbox id="useCustomCode" checked={watchedValues.useCustomCode} onCheckedChange={checked => setValue("useCustomCode", checked === true)} />
+                <Checkbox
+                  id="useCustomCode"
+                  checked={watchedValues.useCustomCode}
+                  onCheckedChange={(checked) =>
+                    setValue("useCustomCode", checked === true)
+                  }
+                />
                 <Label htmlFor="useCustomCode">Use custom HTML/CSS/JS</Label>
               </div>
 
@@ -352,15 +488,27 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
                 <div className="grid gap-4 rounded-md border p-4">
                   <div className="space-y-2">
                     <Label htmlFor="customHtml">HTML</Label>
-                    <TextArea id="customHtml" className="min-h-28 font-mono text-xs" {...register("customHtml")} />
+                    <TextArea
+                      id="customHtml"
+                      className="min-h-28 font-mono text-xs"
+                      {...register("customHtml")}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="customCss">CSS</Label>
-                    <TextArea id="customCss" className="min-h-24 font-mono text-xs" {...register("customCss")} />
+                    <TextArea
+                      id="customCss"
+                      className="min-h-24 font-mono text-xs"
+                      {...register("customCss")}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="customJs">JavaScript</Label>
-                    <TextArea id="customJs" className="min-h-24 font-mono text-xs" {...register("customJs")} />
+                    <TextArea
+                      id="customJs"
+                      className="min-h-24 font-mono text-xs"
+                      {...register("customJs")}
+                    />
                   </div>
                 </div>
               )}
@@ -372,28 +520,40 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <H4 as="h2">Preview</H4>
-                  <CardDescription>Rendered with the same public ad layout used on the site.</CardDescription>
+                  <CardDescription>
+                    Rendered with the same public ad layout used on the site.
+                  </CardDescription>
                 </div>
 
                 <Badge variant="outline">{previewPlacement}</Badge>
               </div>
 
-              <div className={watchedSpot === "Sidebar" ? "max-w-sm" : "w-full"}>
+              <div
+                className={watchedSpot === "Sidebar" ? "max-w-sm" : "w-full"}
+              >
                 <PreviewComponent ad={previewAd} interactive={false} />
               </div>
 
               <div className="grid gap-3 rounded-lg border bg-background/70 p-4 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Duration</span>
-                  <span className="font-medium tabular-nums">{days ? `${days} day${days === 1 ? "" : "s"}` : "Select dates"}</span>
+                  <span className="font-medium tabular-nums">
+                    {days
+                      ? `${days} day${days === 1 ? "" : "s"}`
+                      : "Select dates"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Daily rate</span>
-                  <span className="font-medium tabular-nums">${dailyRate.toFixed(2)}</span>
+                  <span className="font-medium tabular-nums">
+                    ${dailyRate.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Total price</span>
-                  <span className="font-medium tabular-nums">${centsToUsd(usdToCents(watchedValues.priceUsd || "0"))}</span>
+                  <span className="font-medium tabular-nums">
+                    ${centsToUsd(usdToCents(watchedValues.priceUsd || "0"))}
+                  </span>
                 </div>
               </div>
             </div>
@@ -401,7 +561,11 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isPending}>
+          <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
             Cancel
           </Button>
           <Button type="submit" form="ad-form" isPending={isPending}>
@@ -410,7 +574,7 @@ const AdFormDialog = ({ open, onOpenChange, pricing, ad }: AdFormDialogProps) =>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export { AdFormDialog }
+export { AdFormDialog };

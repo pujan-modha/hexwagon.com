@@ -1,14 +1,18 @@
-import { withAdminPage } from "~/components/admin/auth-hoc"
-import { AdDiscountManager } from "~/components/admin/ad-discount-manager"
-import { AdPricingManager } from "~/components/admin/ad-pricing-manager"
-import { Wrapper } from "~/components/admin/wrapper"
-import { findAds } from "~/server/admin/ads/queries"
-import { getAdPricing, getAdSettings } from "~/server/web/ads/queries"
-import { AdsTable } from "./_components/ads-table"
-import { CreateAdButton } from "./_components/create-ad-button"
+import { withAdminPage } from "~/components/admin/auth-hoc";
+import { AdDiscountManager } from "~/components/admin/ad-discount-manager";
+import { AdPricingManager } from "~/components/admin/ad-pricing-manager";
+import { Wrapper } from "~/components/admin/wrapper";
+import { findAds } from "~/server/admin/ads/queries";
+import { getAdPricing, getAdSettings } from "~/server/web/ads/queries";
+import { AdsTable } from "./_components/ads-table";
+import { CreateAdButton } from "./_components/create-ad-button";
 
 const AdsPage = async () => {
-  const [ads, pricing, settings] = await Promise.all([findAds({}), getAdPricing(), getAdSettings()])
+  const [ads, pricing, settings] = await Promise.all([
+    findAds({}),
+    getAdPricing(),
+    getAdSettings(),
+  ]);
 
   return (
     <Wrapper size="lg">
@@ -17,7 +21,8 @@ const AdsPage = async () => {
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold tracking-tight">Ads</h1>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Review bookings, tune pricing, and create direct deals without leaving the dashboard.
+              Review bookings, tune pricing, and create direct deals without
+              leaving the dashboard.
             </p>
           </div>
 
@@ -35,7 +40,7 @@ const AdsPage = async () => {
         <AdsTable ads={ads} pricing={pricing} />
       </div>
     </Wrapper>
-  )
-}
+  );
+};
 
-export default withAdminPage(AdsPage)
+export default withAdminPage(AdsPage);

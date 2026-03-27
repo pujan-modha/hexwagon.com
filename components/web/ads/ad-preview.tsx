@@ -1,42 +1,56 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { isExternalUrl } from "@primoui/utils"
-import type { ComponentProps, ReactNode } from "react"
-import { Badge } from "~/components/common/badge"
-import { Button } from "~/components/common/button"
-import { Card, CardBadges, CardDescription, CardHeader, CardIcon } from "~/components/common/card"
-import { H4 } from "~/components/common/heading"
-import { Icon } from "~/components/common/icon"
-import { ExternalLink } from "~/components/web/external-link"
-import { Favicon, FaviconImage } from "~/components/web/ui/favicon"
-import type { AdOne } from "~/server/web/ads/payloads"
-import { cx } from "~/utils/cva"
+import Image from "next/image";
+import { isExternalUrl } from "@primoui/utils";
+import type { ComponentProps, ReactNode } from "react";
+import { Badge } from "~/components/common/badge";
+import { Button } from "~/components/common/button";
+import {
+  Card,
+  CardBadges,
+  CardDescription,
+  CardHeader,
+  CardIcon,
+} from "~/components/common/card";
+import { H4 } from "~/components/common/heading";
+import { Icon } from "~/components/common/icon";
+import { ExternalLink } from "~/components/web/external-link";
+import { Favicon, FaviconImage } from "~/components/web/ui/favicon";
+import type { AdOne } from "~/server/web/ads/payloads";
+import { cx } from "~/utils/cva";
 
-export type AdPreviewAd = Pick<AdOne, "type" | "websiteUrl" | "name" | "description" | "buttonLabel" | "faviconUrl">
+export type AdPreviewAd = Pick<
+  AdOne,
+  "type" | "websiteUrl" | "name" | "description" | "buttonLabel" | "faviconUrl"
+>;
 
 type AdPreviewBaseProps = ComponentProps<typeof Card> & {
-  ad: AdPreviewAd
-  interactive?: boolean
-  className?: string
-}
+  ad: AdPreviewAd;
+  interactive?: boolean;
+  className?: string;
+};
 
 const getLinkProps = (ad: AdPreviewAd, interactive: boolean) => {
-  if (!interactive) return {}
+  if (!interactive) return {};
 
-  const isInternalAd = !isExternalUrl(ad.websiteUrl)
+  const isInternalAd = !isExternalUrl(ad.websiteUrl);
 
   return {
     href: ad.websiteUrl,
     target: isInternalAd ? "_self" : undefined,
     eventName: "click_ad",
     eventProps: { url: ad.websiteUrl, type: ad.type, source: "card" },
-  }
-}
+  };
+};
 
-const AdPreviewCard = ({ ad, interactive = true, className, ...props }: AdPreviewBaseProps) => {
-  const linkProps = getLinkProps(ad, interactive)
-  const Wrapper = interactive ? ExternalLink : "div"
+const AdPreviewCard = ({
+  ad,
+  interactive = true,
+  className,
+  ...props
+}: AdPreviewBaseProps) => {
+  const linkProps = getLinkProps(ad, interactive);
+  const Wrapper = interactive ? ExternalLink : "div";
 
   return (
     <Card className={cx("group/button", className)} asChild {...props}>
@@ -53,9 +67,15 @@ const AdPreviewCard = ({ ad, interactive = true, className, ...props }: AdPrevie
           </H4>
         </CardHeader>
 
-        <CardDescription className="mb-auto pr-2 line-clamp-4">{ad.description}</CardDescription>
+        <CardDescription className="mb-auto pr-2 line-clamp-4">
+          {ad.description}
+        </CardDescription>
 
-        <Button className="pointer-events-none md:w-full" suffix={<Icon name="lucide/arrow-up-right" />} asChild>
+        <Button
+          className="pointer-events-none md:w-full"
+          suffix={<Icon name="lucide/arrow-up-right" />}
+          asChild
+        >
           <span>{ad.buttonLabel || `Visit ${ad.name}`}</span>
         </Button>
 
@@ -66,15 +86,27 @@ const AdPreviewCard = ({ ad, interactive = true, className, ...props }: AdPrevie
         ) : null}
       </Wrapper>
     </Card>
-  )
-}
+  );
+};
 
-const AdPreviewBanner = ({ ad, interactive = true, className, ...props }: AdPreviewBaseProps) => {
-  const linkProps = getLinkProps(ad, interactive)
-  const Wrapper = interactive ? ExternalLink : "div"
+const AdPreviewBanner = ({
+  ad,
+  interactive = true,
+  className,
+  ...props
+}: AdPreviewBaseProps) => {
+  const linkProps = getLinkProps(ad, interactive);
+  const Wrapper = interactive ? ExternalLink : "div";
 
   return (
-    <Card className={cx("flex-row items-center gap-3 px-3 py-2.5 md:px-4", className)} asChild {...props}>
+    <Card
+      className={cx(
+        "flex-row items-center gap-3 px-3 py-2.5 md:px-4",
+        className,
+      )}
+      asChild
+      {...props}
+    >
       <Wrapper {...linkProps}>
         <Badge variant="outline" className="leading-none max-sm:order-last">
           Ad
@@ -90,7 +122,8 @@ const AdPreviewBanner = ({ ad, interactive = true, className, ...props }: AdPrev
               className="flex float-left align-middle mr-1.5 size-3.5 rounded-sm sm:size-4"
             />
           ) : null}
-          <strong className="font-medium text-foreground">{ad.name}</strong> — {ad.description}
+          <strong className="font-medium text-foreground">{ad.name}</strong> —{" "}
+          {ad.description}
         </div>
 
         <Button
@@ -103,7 +136,7 @@ const AdPreviewBanner = ({ ad, interactive = true, className, ...props }: AdPrev
         </Button>
       </Wrapper>
     </Card>
-  )
-}
+  );
+};
 
-export { AdPreviewCard, AdPreviewBanner }
+export { AdPreviewCard, AdPreviewBanner };

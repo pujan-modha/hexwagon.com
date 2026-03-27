@@ -1,43 +1,51 @@
-"use server"
+"use server";
 
-import { after } from "next/server"
-import { revalidatePath, revalidateTag } from "next/cache"
-import { getUrlHostname } from "@primoui/utils"
-import { z } from "zod"
-import { adminProcedure } from "~/lib/safe-actions"
-import { uploadFavicon } from "~/lib/media"
-import { tryCatch } from "~/utils/helpers"
-import { db } from "~/services/db"
-import { adStatus } from "~/utils/ads"
-import { notifyAdvertiserOfAdApproved, notifyAdvertiserOfAdRejected } from "~/lib/notifications"
-import { createAdSchema, rejectAdSchema, updateAdSchema } from "./schema"
+import { after } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { getUrlHostname } from "@primoui/utils";
+import { z } from "zod";
+import { adminProcedure } from "~/lib/safe-actions";
+import { uploadFavicon } from "~/lib/media";
+import { tryCatch } from "~/utils/helpers";
+import { db } from "~/services/db";
+import { adStatus } from "~/utils/ads";
+import {
+  notifyAdvertiserOfAdApproved,
+  notifyAdvertiserOfAdRejected,
+} from "~/lib/notifications";
+import { createAdSchema, rejectAdSchema, updateAdSchema } from "./schema";
 
 const adSpotPricingSchema = z.object({
   banner: z.number().positive(),
   listing: z.number().positive(),
   sidebar: z.number().positive(),
-})
+});
 
 const adSettingsSchema = z.object({
   maxDiscountPercentage: z.number().int().min(0).max(100),
   targetingUnitPrice: z.number().min(0),
-})
+});
 
-const adIdSchema = z.object({ id: z.string() })
+const adIdSchema = z.object({ id: z.string() });
 
 const resolveAdImageUrl = async ({
   destinationUrl,
   faviconUrl,
 }: {
-  destinationUrl: string
-  faviconUrl?: string | null
+  destinationUrl: string;
+  faviconUrl?: string | null;
 }) => {
-  if (faviconUrl) return faviconUrl
+  if (faviconUrl) return faviconUrl;
 
-  const favicon = await tryCatch(uploadFavicon(getUrlHostname(destinationUrl), `ads/${getUrlHostname(destinationUrl)}`))
+  const favicon = await tryCatch(
+    uploadFavicon(
+      getUrlHostname(destinationUrl),
+      `ads/${getUrlHostname(destinationUrl)}`,
+    ),
+  );
 
-  return favicon.data ?? null
-}
+  return favicon.data ?? null;
+};
 
 export const approveAd = adminProcedure
   .createServerAction()
@@ -51,17 +59,17 @@ export const approveAd = adminProcedure
         rejectedAt: null,
         cancelledAt: null,
       },
-    })
+    });
 
-    revalidatePath("/admin/ads")
-    revalidateTag("ads", "max")
+    revalidatePath("/admin/ads");
+    revalidateTag("ads", "max");
 
     after(async () => {
-      await notifyAdvertiserOfAdApproved(ad)
-    })
+      await notifyAdvertiserOfAdApproved(ad);
+    });
 
-    return ad
-  })
+    return ad;
+  });
 
 export const rejectAd = adminProcedure
   .createServerAction()
@@ -76,17 +84,17 @@ export const rejectAd = adminProcedure
         cancelledAt: null,
         adminNote: reason,
       },
-    })
+    });
 
-    revalidatePath("/admin/ads")
-    revalidateTag("ads", "max")
+    revalidatePath("/admin/ads");
+    revalidateTag("ads", "max");
 
     after(async () => {
-      await notifyAdvertiserOfAdRejected(ad)
-    })
+      await notifyAdvertiserOfAdRejected(ad);
+    });
 
-    return ad
-  })
+    return ad;
+  });
 
 export const cancelAd = adminProcedure
   .createServerAction()
@@ -100,25 +108,25 @@ export const cancelAd = adminProcedure
         approvedAt: null,
         rejectedAt: null,
       },
-    })
+    });
 
-    revalidatePath("/admin/ads")
-    revalidateTag("ads", "max")
+    revalidatePath("/admin/ads");
+    revalidateTag("ads", "max");
 
-    return ad
-  })
+    return ad;
+  });
 
 export const createAd = adminProcedure
   .createServerAction()
   .input(createAdSchema)
   .handler(async ({ input }) => {
-    const now = new Date()
-    const startsAt = new Date(`${input.startsAt}T00:00:00Z`)
-    const endsAt = new Date(`${input.endsAt}T00:00:00Z`)
+    const now = new Date();
+    const startsAt = new Date(`${input.startsAt}T00:00:00Z`);
+    const endsAt = new Date(`${input.endsAt}T00:00:00Z`);
     const faviconUrl = await resolveAdImageUrl({
       destinationUrl: input.destinationUrl,
       faviconUrl: input.faviconUrl || null,
-    })
+    });
 
     const ad = await db.ad.create({
       data: {
@@ -141,26 +149,26 @@ export const createAd = adminProcedure
         customCss: input.customCss || null,
         customJs: input.customJs || null,
       },
-    })
+    });
 
-    revalidatePath("/admin/ads")
-    revalidatePath("/advertise")
-    revalidateTag("ads", "max")
+    revalidatePath("/admin/ads");
+    revalidatePath("/advertise");
+    revalidateTag("ads", "max");
 
-    return ad
-  })
+    return ad;
+  });
 
 export const updateAd = adminProcedure
   .createServerAction()
   .input(updateAdSchema)
   .handler(async ({ input }) => {
-    const now = new Date()
-    const startsAt = new Date(`${input.startsAt}T00:00:00Z`)
-    const endsAt = new Date(`${input.endsAt}T00:00:00Z`)
+    const now = new Date();
+    const startsAt = new Date(`${input.startsAt}T00:00:00Z`);
+    const endsAt = new Date(`${input.endsAt}T00:00:00Z`);
     const faviconUrl = await resolveAdImageUrl({
       destinationUrl: input.destinationUrl,
       faviconUrl: input.faviconUrl || null,
-    })
+    });
 
     const ad = await db.ad.update({
       where: { id: input.adId },
@@ -184,14 +192,14 @@ export const updateAd = adminProcedure
         customCss: input.customCss || null,
         customJs: input.customJs || null,
       },
-    })
+    });
 
-    revalidatePath("/admin/ads")
-    revalidatePath("/advertise")
-    revalidateTag("ads", "max")
+    revalidatePath("/admin/ads");
+    revalidatePath("/advertise");
+    revalidateTag("ads", "max");
 
-    return ad
-  })
+    return ad;
+  });
 
 export const updateAdPricing = adminProcedure
   .createServerAction()
@@ -201,38 +209,38 @@ export const updateAdPricing = adminProcedure
       { spot: "Banner" as const, priceCents: Math.round(banner * 100) },
       { spot: "Listing" as const, priceCents: Math.round(listing * 100) },
       { spot: "Sidebar" as const, priceCents: Math.round(sidebar * 100) },
-    ]
+    ];
 
     for (const { spot, priceCents } of spots) {
       await db.adSpotPricing.upsert({
         where: { spot },
         create: { spot, priceCents },
         update: { priceCents },
-      })
+      });
     }
 
-    revalidatePath("/admin/ads")
-    revalidatePath("/advertise")
-    revalidateTag("ad-pricing", "max")
+    revalidatePath("/admin/ads");
+    revalidatePath("/advertise");
+    revalidateTag("ad-pricing", "max");
 
-    return spots
-  })
+    return spots;
+  });
 
 export const updateAdSettings = adminProcedure
   .createServerAction()
   .input(adSettingsSchema)
   .handler(async ({ input: { maxDiscountPercentage, targetingUnitPrice } }) => {
-    const targetingUnitPriceCents = Math.round(targetingUnitPrice * 100)
+    const targetingUnitPriceCents = Math.round(targetingUnitPrice * 100);
 
     await db.adConfig.upsert({
       where: { id: 1 },
       create: { id: 1, maxDiscountPercentage, targetingUnitPriceCents },
       update: { maxDiscountPercentage, targetingUnitPriceCents },
-    })
+    });
 
-    revalidatePath("/admin/ads")
-    revalidatePath("/advertise")
-    revalidateTag("ad-settings", "max")
+    revalidatePath("/admin/ads");
+    revalidatePath("/advertise");
+    revalidateTag("ad-settings", "max");
 
-    return { maxDiscountPercentage, targetingUnitPrice }
-  })
+    return { maxDiscountPercentage, targetingUnitPrice };
+  });

@@ -1,29 +1,44 @@
-import { formatDate } from "@primoui/utils"
-import { AdStatusBadge } from "~/components/admin/ad-status-badge"
-import { Badge } from "~/components/common/badge"
-import { Card } from "~/components/common/card"
-import { H4 } from "~/components/common/heading"
-import { Note } from "~/components/common/note"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/common/table"
-import type { AdAdminMany } from "~/server/admin/ads/payloads"
-import type { AdPricingMap } from "~/server/web/ads/queries"
-import { AdActions } from "./ad-actions"
+import { formatDate } from "@primoui/utils";
+import { AdStatusBadge } from "~/components/admin/ad-status-badge";
+import { Badge } from "~/components/common/badge";
+import { Card } from "~/components/common/card";
+import { H4 } from "~/components/common/heading";
+import { Note } from "~/components/common/note";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/common/table";
+import type { AdAdminMany } from "~/server/admin/ads/payloads";
+import type { AdPricingMap } from "~/server/web/ads/queries";
+import { AdActions } from "./ad-actions";
 
 type AdsTableProps = {
-  ads: AdAdminMany[]
-  pricing: AdPricingMap
-}
+  ads: AdAdminMany[];
+  pricing: AdPricingMap;
+};
 
 export const AdsTable = ({ ads, pricing }: AdsTableProps) => {
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-col gap-2 border-b p-5">
         <H4 as="h1">Ads</H4>
-        <Note>Pending ads stay hidden until approved. Use the pricing panel above to change spot rates.</Note>
+        <Note>
+          Pending ads stay hidden until approved. Use the pricing panel above to
+          change spot rates.
+        </Note>
       </div>
 
       <div className="overflow-auto">
-        <Table style={{ ["--table-columns" as string]: "minmax(18rem, 1.8fr) 7rem 7rem 7rem 7rem 7rem 4rem" }}>
+        <Table
+          style={{
+            ["--table-columns" as string]:
+              "minmax(18rem, 1.8fr) 7rem 7rem 7rem 7rem 7rem 4rem",
+          }}
+        >
           <TableHeader>
             <TableRow className="h-auto items-start py-3">
               <TableHead>Ad</TableHead>
@@ -37,13 +52,17 @@ export const AdsTable = ({ ads, pricing }: AdsTableProps) => {
           </TableHeader>
 
           <TableBody>
-            {ads.map(ad => (
+            {ads.map((ad) => (
               <TableRow key={ad.id} className="h-auto items-start py-4">
                 <TableCell className="py-4 align-top">
                   <div className="flex min-w-0 flex-col gap-1.5">
                     <strong className="truncate font-medium">{ad.name}</strong>
-                    <Note className="line-clamp-2">{ad.description ?? ad.websiteUrl}</Note>
-                    <span className="truncate text-xs text-muted-foreground">{ad.websiteUrl}</span>
+                    <Note className="line-clamp-2">
+                      {ad.description ?? ad.websiteUrl}
+                    </Note>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {ad.websiteUrl}
+                    </span>
                   </div>
                 </TableCell>
 
@@ -57,9 +76,15 @@ export const AdsTable = ({ ads, pricing }: AdsTableProps) => {
 
                 <TableCell className="py-4 align-top text-sm font-medium tabular-nums">
                   <div className="flex flex-col gap-1">
-                    <span>{ad.priceCents ? `$${(ad.priceCents / 100).toFixed(2)}` : "—"}</span>
+                    <span>
+                      {ad.priceCents
+                        ? `$${(ad.priceCents / 100).toFixed(2)}`
+                        : "—"}
+                    </span>
                     {ad.paidAt !== null && (
-                      <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">Paid</span>
+                      <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                        Paid
+                      </span>
                     )}
                   </div>
                 </TableCell>
@@ -89,5 +114,5 @@ export const AdsTable = ({ ads, pricing }: AdsTableProps) => {
         </Table>
       </div>
     </Card>
-  )
-}
+  );
+};

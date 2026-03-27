@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client"
+import { Prisma } from "@prisma/client";
 
 export const adAdminPayload = Prisma.validator<Prisma.AdSelect>()({
   id: true,
@@ -25,6 +25,8 @@ export const adAdminPayload = Prisma.validator<Prisma.AdSelect>()({
   subscriptionId: true,
   createdAt: true,
   updatedAt: true,
-})
+});
 
-export type AdAdminMany = Prisma.AdGetPayload<{ select: typeof adAdminPayload }>
+export type AdAdminMany = Prisma.AdGetPayload<{
+  select: typeof adAdminPayload;
+}>;

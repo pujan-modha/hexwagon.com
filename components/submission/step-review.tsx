@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useSubmissionStore } from "~/stores/submission-store"
-import { submitPort } from "~/actions/submit"
-import { Button } from "~/components/common/button"
-import { Card } from "~/components/common/card"
-import { useRouter } from "next/navigation"
+import { useSubmissionStore } from "~/stores/submission-store";
+import { submitPort } from "~/actions/submit";
+import { Button } from "~/components/common/button";
+import { Card } from "~/components/common/card";
+import { useRouter } from "next/navigation";
 
 type StepReviewProps = {
-  onBack: () => void
-}
+  onBack: () => void;
+};
 
 const StepReview = ({ onBack }: StepReviewProps) => {
-  const router = useRouter()
+  const router = useRouter();
   const {
     themeName,
     platformName,
@@ -27,7 +27,7 @@ const StepReview = ({ onBack }: StepReviewProps) => {
     submitterNote,
     newsletterOptIn,
     reset,
-  } = useSubmissionStore()
+  } = useSubmissionStore();
 
   const handleSubmit = async () => {
     try {
@@ -45,20 +45,20 @@ const StepReview = ({ onBack }: StepReviewProps) => {
         submitterEmail,
         submitterNote,
         newsletterOptIn,
-      })
+      });
 
       if (error) {
-        throw error
+        throw error;
       }
 
       if (result?.id) {
-        reset()
-        router.push("/dashboard")
+        reset();
+        router.push("/dashboard");
       }
     } catch (error) {
-      console.error("Failed to submit port:", error)
+      console.error("Failed to submit port:", error);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -87,13 +87,17 @@ const StepReview = ({ onBack }: StepReviewProps) => {
           {repositoryUrl && (
             <div className="grid grid-cols-2 gap-2">
               <span className="text-muted-foreground">Repository:</span>
-              <a href={repositoryUrl} className="underline">{repositoryUrl}</a>
+              <a href={repositoryUrl} className="underline">
+                {repositoryUrl}
+              </a>
             </div>
           )}
           {installUrl && (
             <div className="grid grid-cols-2 gap-2">
               <span className="text-muted-foreground">Install URL:</span>
-              <a href={installUrl} className="underline">{installUrl}</a>
+              <a href={installUrl} className="underline">
+                {installUrl}
+              </a>
             </div>
           )}
           <div className="grid grid-cols-2 gap-2">
@@ -102,7 +106,9 @@ const StepReview = ({ onBack }: StepReviewProps) => {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Submitter:</span>
-            <span>{submitterName} ({submitterEmail})</span>
+            <span>
+              {submitterName} ({submitterEmail})
+            </span>
           </div>
           {submitterNote && (
             <div className="grid grid-cols-2 gap-2">
@@ -121,12 +127,10 @@ const StepReview = ({ onBack }: StepReviewProps) => {
         <Button variant="secondary" onClick={onBack}>
           Back
         </Button>
-        <Button onClick={handleSubmit}>
-          Submit Port
-        </Button>
+        <Button onClick={handleSubmit}>Submit Port</Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export { StepReview }
+export { StepReview };

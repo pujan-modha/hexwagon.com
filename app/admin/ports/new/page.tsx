@@ -1,8 +1,8 @@
-import { Wrapper } from "~/components/admin/wrapper"
-import { withAdminPage } from "~/components/admin/auth-hoc"
-import { PortForm } from "../_components/port-form"
-import { findPlatformList } from "~/server/admin/platforms/queries"
-import { findThemeList } from "~/server/admin/themes/queries"
+import { Wrapper } from "~/components/admin/wrapper";
+import { withAdminPage } from "~/components/admin/auth-hoc";
+import { PortForm } from "../_components/port-form";
+import { findPlatformList } from "~/server/admin/platforms/queries";
+import { findThemeList } from "~/server/admin/themes/queries";
 
 const NewPortPage = async () => {
   return (
@@ -13,7 +13,7 @@ const NewPortPage = async () => {
         themesPromise={findThemeList()}
       />
     </Wrapper>
-  )
-}
+  );
+};
 
-export default withAdminPage(NewPortPage)
+export default withAdminPage(NewPortPage);
