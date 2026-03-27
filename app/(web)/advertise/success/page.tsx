@@ -31,9 +31,9 @@ const getCheckoutSession = cache(async ({ searchParams }: PageProps) => {
 
 const getMetadata = async () => {
   return {
-    title: "Thank you for your payment!",
+    title: "Your advertisement is under review",
     description:
-      "Please complete your advertisement setup by providing your company details below.",
+      "Please complete your advertisement setup below. Once approved, it will go live during the booked dates.",
   }
 }
 

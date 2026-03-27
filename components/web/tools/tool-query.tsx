@@ -20,7 +20,7 @@ export const ToolQuery = async ({ searchParams, where }: ToolQueryProps) => {
   if (!ports.length) {
     return (
       <Card className="p-6 text-muted-foreground">
-        No ports found for this license yet.
+        No ports found yet.
       </Card>
     )
   }

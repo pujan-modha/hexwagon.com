@@ -48,6 +48,11 @@ export const Sidebar = () => {
         undefined, // Separator
 
         {
+          title: "Ads",
+          href: "/admin/ads",
+          prefix: <Icon name="lucide/badge-dollar-sign" />,
+        },
+        {
           title: "Ports",
           href: "/admin/ports",
           prefix: <Icon name="lucide/tags" />,

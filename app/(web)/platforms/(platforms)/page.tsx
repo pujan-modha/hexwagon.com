@@ -1,8 +1,10 @@
 import type { Metadata } from "next"
 import type { SearchParams } from "nuqs/server"
+import { AdType } from "@prisma/client"
 import { Suspense } from "react"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
+import { AdCard } from "~/components/web/ads/ad-card"
 import { metadataConfig } from "~/config/metadata"
 import { searchPlatforms } from "~/server/web/platforms/queries"
 import { CatalogueListHeader } from "~/components/catalogue/catalogue-list-header"
@@ -21,6 +23,7 @@ export const metadata: Metadata = {
 }
 
 const PLATFORMS_PER_PAGE = 35
+const PLATFORM_AD_INDEX = 8
 
 export default async function PlatformsPage(props: PageProps) {
   const search = await props.searchParams
@@ -28,9 +31,23 @@ export default async function PlatformsPage(props: PageProps) {
   const page = Number(search.page) || 1
 
   const { platforms, totalCount } = await searchPlatforms(
-    { q, page, perPage: PLATFORMS_PER_PAGE, sort: "default", theme: [], platform: [], tag: [], license: [] },
+    { q, page, perPage: PLATFORMS_PER_PAGE, sort: "default", theme: [], platform: [], tag: [] },
     q ? undefined : { isFeatured: true },
   )
+
+  const platformCards = platforms.flatMap((platform, index) => {
+    const cards = [<PlatformCard key={platform.id} platform={platform} showCount />]
+
+    if (index === PLATFORM_AD_INDEX) {
+      cards.push(<AdCard key="platforms-list-ad" where={{ type: { in: [AdType.Listing, AdType.Ports] } }} />)
+    }
+
+    return cards
+  })
+
+  if (platforms.length <= PLATFORM_AD_INDEX) {
+    platformCards.push(<AdCard key="platforms-list-ad" where={{ type: { in: [AdType.Listing, AdType.Ports] } }} />)
+  }
 
   return (
     <>
@@ -64,9 +81,7 @@ export default async function PlatformsPage(props: PageProps) {
         }
       >
         <CatalogueGrid>
-          {platforms.map(platform => (
-            <PlatformCard key={platform.id} platform={platform} showCount />
-          ))}
+          {platformCards}
         </CatalogueGrid>
       </Suspense>
     </>

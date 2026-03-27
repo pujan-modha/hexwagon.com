@@ -28,26 +28,18 @@ import { Switch } from "~/components/common/switch"
 import { TextArea } from "~/components/common/textarea"
 import { ExternalLink } from "~/components/web/external-link"
 import { Markdown } from "~/components/web/markdown"
+import { LICENSE_SUGGESTIONS } from "~/config/licenses"
 import { siteConfig } from "~/config/site"
 import { useComputedField } from "~/hooks/use-computed-field"
 import { upsertPlatform } from "~/server/admin/platforms/actions"
 import type { findPlatformBySlug } from "~/server/admin/platforms/queries"
 import { platformSchema } from "~/server/admin/platforms/schema"
-import type { findLicenseList } from "~/server/admin/licenses/queries"
 import { PlatformActions } from "./platform-actions"
 import { PlatformGenerateDescription } from "./platform-generate-description"
 import { cx } from "~/utils/cva"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/common/select"
 
 type PlatformFormProps = ComponentProps<"form"> & {
   platform?: Awaited<ReturnType<typeof findPlatformBySlug>>
-  licensesPromise: ReturnType<typeof findLicenseList>
 }
 
 export function PlatformForm({
@@ -55,11 +47,9 @@ export function PlatformForm({
   className,
   title,
   platform,
-  licensesPromise,
   ...props
 }: PlatformFormProps) {
   const router = useRouter()
-  const licenses = use(licensesPromise)
   const [isPreviewing, setIsPreviewing] = useState(false)
 
   const form = useForm({
@@ -73,7 +63,8 @@ export function PlatformForm({
       installInstructions: platform?.installInstructions ?? "",
       themeCreationDocs: platform?.themeCreationDocs ?? "",
       isFeatured: platform?.isFeatured ?? false,
-      licenseId: platform?.licenseId ?? "",
+      order: platform?.order ?? 0,
+      license: platform?.license ?? "",
     },
   })
 
@@ -181,24 +172,18 @@ export function PlatformForm({
 
         <FormField
           control={form.control}
-          name="licenseId"
+          name="license"
           render={({ field }) => (
             <FormItem>
               <FormLabel>License</FormLabel>
               <FormControl>
-                <Select onValueChange={field.onChange} value={field.value ?? ""}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a license" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {licenses.map(license => (
-                      <SelectItem key={license.id} value={license.id}>
-                        {license.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input {...field} list="platform-license-suggestions" placeholder="MIT" />
               </FormControl>
+              <datalist id="platform-license-suggestions">
+                {LICENSE_SUGGESTIONS.map(option => (
+                  <option key={option} value={option} />
+                ))}
+              </datalist>
               <FormMessage />
             </FormItem>
           )}
@@ -278,6 +263,20 @@ export function PlatformForm({
                 <FormLabel>Featured</FormLabel>
                 <FormControl>
                   <Switch onCheckedChange={field.onChange} checked={field.value} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="order"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Order</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -5,15 +5,18 @@ import { cx } from "~/utils/cva"
 type FaviconProps = ComponentProps<"div"> & {
   src: string | null
   title?: string | null
+  plain?: boolean
 }
 
-const Favicon = ({ className, src, title, ...props }: FaviconProps) => {
+const Favicon = ({ className, src, title, plain, ...props }: FaviconProps) => {
   if (!src) return null
 
   return (
     <div
       className={cx(
-        "flex size-9 items-center justify-center shrink-0 rounded-md border bg-accent p-1",
+        plain
+          ? "flex size-9 items-center justify-center shrink-0 rounded-sm"
+          : "flex size-9 items-center justify-center shrink-0 rounded-md border bg-accent p-1",
         className,
       )}
       {...props}

@@ -1,8 +1,12 @@
 import type { Metadata } from "next"
+import { AdType } from "@prisma/client"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
+import { Icon } from "~/components/common/icon"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Section } from "~/components/web/ui/section"
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
+import { EntitySidebarCard } from "~/components/web/ui/entity-sidebar-card"
 import { metadataConfig } from "~/config/metadata"
 import { findTheme } from "~/server/web/themes/queries"
 import { findPlatform } from "~/server/web/platforms/queries"
@@ -83,18 +87,71 @@ export default async function ThemePortPage(props: PageProps) {
             port={port}
             canonicalUrl={`/themes/${slug}/${platform}/${portId}`}
           />
-        </Section.Content>
-      </Section>
 
-      <Section>
-        <Section.Content>
-          <h2 className="mb-4 text-xl font-semibold">Comments</h2>
-          <CommentForm portId={port.id} />
-          <div className="mt-6">
-            <CommentThread comments={comments} portId={port.id} />
+          <div className="mt-8">
+            <h2 className="mb-4 text-xl font-semibold">Comments</h2>
+            <CommentForm portId={port.id} />
+            <div className="mt-6">
+              <CommentThread comments={comments} portId={port.id} />
+            </div>
           </div>
         </Section.Content>
+
+        <Section.Sidebar>
+          <EntitySidebarCard
+            title="Port Details"
+            insights={[
+              {
+                label: "Theme",
+                value: port.theme.name,
+                link: `/themes/${port.theme.slug}`,
+                icon: <Icon name="lucide/layers-3" />,
+              },
+              {
+                label: "Platform",
+                value: port.platform.name,
+                link: `/platforms/${port.platform.slug}`,
+                icon: <Icon name="lucide/layout-grid" />,
+              },
+              port.websiteUrl
+                ? {
+                    label: "Website",
+                    value: port.websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, ""),
+                    link: port.websiteUrl,
+                    icon: <Icon name="lucide/globe" />,
+                  }
+                : undefined,
+              {
+                label: "Submitted",
+                value: port.createdAt.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+                icon: <Icon name="lucide/history" />,
+              },
+            ].filter(Boolean) as any}
+            buttonHref={port.websiteUrl ?? port.repositoryUrl ?? undefined}
+            buttonLabel={port.websiteUrl ? "Visit Website" : port.repositoryUrl ? "View Repository" : undefined}
+            footer={`Updated ${port.updatedAt.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}`}
+          />
+
+          <Suspense fallback={<AdCardSkeleton />}>
+            <AdCard
+              where={{ type: { in: [AdType.Sidebar, AdType.PortPage] } }}
+              sidebarTargeting={{
+                themeSlug: port.theme.slug,
+                platformSlug: port.platform.slug,
+              }}
+            />
+          </Suspense>
+        </Section.Sidebar>
       </Section>
+
     </>
   )
 }

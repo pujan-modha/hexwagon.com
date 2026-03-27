@@ -2,6 +2,7 @@ import { performance } from "node:perf_hooks"
 import { type Prisma, PortStatus } from "@prisma/client"
 import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from "next/cache"
 import { platformManyPayload, platformOnePayload } from "~/server/web/platforms/payloads"
+import type { PlatformMany } from "~/server/web/platforms/payloads"
 import type { FilterSchema } from "~/server/web/shared/schema"
 import { db } from "~/services/db"
 
@@ -27,7 +28,6 @@ export const searchPlatforms = async (
   }
 
   const whereQuery: Prisma.PlatformWhereInput = {
-    ports: { some: { status: PortStatus.Published } },
     ...(q && {
       OR: [
         { name: { contains: q, mode: "insensitive" } },
@@ -68,8 +68,8 @@ export const findPlatforms = async ({
 
   return db.platform.findMany({
     ...args,
-    orderBy: orderBy ?? { name: "asc" },
-    where: { ports: { some: { status: PortStatus.Published } }, ...where },
+    orderBy: orderBy ?? [{ order: "asc" }, { name: "asc" }],
+    where: { ...where },
     select: platformManyPayload,
   })
 }
@@ -86,8 +86,8 @@ export const findPlatformSlugs = async ({
 
   return db.platform.findMany({
     ...args,
-    orderBy: orderBy ?? { name: "asc" },
-    where: { ports: { some: { status: PortStatus.Published } }, ...where },
+    orderBy: orderBy ?? [{ order: "asc" }, { name: "asc" }],
+    where: { ...where },
     select: { slug: true, updatedAt: true },
   })
 }
@@ -107,7 +107,7 @@ export const findPlatform = async ({ ...args }: Prisma.PlatformFindFirstArgs = {
 export const findFeaturedPlatforms = async ({
   where,
   ...args
-}: Prisma.PlatformFindManyArgs) => {
+}: Prisma.PlatformFindManyArgs): Promise<PlatformMany[]> => {
   "use cache"
 
   cacheTag("featured-platforms")

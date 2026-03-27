@@ -24,14 +24,7 @@ export const getPortRepositoryData = async (repository: string) => {
     isSelfHosted: repo.topics.some(topic => selfHostedTopics.includes(topic)) ? true : undefined,
 
     // License
-    license: repo.license
-      ? {
-          connectOrCreate: {
-            where: { name: repo.license },
-            create: { name: repo.license, slug: slugify(repo.license).replace(/-0$/, "") },
-          },
-        }
-      : undefined,
+    license: repo.license || undefined,
 
     // Tags
     tags: {

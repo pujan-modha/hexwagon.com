@@ -3,8 +3,8 @@
 import type { AdType } from "@prisma/client"
 import { useCallback, useMemo, useState } from "react"
 import type { DateRange } from "react-day-picker"
-import { config } from "~/config"
-import { calculateAdsPrice } from "~/utils/ads"
+import { adsConfig, type AdSpot } from "~/config/ads"
+import { calculateAdsPrice, defaultMaxAdDiscountPercentage } from "~/utils/ads"
 
 export type AdsPicker = {
   label: string
@@ -19,13 +19,16 @@ export type AdsSelection = {
   duration?: number
 }
 
-export const useAds = () => {
+export const useAds = (
+  adSpots: AdSpot[] = adsConfig.adSpots,
+  maxDiscountPercentage = defaultMaxAdDiscountPercentage,
+) => {
   const [selections, setSelections] = useState<AdsSelection[]>([])
-  const spots = config.ads.adSpots
+  const spots = adSpots
 
   const findAdSpot = useCallback((type: AdType) => {
     return spots.find(s => s.type === type) ?? spots[0]
-  }, [])
+  }, [spots])
 
   const clearSelection = useCallback((type: AdType) => {
     setSelections(prev => prev.filter(s => s.type !== type))
@@ -60,8 +63,8 @@ export const useAds = () => {
     if (selectedItems.length === 0) return null
 
     const basePrice = Math.min(...spots.map(s => s.price))
-    return calculateAdsPrice(selectedItems, basePrice)
-  }, [selections, spots])
+    return calculateAdsPrice(selectedItems, basePrice, maxDiscountPercentage)
+  }, [selections, spots, maxDiscountPercentage])
 
   return {
     price,

@@ -21,6 +21,7 @@ const StepReview = ({ onBack }: StepReviewProps) => {
     repositoryUrl,
     installUrl,
     websiteUrl,
+    license,
     submitterName,
     submitterEmail,
     submitterNote,
@@ -39,6 +40,7 @@ const StepReview = ({ onBack }: StepReviewProps) => {
         repositoryUrl: repositoryUrl || undefined,
         installUrl: installUrl || undefined,
         websiteUrl: websiteUrl || undefined,
+        license,
         submitterName,
         submitterEmail,
         submitterNote,
@@ -94,6 +96,10 @@ const StepReview = ({ onBack }: StepReviewProps) => {
               <a href={installUrl} className="underline">{installUrl}</a>
             </div>
           )}
+          <div className="grid grid-cols-2 gap-2">
+            <span className="text-muted-foreground">License:</span>
+            <span>{license}</span>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Submitter:</span>
             <span>{submitterName} ({submitterEmail})</span>

@@ -47,8 +47,7 @@ export const RepositoryDetails = ({ className, tool, ...props }: RepositoryDetai
     tool.license
       ? {
           label: "License",
-          value: tool.license.name,
-          link: `/licenses/${tool.license.slug}`,
+          value: tool.license,
           icon: <Icon name="lucide/copyright" />,
         }
       : undefined,

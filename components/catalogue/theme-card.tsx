@@ -12,21 +12,21 @@ type ThemeCardProps = Omit<ComponentProps<typeof Card>, "href"> & {
   showCount?: boolean
 }
 
-const ThemeCard = ({ theme, showCount, ...props }: ThemeCardProps) => {
+const ThemeCard = ({ theme, showCount, className, ...props }: ThemeCardProps) => {
   return (
-    <Card asChild {...props}>
+    <Card asChild className={className} {...props}>
       <Link href={`/themes/${theme.slug}`}>
         <CardHeader wrap={false}>
-          <Favicon src={theme.faviconUrl} title={theme.name} />
+          <Favicon src={theme.faviconUrl} title={theme.name} plain />
 
           <H4 as="h3" className="truncate">
             {theme.name}
           </H4>
         </CardHeader>
 
-        {theme.description && (
-          <CardDescription className="line-clamp-3">{theme.description}</CardDescription>
-        )}
+        <CardDescription className="min-h-[3.75rem] line-clamp-3">
+          {theme.description || "\u00A0"}
+        </CardDescription>
 
         {showCount && (
           <CardFooter className="mt-auto">
@@ -41,8 +41,8 @@ const ThemeCard = ({ theme, showCount, ...props }: ThemeCardProps) => {
 const ThemeCardSkeleton = () => {
   return (
     <Card hover={false} className="items-stretch select-none">
-      <CardHeader>
-        <Favicon src="/favicon.png" className="animate-pulse opacity-50" />
+      <CardHeader wrap={false}>
+        <Favicon src="/favicon.png" plain className="animate-pulse opacity-50" />
 
         <H4 className="w-2/3">
           <Skeleton>&nbsp;</Skeleton>

@@ -8,8 +8,10 @@ import { createServerAction } from "zsa"
 import { env } from "~/env"
 import { uploadFavicon } from "~/lib/media"
 import { adDetailsSchema } from "~/server/web/shared/schema"
+import { getAdPricing, getAdSettings } from "~/server/web/ads/queries"
 import { db } from "~/services/db"
 import { stripe } from "~/services/stripe"
+import { adStatus, calculateAdsPrice } from "~/utils/ads"
 import { tryCatch } from "~/utils/helpers"
 
 export const createStripeToolCheckout = createServerAction()
@@ -48,34 +50,101 @@ export const createStripeAdsCheckout = createServerAction()
   .input(
     z.array(
       z.object({
-        type: z.nativeEnum(AdType),
-        price: z.coerce.number(),
+        type: z.enum([AdType.Banner, AdType.Listing, AdType.Sidebar]),
         duration: z.coerce.number(),
         metadata: z.object({
           startDate: z.coerce.number(),
           endDate: z.coerce.number(),
         }),
+        targeting: z.object({
+          themeSlugs: z.array(z.string()).default([]),
+          platformSlugs: z.array(z.string()).default([]),
+        }).optional(),
       }),
     ),
   )
   .handler(async ({ input: ads }) => {
-    const adData = ads.map(({ type, metadata }) => ({
-      type,
-      startsAt: metadata.startDate,
-      endsAt: metadata.endDate,
+    const [pricing, settings] = await Promise.all([getAdPricing(), getAdSettings()])
+
+    const normalizedAds = ads.map(ad => ({
+      ...ad,
+      targeting: ad.targeting
+        ? {
+            themeSlugs: [...new Set(ad.targeting.themeSlugs)],
+            platformSlugs: [...new Set(ad.targeting.platformSlugs)],
+          }
+        : undefined,
     }))
+
+    const hasInvalidTargeting = normalizedAds.some(ad => {
+      const count = (ad.targeting?.themeSlugs.length ?? 0) + (ad.targeting?.platformSlugs.length ?? 0)
+      return ad.type !== AdType.Sidebar && count > 0
+    })
+
+    if (hasInvalidTargeting) {
+      throw new Error("Only sidebar ads can include targeting.")
+    }
+
+    const basePrice = Math.min(...Object.values(pricing))
+    const pricingSummary = calculateAdsPrice(
+      normalizedAds.map(({ type, duration }) => ({ price: pricing[type], duration })),
+      basePrice,
+      settings.maxDiscountPercentage,
+    )
+
+    const discountedMultiplier = 1 - pricingSummary.discountPercentage / 100
+    const targetingUnitPriceCents = Math.round(settings.targetingUnitPrice * 100)
+
+    const adData = normalizedAds.map(({ type, duration, metadata, targeting }) => {
+      const targetThemeSlugs = type === AdType.Sidebar ? (targeting?.themeSlugs ?? []) : []
+      const targetPlatformSlugs = type === AdType.Sidebar ? (targeting?.platformSlugs ?? []) : []
+      const targetCount = targetThemeSlugs.length + targetPlatformSlugs.length
+      const unitAmountCents = Math.round(pricing[type] * discountedMultiplier * 100)
+
+      return {
+        type,
+        startsAt: metadata.startDate,
+        endsAt: metadata.endDate,
+        priceCents: unitAmountCents * duration + targetCount * targetingUnitPriceCents,
+        isTargetedSidebar: type === AdType.Sidebar && targetCount > 0,
+        targetThemeSlugs,
+        targetPlatformSlugs,
+      }
+    })
+
+    const targetingLineItems = normalizedAds.flatMap(({ type, targeting }) => {
+      if (type !== AdType.Sidebar || !targeting) return []
+
+      const targetCount = targeting.themeSlugs.length + targeting.platformSlugs.length
+      if (!targetCount || targetingUnitPriceCents <= 0) return []
+
+      return [{
+        price_data: {
+          product_data: {
+            name: "Sidebar targeting add-on",
+            description: `${targetCount} ${targetCount === 1 ? "target" : "targets"}`,
+          },
+          unit_amount: targetingUnitPriceCents,
+          currency: "usd",
+        },
+        quantity: targetCount,
+      }]
+    })
 
     const checkout = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_creation: "if_required",
-      line_items: ads.map(({ type, price, duration }) => ({
-        price_data: {
-          product_data: { name: `${type} Ad` },
-          unit_amount: Math.round(price * 100),
-          currency: "usd",
-        },
-        quantity: duration,
-      })),
+      line_items: [
+        ...normalizedAds.map(({ type, duration }) => ({
+          price_data: {
+            product_data: { name: `${type} Ad` },
+            unit_amount: Math.round(pricing[type] * discountedMultiplier * 100),
+            currency: "usd",
+          },
+          quantity: duration,
+        })),
+        ...targetingLineItems,
+      ],
       metadata: { ads: JSON.stringify(adData) },
       allow_promotion_codes: true,
       automatic_tax: { enabled: true },
@@ -158,7 +227,7 @@ export const createAdFromCheckout = createServerAction()
     if (existingAds.length) {
       await db.ad.updateMany({
         where: { sessionId },
-        data: { ...adDetails, faviconUrl },
+        data: { ...adDetails, faviconUrl, status: adStatus.Pending, paidAt: new Date() },
       })
 
       // Revalidate the cache
@@ -180,6 +249,10 @@ export const createAdFromCheckout = createServerAction()
             type: z.nativeEnum(AdType),
             startsAt: z.coerce.number().transform(date => new Date(date)),
             endsAt: z.coerce.number().transform(date => new Date(date)),
+            priceCents: z.coerce.number().int().nonnegative().optional(),
+            isTargetedSidebar: z.boolean().optional().default(false),
+            targetThemeSlugs: z.array(z.string()).default([]),
+            targetPlatformSlugs: z.array(z.string()).default([]),
           }),
         )
 
@@ -187,7 +260,21 @@ export const createAdFromCheckout = createServerAction()
         const parsedAds = adsSchema.parse(JSON.parse(session.metadata.ads))
 
         // Add ads to create later
-        ads.push(...parsedAds)
+        ads.push(
+          ...parsedAds.map(ad => {
+            const isSidebar = ad.type === AdType.Sidebar
+            const targetThemeSlugs = isSidebar ? ad.targetThemeSlugs : []
+            const targetPlatformSlugs = isSidebar ? ad.targetPlatformSlugs : []
+            const isTargetedSidebar = isSidebar && (targetThemeSlugs.length + targetPlatformSlugs.length > 0)
+
+            return {
+              ...ad,
+              isTargetedSidebar,
+              targetThemeSlugs,
+              targetPlatformSlugs,
+            }
+          }),
+        )
 
         break
       }
@@ -231,7 +318,20 @@ export const createAdFromCheckout = createServerAction()
 
     // Create ads in a transaction
     await db.$transaction(
-      ads.map(ad => db.ad.create({ data: { ...ad, ...adDetails, email, faviconUrl, sessionId } })),
+      ads.map(ad =>
+        db.ad.create({
+            data: {
+              ...ad,
+              ...adDetails,
+              email,
+              faviconUrl,
+              sessionId,
+              priceCents: ad.priceCents,
+              paidAt: new Date(),
+              status: adStatus.Pending,
+            },
+        }),
+      ),
     )
 
     // Revalidate the cache

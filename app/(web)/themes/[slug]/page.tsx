@@ -1,9 +1,13 @@
 import type { Metadata } from "next"
 import type { SearchParams } from "nuqs/server"
+import { AdType } from "@prisma/client"
 import { notFound } from "next/navigation"
 import { Suspense, cache } from "react"
+import { Icon } from "~/components/common/icon"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Section } from "~/components/web/ui/section"
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
+import { EntitySidebarCard } from "~/components/web/ui/entity-sidebar-card"
 import { metadataConfig } from "~/config/metadata"
 import { findTheme } from "~/server/web/themes/queries"
 import { findPlatforms } from "~/server/web/platforms/queries"
@@ -93,10 +97,59 @@ export default async function ThemePage(props: PageProps) {
             description={theme.description}
             externalUrl={theme.websiteUrl ?? undefined}
           />
-        </Section.Content>
-      </Section>
 
-      <EntityTabs tabs={tabs} defaultTab="platforms" />
+          <EntityTabs tabs={tabs} defaultTab="platforms" />
+        </Section.Content>
+
+        <Section.Sidebar>
+          <EntitySidebarCard
+            title="Theme Details"
+            insights={[
+              {
+                label: "Author",
+                value: theme.author,
+                icon: <Icon name="lucide/user" />,
+              },
+              theme.websiteUrl
+                ? {
+                    label: "Homepage",
+                    value: theme.websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, ""),
+                    link: theme.websiteUrl,
+                    icon: <Icon name="lucide/globe" />,
+                  }
+                : undefined,
+              {
+                label: "Ports",
+                value: theme._count.ports,
+                icon: <Icon name="lucide/star" />,
+              },
+              {
+                label: "Submitted",
+                value: theme.createdAt.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+                icon: <Icon name="lucide/history" />,
+              },
+            ].filter(Boolean) as any}
+            buttonHref={theme.websiteUrl ?? undefined}
+            buttonLabel={theme.websiteUrl ? "Visit Website" : undefined}
+            footer={`Updated ${theme.updatedAt.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}`}
+          />
+
+          <Suspense fallback={<AdCardSkeleton />}>
+            <AdCard
+              where={{ type: { in: [AdType.Sidebar, AdType.ThemePage] } }}
+              sidebarTargeting={{ themeSlug: theme.slug }}
+            />
+          </Suspense>
+        </Section.Sidebar>
+      </Section>
     </>
   )
 }

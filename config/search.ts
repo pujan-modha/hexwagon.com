@@ -1,3 +1,3 @@
 export const searchConfig = {
-  filters: ["theme", "platform", "tag", "license"] as const,
+  filters: ["theme", "platform", "tag"] as const,
 }

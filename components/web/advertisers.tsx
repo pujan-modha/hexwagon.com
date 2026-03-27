@@ -6,9 +6,10 @@ import { Stack } from "~/components/common/stack"
 import { config } from "~/config"
 import { db } from "~/services/db"
 import { cx } from "~/utils/cva"
+import { adStatus } from "~/utils/ads"
 
 export const Advertisers = async ({ className, ...props }: ComponentProps<"div">) => {
-  const ads = await db.ad.findMany({ orderBy: { createdAt: "asc" } })
+  const ads = await db.ad.findMany({ where: { status: adStatus.Approved }, orderBy: { createdAt: "asc" } })
 
   // Filter advertisers with campaigns of at least 30 days
   const longTermAds = ads.filter((ad: Ad) => {

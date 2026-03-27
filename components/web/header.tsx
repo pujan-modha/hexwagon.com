@@ -90,11 +90,6 @@ const Header = ({ children, className, session, ...props }: HeaderProps) => {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <NavLink href="/licenses">
-                    <Icon name="lucide/copyright" className="shrink-0 size-4 opacity-75" /> Licenses
-                  </NavLink>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
                   <NavLink href="/coming-soon">
                     <Icon name="lucide/clock" className="shrink-0 size-4 opacity-75" /> Coming Soon
                   </NavLink>
@@ -137,9 +132,6 @@ const Header = ({ children, className, session, ...props }: HeaderProps) => {
           </NavLink>
           <NavLink href="/platforms" className="text-base">
             Platforms
-          </NavLink>
-          <NavLink href="/licenses" className="text-base">
-            Licenses
           </NavLink>
           <NavLink href="/coming-soon" className="text-base">
             Coming Soon

@@ -3,7 +3,8 @@ import { AdsPicker } from "~/components/web/ads-picker"
 import { AdsPickerThemes } from "~/components/web/ads-picker-alternatives"
 import { ExternalLink } from "~/components/web/external-link"
 import { adsConfig } from "~/config/ads"
-import { findAds } from "~/server/web/ads/queries"
+import { findAds, getAdPricing, getAdSettings } from "~/server/web/ads/queries"
+import { findPlatforms } from "~/server/web/platforms/queries"
 import { findRelatedThemeIds } from "~/server/web/themes/queries"
 
 import { findThemes } from "~/server/web/themes/queries"
@@ -40,11 +41,48 @@ export const AdvertisePickers = async ({ theme }: AdvertisePickersProps) => {
     )
   }
 
-  const ads = await findAds({})
+  const [ads, pricing, settings, targetThemes, targetPlatforms] = await Promise.all([
+    findAds({}),
+    getAdPricing(),
+    getAdSettings(),
+    findThemes({
+      where: {
+        ports: { some: { status: { in: ["Published"] } } },
+      },
+      orderBy: { name: "asc" },
+    }),
+    findPlatforms({
+      where: {
+        ports: { some: { status: { in: ["Published"] } } },
+      },
+      orderBy: { name: "asc" },
+    }),
+  ])
+
+  const adSpots = adsConfig.adSpots.map(spot => ({
+    ...spot,
+    price: pricing[spot.type],
+  }))
 
   return (
     <div className="flex flex-col items-center gap-4 md:gap-6">
-      <AdsPicker ads={ads} className="mx-auto" />
+      <AdsPicker
+        ads={ads}
+        adSpots={adSpots}
+        maxDiscountPercentage={settings.maxDiscountPercentage}
+        targetingUnitPrice={settings.targetingUnitPrice}
+        targetThemes={targetThemes.map(theme => ({
+          slug: theme.slug,
+          name: theme.name,
+          faviconUrl: theme.faviconUrl,
+        }))}
+        targetPlatforms={targetPlatforms.map(platform => ({
+          slug: platform.slug,
+          name: platform.name,
+          faviconUrl: platform.faviconUrl,
+        }))}
+        className="mx-auto"
+      />
 
       <Stack
         size="sm"

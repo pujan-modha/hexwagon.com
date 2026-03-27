@@ -22,6 +22,7 @@ type AdsCalendarProps = ComponentProps<"div"> & {
   price: ReturnType<typeof useAds>["price"]
   selections: AdsSelection[]
   updateSelection: (type: AdType, selection: Partial<Omit<AdsSelection, "type">>) => void
+  ignoreBooked?: boolean
 }
 
 export const AdsCalendar = ({
@@ -31,19 +32,23 @@ export const AdsCalendar = ({
   price,
   selections,
   updateSelection,
+  ignoreBooked = false,
   ...props
 }: AdsCalendarProps) => {
   const selection = selections.find(s => s.type === adSpot.type)
 
   const booked = useMemo(
-    () =>
-      ads
+    () => {
+      if (ignoreBooked) return []
+
+      return ads
         .filter(({ type }) => type === adSpot.type || type === "All")
         .map(({ startsAt, endsAt }) => ({
           from: startOfDay(startsAt),
           to: startOfDay(endsAt),
-        })),
-    [ads, adSpot.type],
+        }))
+    },
+    [ads, adSpot.type, ignoreBooked],
   )
 
   const firstAvailableMonth = useMemo(() => getFirstAvailableMonth(booked), [booked])
@@ -56,6 +61,8 @@ export const AdsCalendar = ({
       const to = endOfDay(range.to)
 
       const duration = differenceInDays(to, from) + 1
+      if (ignoreBooked) return duration
+
       const overlapDays = booked.reduce((acc, { from: bookedFrom, to: bookedTo }) => {
         const normalizedBookedFrom = startOfDay(bookedFrom)
         const normalizedBookedTo = endOfDay(bookedTo)
@@ -71,7 +78,7 @@ export const AdsCalendar = ({
 
       return Math.max(duration - overlapDays, 0)
     },
-    [booked],
+    [booked, ignoreBooked],
   )
 
   const handleSelect = useCallback(

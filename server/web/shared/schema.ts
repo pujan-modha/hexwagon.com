@@ -18,7 +18,6 @@ export const filterParamsSchema = {
   theme: parseAsArrayOf(parseAsString).withDefault([]),
   platform: parseAsArrayOf(parseAsString).withDefault([]),
   tag: parseAsArrayOf(parseAsString).withDefault([]),
-  license: parseAsArrayOf(parseAsString).withDefault([]),
 }
 
 export const filterParamsCache = createSearchParamsCache(filterParamsSchema)
@@ -48,6 +47,7 @@ export const submitPortSchema = z.object({
   newsletterOptIn: z.boolean().optional().default(true),
   themeId: z.string().min(1, "Theme is required"),
   platformId: z.string().min(1, "Platform is required"),
+  license: z.string().trim().min(1, "License is required").max(120),
 })
 
 export const submitSuggestionSchema = z.object({

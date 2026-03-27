@@ -29,12 +29,12 @@ import { Switch } from "~/components/common/switch"
 import { TextArea } from "~/components/common/textarea"
 import { ExternalLink } from "~/components/web/external-link"
 import { Markdown } from "~/components/web/markdown"
+import { LICENSE_SUGGESTIONS } from "~/config/licenses"
 import { siteConfig } from "~/config/site"
 import { useComputedField } from "~/hooks/use-computed-field"
 import { upsertPort } from "~/server/admin/ports/actions"
 import type { findPortBySlug } from "~/server/admin/ports/queries"
 import { portSchema } from "~/server/admin/ports/schema"
-import type { findLicenseList } from "~/server/admin/licenses/queries"
 import type { findPlatformList } from "~/server/admin/platforms/queries"
 import type { findThemeList } from "~/server/admin/themes/queries"
 import { PortActions } from "./port-actions"
@@ -51,7 +51,6 @@ import {
 
 type PortFormProps = ComponentProps<"form"> & {
   port?: Awaited<ReturnType<typeof findPortBySlug>>
-  licensesPromise: ReturnType<typeof findLicenseList>
   platformsPromise: ReturnType<typeof findPlatformList>
   themesPromise: ReturnType<typeof findThemeList>
 }
@@ -77,13 +76,11 @@ export function PortForm({
   className,
   title,
   port,
-  licensesPromise,
   platformsPromise,
   themesPromise,
   ...props
 }: PortFormProps) {
   const router = useRouter()
-  const licenses = use(licensesPromise)
   const platforms = use(platformsPromise)
   const themes = use(themesPromise)
 
@@ -116,7 +113,7 @@ export function PortForm({
       rejectionReason: port?.rejectionReason ?? "",
       themeId: port?.themeId ?? "",
       platformId: port?.platformId ?? "",
-      licenseId: port?.licenseId ?? "",
+      license: port?.license ?? "",
       notifySubmitter: true,
     },
   })
@@ -301,24 +298,18 @@ export function PortForm({
 
         <FormField
           control={form.control}
-          name="licenseId"
+          name="license"
           render={({ field }) => (
             <FormItem>
               <FormLabel>License</FormLabel>
               <FormControl>
-                <Select onValueChange={field.onChange} value={field.value ?? ""}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a license" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {licenses.map(license => (
-                      <SelectItem key={license.id} value={license.id}>
-                        {license.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input {...field} list="port-license-suggestions" placeholder="MIT" />
               </FormControl>
+              <datalist id="port-license-suggestions">
+                {LICENSE_SUGGESTIONS.map(option => (
+                  <option key={option} value={option} />
+                ))}
+              </datalist>
               <FormMessage />
             </FormItem>
           )}

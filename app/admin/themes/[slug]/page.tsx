@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation"
 import { withAdminPage } from "~/components/admin/auth-hoc"
 import { Wrapper } from "~/components/admin/wrapper"
-import { findLicenseList } from "~/server/admin/licenses/queries"
 import { findThemeBySlug } from "~/server/admin/themes/queries"
 import { ThemeForm } from "../_components/theme-form"
 
@@ -17,9 +16,10 @@ const UpdateThemePage = async ({ params }: PageProps) => {
 
   return (
     <Wrapper size="lg">
-      <ThemeForm title={`Edit ${theme.name}`} theme={theme} licensesPromise={findLicenseList()} />
+      <ThemeForm title={`Edit ${theme.name}`} theme={theme} />
     </Wrapper>
   )
 }
 
 export default withAdminPage(UpdateThemePage)
+

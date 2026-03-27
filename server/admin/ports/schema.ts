@@ -51,7 +51,7 @@ export const portSchema = z.object({
   rejectionReason: z.string().optional(),
   themeId: z.string().optional(),
   platformId: z.string().optional(),
-  licenseId: z.string().optional(),
+  license: z.string().trim().max(120).optional().or(z.literal("")),
   notifySubmitter: z.boolean().default(true),
 })
 

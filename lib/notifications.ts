@@ -14,6 +14,8 @@ import EmailSuggestionApproved from "~/emails/suggestion-approved"
 import EmailSuggestionRejected from "~/emails/suggestion-rejected"
 import EmailPortEditApproved from "~/emails/port-edit-approved"
 import EmailPortEditRejected from "~/emails/port-edit-rejected"
+import EmailAdApproved from "~/emails/ad-approved"
+import EmailAdRejected from "~/emails/ad-rejected"
 import { sendEmail } from "~/lib/email"
 import { countSubmittedPorts } from "~/server/web/ports/queries"
 
@@ -23,6 +25,11 @@ type SuggestionWithSubmitter = {
     email: string
     name: string
   } | null
+}
+
+type AdWithContact = Port & {
+  email: string
+  adminNote?: string | null
 }
 
 /**
@@ -177,6 +184,34 @@ export const notifyEditorOfPortEditRejected = async (portEdit: { editor: { email
     to,
     subject,
     react: EmailPortEditRejected({ to, portEdit }),
+  })
+}
+
+/**
+ * Notify the advertiser of an approved ad
+ */
+export const notifyAdvertiserOfAdApproved = async (ad: AdWithContact) => {
+  const to = ad.email
+  const subject = `🎉 Your ad for ${ad.name} has been approved!`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailAdApproved({ to, ad }),
+  })
+}
+
+/**
+ * Notify the advertiser of a rejected ad
+ */
+export const notifyAdvertiserOfAdRejected = async (ad: AdWithContact) => {
+  const to = ad.email
+  const subject = `Update on your ad for ${ad.name}`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailAdRejected({ to, ad }),
   })
 }
 

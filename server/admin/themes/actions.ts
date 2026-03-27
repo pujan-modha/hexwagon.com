@@ -9,18 +9,80 @@ import { adminProcedure } from "~/lib/safe-actions"
 import { themeSchema } from "~/server/admin/themes/schema"
 import { db } from "~/services/db"
 
+// --- Color Palette Actions ---
+
+const colorPaletteEntrySchema = z.object({
+  id: z.string().optional(),
+  themeId: z.string(),
+  label: z.string().min(1, "Label is required"),
+  hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color"),
+  order: z.number().int().default(0),
+})
+
+export const upsertColorPaletteEntry = adminProcedure
+  .createServerAction()
+  .input(colorPaletteEntrySchema)
+  .handler(async ({ input: { id, ...input } }) => {
+    const entry = id
+      ? await db.colorPalette.update({ where: { id }, data: input })
+      : await db.colorPalette.create({ data: input })
+
+    revalidateTag(`theme-${(await db.theme.findUnique({ where: { id: input.themeId }, select: { slug: true } }))?.slug}`, "max")
+    return entry
+  })
+
+export const deleteColorPaletteEntry = adminProcedure
+  .createServerAction()
+  .input(z.object({ id: z.string(), themeSlug: z.string() }))
+  .handler(async ({ input: { id, themeSlug } }) => {
+    await db.colorPalette.delete({ where: { id } })
+    revalidateTag(`theme-${themeSlug}`, "max")
+    return true
+  })
+
+export const reorderColorPaletteEntries = adminProcedure
+  .createServerAction()
+  .input(z.object({ entries: z.array(z.object({ id: z.string(), order: z.number().int() })), themeSlug: z.string() }))
+  .handler(async ({ input: { entries, themeSlug } }) => {
+    await db.$transaction(
+      entries.map(({ id, order }) => db.colorPalette.update({ where: { id }, data: { order } })),
+    )
+    revalidateTag(`theme-${themeSlug}`, "max")
+    return true
+  })
+
 export const upsertTheme = adminProcedure
   .createServerAction()
   .input(themeSchema)
-  .handler(async ({ input: { id, ...input } }) => {
+  .handler(async ({ input: { id, palettes, ...input } }) => {
+    const slug = input.slug || slugify(input.name)
+
     const theme = id
       ? await db.theme.update({
           where: { id },
-          data: { ...input, slug: input.slug || slugify(input.name) },
+          data: { ...input, slug },
         })
       : await db.theme.create({
-          data: { ...input, slug: input.slug || slugify(input.name) },
+          data: { ...input, slug },
         })
+
+    // Replace color palette entries if provided
+    if (palettes !== undefined) {
+      const flatColors = palettes.flatMap(p => 
+        p.colors.map((c, i) => ({
+          themeId: theme.id,
+          paletteName: p.name,
+          label: c.label,
+          hex: c.hex,
+          order: c.order ?? i,
+        }))
+      )
+
+      await db.$transaction([
+        db.colorPalette.deleteMany({ where: { themeId: theme.id } }),
+        db.colorPalette.createMany({ data: flatColors }),
+      ])
+    }
 
     revalidateTag("themes", "max")
     revalidateTag(`theme-${theme.slug}`, "max")

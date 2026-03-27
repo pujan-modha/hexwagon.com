@@ -12,6 +12,7 @@ type SubmissionState = {
   repositoryUrl: string
   installUrl: string
   websiteUrl: string
+  license: string
   submitterName: string
   submitterEmail: string
   submitterNote: string
@@ -27,6 +28,7 @@ type SubmissionState = {
     repositoryUrl?: string
     installUrl?: string
     websiteUrl?: string
+    license?: string
     submitterName?: string
     submitterEmail?: string
     submitterNote?: string
@@ -47,6 +49,7 @@ const initialState = {
   repositoryUrl: "",
   installUrl: "",
   websiteUrl: "",
+  license: "",
   submitterName: "",
   submitterEmail: "",
   submitterNote: "",

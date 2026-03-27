@@ -10,14 +10,16 @@ export const platformOnePayload = Prisma.validator<Prisma.PlatformSelect>()({
   installInstructions: true,
   themeCreationDocs: true,
   isFeatured: true,
+  order: true,
   pageviews: true,
-  licenseId: true,
+  createdAt: true,
+  updatedAt: true,
+  license: true,
   _count: {
     select: {
       ports: { where: { status: PortStatus.Published } },
     },
   },
-  license: true,
 })
 
 export const platformManyPayload = Prisma.validator<Prisma.PlatformSelect>()({
@@ -27,7 +29,10 @@ export const platformManyPayload = Prisma.validator<Prisma.PlatformSelect>()({
   description: true,
   faviconUrl: true,
   isFeatured: true,
+  order: true,
+  pageviews: true,
   createdAt: true,
+  updatedAt: true,
   _count: {
     select: {
       ports: { where: { status: PortStatus.Published } },

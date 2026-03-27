@@ -1,9 +1,13 @@
 import type { Metadata } from "next"
 import type { SearchParams } from "nuqs/server"
+import { AdType } from "@prisma/client"
 import { notFound } from "next/navigation"
 import { Suspense, cache } from "react"
+import { Icon } from "~/components/common/icon"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Section } from "~/components/web/ui/section"
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
+import { EntitySidebarCard } from "~/components/web/ui/entity-sidebar-card"
 import { metadataConfig } from "~/config/metadata"
 import { findPlatform } from "~/server/web/platforms/queries"
 import { findThemes } from "~/server/web/themes/queries"
@@ -97,10 +101,54 @@ export default async function PlatformPage(props: PageProps) {
             description={platform.description}
             externalUrl={platform.websiteUrl ?? undefined}
           />
-        </Section.Content>
-      </Section>
 
-      <EntityTabs tabs={tabs} defaultTab="themes" />
+          <EntityTabs tabs={tabs} defaultTab="themes" />
+        </Section.Content>
+
+        <Section.Sidebar>
+          <EntitySidebarCard
+            title="Platform Details"
+            insights={[
+              platform.websiteUrl
+                ? {
+                    label: "Website",
+                    value: platform.websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, ""),
+                    link: platform.websiteUrl,
+                    icon: <Icon name="lucide/globe" />,
+                  }
+                : undefined,
+              {
+                label: "Themes",
+                value: platform._count.ports,
+                icon: <Icon name="lucide/star" />,
+              },
+              {
+                label: "Submitted",
+                value: platform.createdAt.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+                icon: <Icon name="lucide/history" />,
+              },
+            ].filter(Boolean) as any}
+            buttonHref={platform.websiteUrl ?? undefined}
+            buttonLabel={platform.websiteUrl ? "Visit Website" : undefined}
+            footer={`Updated ${platform.updatedAt.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}`}
+          />
+
+          <Suspense fallback={<AdCardSkeleton />}>
+            <AdCard
+              where={{ type: { in: [AdType.Sidebar, AdType.PlatformPage] } }}
+              sidebarTargeting={{ platformSlug: platform.slug }}
+            />
+          </Suspense>
+        </Section.Sidebar>
+      </Section>
     </>
   )
 }

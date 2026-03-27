@@ -18,7 +18,7 @@ export const searchPorts = async (search: FilterSchema, where?: Prisma.PortWhere
   cacheTag("ports")
   cacheLife("max")
 
-  const { q, page, sort, perPage, theme, platform, tag, license } = search
+  const { q, page, sort, perPage, theme, platform, tag } = search
   const start = performance.now()
   const skip = (page - 1) * perPage
   const take = perPage
@@ -35,7 +35,6 @@ export const searchPorts = async (search: FilterSchema, where?: Prisma.PortWhere
     ...(!!theme.length && { theme: { slug: { in: theme } } }),
     ...(!!platform.length && { platform: { slug: { in: platform } } }),
     ...(!!tag.length && { tags: { some: { slug: { in: tag } } } }),
-    ...(!!license.length && { license: { slug: { in: license } } }),
   }
 
   if (q) {

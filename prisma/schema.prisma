@@ -12,6 +12,8 @@ datasource db {
 
 enum AdType {
   Banner
+  Listing
+  Sidebar
   Themes
   ThemePage
   Platforms
@@ -19,6 +21,13 @@ enum AdType {
   Ports
   PortPage
   All
+}
+
+enum AdStatus {
+  Pending
+  Approved
+  Rejected
+  Cancelled
 }
 
 enum PortStatus {
@@ -82,6 +91,8 @@ model User {
   suggestions      Suggestion[]
   portEdits        PortEdit[]
   maintainedThemes ThemeMaintainer[]
+  updatedAdSpotPricing AdSpotPricing[] @relation("AdSpotPricingUpdatedBy")
+  updatedAdConfigs     AdConfig[]      @relation("AdConfigUpdatedBy")
 
   // Indexes
   @@index([id])
@@ -145,8 +156,21 @@ model Ad {
   buttonLabel    String?
   faviconUrl     String?
   type           AdType   @default(All)
+  status         AdStatus @default(Pending)
   startsAt       DateTime
   endsAt         DateTime
+  priceCents     Int?
+  isTargetedSidebar Boolean @default(false)
+  targetThemeSlugs String[] @default([])
+  targetPlatformSlugs String[] @default([])
+  approvedAt     DateTime?
+  rejectedAt     DateTime?
+  cancelledAt    DateTime?
+  paidAt         DateTime?
+  adminNote      String?  @db.Text
+  customHtml     String?  @db.Text
+  customCss      String?  @db.Text
+  customJs       String?  @db.Text
   sessionId      String?
   subscriptionId String?  @unique
   createdAt      DateTime @default(now())
@@ -154,6 +178,23 @@ model Ad {
 
   // Relations
   themes Theme[]
+}
+
+model AdSpotPricing {
+  spot          AdType   @id
+  priceCents    Int
+  updatedById   String?
+  updatedBy     User?    @relation("AdSpotPricingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt     DateTime @updatedAt
+}
+
+model AdConfig {
+  id                    Int      @id @default(1)
+  maxDiscountPercentage Int      @default(30)
+  targetingUnitPriceCents Int    @default(0)
+  updatedById           String?
+  updatedBy             User?    @relation("AdConfigUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt             DateTime @updatedAt
 }
 
 model Theme {
@@ -167,7 +208,9 @@ model Theme {
   author        String?
   authorUrl     String?
   guidelines    String?  @db.Text
+  license       String?
   isFeatured    Boolean  @default(false)
+  order         Int      @default(0)
   discountCode  String?
   discountAmount String?
   pageviews     Int?     @default(0)
@@ -180,8 +223,6 @@ model Theme {
   likes       Like[]
   reports     Report[]
   maintainers ThemeMaintainer[]
-  license     License?  @relation(fields: [licenseId], references: [id])
-  licenseId   String?
   ad          Ad?       @relation(fields: [adId], references: [id])
   adId        String?
 
@@ -199,7 +240,9 @@ model Platform {
   faviconUrl          String?
   installInstructions String?  @db.Text
   themeCreationDocs   String?  @db.Text
+  license             String?
   isFeatured          Boolean  @default(false)
+  order               Int      @default(0)
   pageviews           Int?     @default(0)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -208,8 +251,6 @@ model Platform {
   ports   Port[]
   likes   Like[]
   reports Report[]
-  license License? @relation(fields: [licenseId], references: [id])
-  licenseId String?
 
   // Indexes
   @@index([slug])
@@ -238,6 +279,7 @@ model Port {
   submitterNote   String?
   discountCode    String?
   discountAmount  String?
+  license         String?
   affiliateUrl    String?
   rejectionReason String?
   firstCommitDate DateTime?
@@ -260,8 +302,6 @@ model Port {
   comments     Comment[]
   reports      Report[]
   pendingEdits PortEdit[]
-  license      License? @relation(fields: [licenseId], references: [id])
-  licenseId    String?
 
   // Indexes
   @@index([id, slug])
@@ -288,31 +328,16 @@ model Tag {
   @@index([slug])
 }
 
-model License {
-  id        String   @id @default(cuid())
-  name      String   @unique @db.Citext
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  ports     Port[]
-  themes    Theme[]
-  platforms Platform[]
-
-  // Indexes
-  @@index([slug])
-}
-
 model ColorPalette {
-  id        String   @id @default(cuid())
-  label     String
-  hex       String
-  order     Int      @default(0)
-  theme     Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
-  themeId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  paletteName String   @default("Default")
+  label       String
+  hex         String
+  order       Int      @default(0)
+  theme       Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  themeId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([themeId])
 }

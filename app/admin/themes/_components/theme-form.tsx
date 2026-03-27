@@ -5,7 +5,8 @@ import { getRandomString, isValidUrl, slugify } from "@primoui/utils"
 import { useRouter } from "next/navigation"
 import type { ComponentProps } from "react"
 import { use, useState } from "react"
-import { useForm } from "react-hook-form"
+import type { UseFormReturn } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { useServerAction } from "zsa-react"
 import { generateFavicon } from "~/actions/media"
@@ -28,26 +29,19 @@ import { Switch } from "~/components/common/switch"
 import { TextArea } from "~/components/common/textarea"
 import { ExternalLink } from "~/components/web/external-link"
 import { Markdown } from "~/components/web/markdown"
+import { LICENSE_SUGGESTIONS } from "~/config/licenses"
 import { siteConfig } from "~/config/site"
 import { useComputedField } from "~/hooks/use-computed-field"
 import { upsertTheme } from "~/server/admin/themes/actions"
 import type { findThemeBySlug } from "~/server/admin/themes/queries"
 import { themeSchema } from "~/server/admin/themes/schema"
-import type { findLicenseList } from "~/server/admin/licenses/queries"
 import { ThemeActions } from "./theme-actions"
 import { ThemeGenerateDescription } from "./theme-generate-description"
+import { PaletteGroupEditor } from "./palette-group-editor"
 import { cx } from "~/utils/cva"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/common/select"
 
 type ThemeFormProps = ComponentProps<"form"> & {
   theme?: Awaited<ReturnType<typeof findThemeBySlug>>
-  licensesPromise: ReturnType<typeof findLicenseList>
 }
 
 export function ThemeForm({
@@ -55,11 +49,9 @@ export function ThemeForm({
   className,
   title,
   theme,
-  licensesPromise,
   ...props
 }: ThemeFormProps) {
   const router = useRouter()
-  const licenses = use(licensesPromise)
   const [isPreviewing, setIsPreviewing] = useState(false)
 
   const form = useForm({
@@ -75,10 +67,33 @@ export function ThemeForm({
       authorUrl: theme?.authorUrl ?? "",
       guidelines: theme?.guidelines ?? "",
       isFeatured: theme?.isFeatured ?? false,
+      order: theme?.order ?? 0,
       discountCode: theme?.discountCode ?? "",
       discountAmount: theme?.discountAmount ?? "",
-      licenseId: theme?.licenseId ?? "",
+      license: theme?.license ?? "",
+      palettes: (() => {
+        if (!theme?.colors || theme.colors.length === 0) return []
+        
+        // Group flat colors into palettes
+        const groups: Record<string, any[]> = {}
+        const sorted = [...theme.colors].sort((a, b) => a.order - b.order)
+        sorted.forEach(c => {
+          const pName = (c as any).paletteName || "Default"
+          if (!groups[pName]) groups[pName] = []
+          groups[pName].push({ id: c.id, label: c.label, hex: c.hex, order: c.order })
+        })
+        
+        return Object.entries(groups).map(([name, colors]) => ({
+          name,
+          colors
+        }))
+      })(),
     },
+  })
+
+  const { fields: paletteFields, append: appendPalette, remove: removePalette } = useFieldArray({
+    control: form.control,
+    name: "palettes",
   })
 
   useComputedField({
@@ -110,38 +125,46 @@ export function ThemeForm({
     onError: ({ err }) => toast.error(err.message),
   })
 
-  const handleSubmit = form.handleSubmit(data => {
-    upsertAction.execute({ id: theme?.id, ...data })
-  })
+  const handleSubmit = form.handleSubmit(
+    data => {
+      upsertAction.execute({ id: theme?.id, ...data })
+    },
+    errors => {
+      console.error("Form Validation Failed:", errors)
+      toast.error("Please fill in all required fields. Check console for details.")
+    }
+  )
 
   return (
     <Form {...form}>
-      <Stack className="justify-between">
-        <H3 className="flex-1 truncate">{title}</H3>
+      <div className="flex flex-col gap-6">
+        <Stack className="justify-between">
+          <H3 className="flex-1 truncate">{title}</H3>
 
-        <Stack size="sm" className="-my-0.5">
-          <ThemeGenerateDescription />
+          <Stack size="sm" className="-my-0.5">
+            <ThemeGenerateDescription />
 
-          {theme && <ThemeActions theme={theme} className="ml-auto" />}
+            {theme && <ThemeActions theme={theme} className="ml-auto" />}
+          </Stack>
+
+          {theme && (
+            <Note className="w-full">
+              View:{" "}
+              <ExternalLink href={`/themes/${theme.slug}`} className="text-primary underline">
+                {siteConfig.url}/themes/{theme.slug}
+              </ExternalLink>
+            </Note>
+          )}
         </Stack>
 
-        {theme && (
-          <Note className="w-full">
-            View:{" "}
-            <ExternalLink href={`/themes/${theme.slug}`} className="text-primary underline">
-              {siteConfig.url}/themes/{theme.slug}
-            </ExternalLink>
-          </Note>
-        )}
-      </Stack>
-
-      <form
-        onSubmit={handleSubmit}
-        className={cx("grid gap-4 @sm:grid-cols-2", className)}
-        noValidate
-        {...props}
-      >
-        <FormField
+        <form
+          id="theme-create-form"
+          onSubmit={handleSubmit}
+          className={cx("grid gap-4 @sm:grid-cols-2", className)}
+          noValidate
+          {...props}
+        >
+          <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
@@ -199,24 +222,18 @@ export function ThemeForm({
 
         <FormField
           control={form.control}
-          name="licenseId"
+          name="license"
           render={({ field }) => (
             <FormItem>
               <FormLabel>License</FormLabel>
               <FormControl>
-                <Select onValueChange={field.onChange} value={field.value ?? ""}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a license" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {licenses.map(license => (
-                      <SelectItem key={license.id} value={license.id}>
-                        {license.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input {...field} list="theme-license-suggestions" placeholder="MIT" />
               </FormControl>
+              <datalist id="theme-license-suggestions">
+                {LICENSE_SUGGESTIONS.map(option => (
+                  <option key={option} value={option} />
+                ))}
+              </datalist>
               <FormMessage />
             </FormItem>
           )}
@@ -348,6 +365,20 @@ export function ThemeForm({
 
           <FormField
             control={form.control}
+            name="order"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Order</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="faviconUrl"
             render={({ field }) => (
               <FormItem className="items-stretch">
@@ -392,16 +423,52 @@ export function ThemeForm({
           />
         </div>
 
-        <div className="flex justify-between gap-4 col-span-full">
-          <Button size="md" variant="secondary" asChild>
-            <Link href="/admin/themes">Cancel</Link>
+      {/* Color Palettes Section */}
+      <div className="flex flex-col gap-6 border-t pt-6 mt-6 col-span-full">
+        <Stack className="justify-between">
+          <H3>Color Palettes</H3>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => appendPalette({ name: `Palette ${paletteFields.length + 1}`, colors: [] })}
+            prefix={<Icon name="lucide/plus" />}
+            className="-my-0.5"
+          >
+            Add palette
           </Button>
+        </Stack>
 
-          <Button size="md" isPending={upsertAction.isPending}>
-            {theme ? "Update theme" : "Create theme"}
-          </Button>
+        {paletteFields.length === 0 && (
+          <p className="text-secondary-foreground text-[0.8125rem]">
+            No palettes added yet. Click &quot;Add palette&quot; to begin.
+          </p>
+        )}
+
+        <div className="flex flex-col gap-6">
+          {paletteFields.map((paletteField, pIndex) => (
+            <PaletteGroupEditor 
+              key={paletteField.id} 
+              form={form} 
+              paletteIndex={pIndex} 
+              removePalette={() => removePalette(pIndex)} 
+            />
+          ))}
         </div>
+      </div>
+
+      <div className="flex justify-between gap-4 col-span-full pt-8">
+        <Button size="md" variant="secondary" asChild>
+          <Link href="/admin/themes">Cancel</Link>
+        </Button>
+
+        <Button type="submit" form="theme-create-form" size="md" isPending={upsertAction.isPending}>
+          {theme ? "Update theme" : "Create theme"}
+        </Button>
+      </div>
+      
       </form>
+      </div>
     </Form>
   )
 }

@@ -3,6 +3,7 @@ import { adOnePayload } from "~/server/web/ads/payloads"
 
 export const colorPalettePayload = Prisma.validator<Prisma.ColorPaletteSelect>()({
   id: true,
+  paletteName: true,
   label: true,
   hex: true,
   order: true,
@@ -23,7 +24,9 @@ export const themeOnePayload = Prisma.validator<Prisma.ThemeSelect>()({
   discountCode: true,
   discountAmount: true,
   pageviews: true,
-  licenseId: true,
+  createdAt: true,
+  updatedAt: true,
+  license: true,
   adId: true,
   ad: { select: adOnePayload },
   _count: {
@@ -41,7 +44,6 @@ export const themeOnePayload = Prisma.validator<Prisma.ThemeSelect>()({
       user: { select: { id: true, name: true, image: true } },
     },
   },
-  license: true,
 })
 
 export const themeManyPayload = Prisma.validator<Prisma.ThemeSelect>()({
@@ -50,8 +52,14 @@ export const themeManyPayload = Prisma.validator<Prisma.ThemeSelect>()({
   slug: true,
   description: true,
   faviconUrl: true,
+  repositoryUrl: true,
+  author: true,
+  authorUrl: true,
   isFeatured: true,
+  order: true,
+  pageviews: true,
   createdAt: true,
+  updatedAt: true,
   _count: {
     select: {
       ports: { where: { status: PortStatus.Published } },

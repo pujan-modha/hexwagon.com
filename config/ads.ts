@@ -2,9 +2,11 @@ import type { AdType } from "@prisma/client"
 import { siteConfig } from "~/config/site"
 import type { AdOne } from "~/server/web/ads/payloads"
 
+export type AdSpotType = Extract<AdType, "Banner" | "Listing" | "Sidebar">
+
 export type AdSpot = {
   label: string
-  type: AdType
+  type: AdSpotType
   description: string
   price: number
   preview?: string
@@ -15,9 +17,23 @@ export const adsConfig = {
 
   adSpots: [
     {
+      label: "Top Banner",
+      type: "Banner",
+      description: "Visible at the top of the site across pages",
+      price: 45,
+      preview: "https://share.cleanshot.com/7CFqSw0b",
+    },
+    {
       label: "Listing Ad",
-      type: "Ports",
-      description: "Visible on every port listing page",
+      type: "Listing",
+      description: "Visible in catalogue grids and listing pages",
+      price: 25,
+      preview: "https://share.cleanshot.com/7CFqSw0b",
+    },
+    {
+      label: "Sidebar Ad",
+      type: "Sidebar",
+      description: "Visible in the sticky sidebar on detail pages",
       price: 15,
       preview: "https://share.cleanshot.com/7CFqSw0b",
     },
@@ -28,7 +44,7 @@ export const adsConfig = {
     websiteUrl: "/advertise",
     name: "Your brand here",
     description:
-      "Reach out to our audience of theme enthusiasts and developers, boost your sales and brand awareness.",
+      "Reach out to our audience of developers.",
     buttonLabel: `Advertise on ${siteConfig.name}`,
     faviconUrl: null,
   } satisfies AdOne,

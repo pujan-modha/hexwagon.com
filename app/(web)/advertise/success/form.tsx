@@ -41,7 +41,7 @@ export const AdDetailsForm = ({ className, sessionId, ad, ...props }: AdDetailsF
 
   const { execute, isPending } = useServerAction(createAdFromCheckout, {
     onSuccess: () => {
-      toast.success(`Advertisement ${ad ? "updated" : "created"} successfully!`)
+      toast.success(ad ? "Advertisement updated successfully!" : "Advertisement submitted for review!")
     },
     onError: ({ err }) => {
       toast.error(err.message)

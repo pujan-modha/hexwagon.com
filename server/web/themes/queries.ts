@@ -3,6 +3,7 @@ import { type Prisma, PortStatus } from "@prisma/client"
 import type { SearchSimilarDocumentsParams } from "meilisearch"
 import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from "next/cache"
 import { themeManyPayload, themeOnePayload } from "~/server/web/themes/payloads"
+import type { ThemeMany } from "~/server/web/themes/payloads"
 import type { FilterSchema } from "~/server/web/shared/schema"
 import { db } from "~/services/db"
 import { getMeiliIndex } from "~/services/meilisearch"
@@ -30,7 +31,6 @@ export const searchThemes = async (
   }
 
   const whereQuery: Prisma.ThemeWhereInput = {
-    ports: { some: { status: PortStatus.Published } },
     ...(q && {
       OR: [
         { name: { contains: q, mode: "insensitive" } },
@@ -104,7 +104,7 @@ export const findRelatedThemes = async ({ id, ...params }: SearchSimilarDocument
 export const findFeaturedThemes = async ({
   where,
   ...args
-}: Prisma.ThemeFindManyArgs) => {
+}: Prisma.ThemeFindManyArgs): Promise<ThemeMany[]> => {
   "use cache"
 
   cacheTag("featured-themes")
@@ -128,8 +128,8 @@ export const findThemes = async ({
 
   return db.theme.findMany({
     ...args,
-    orderBy: orderBy ?? { name: "asc" },
-    where: { ports: { some: { status: PortStatus.Published } }, ...where },
+    orderBy: orderBy ?? [{ order: "asc" }, { name: "asc" }],
+    where: { ...where },
     select: themeManyPayload,
   })
 }
@@ -146,8 +146,8 @@ export const findThemeSlugs = async ({
 
   return db.theme.findMany({
     ...args,
-    orderBy: orderBy ?? { name: "asc" },
-    where: { ports: { some: { status: PortStatus.Published } }, ...where },
+    orderBy: orderBy ?? [{ order: "asc" }, { name: "asc" }],
+    where: { ...where },
     select: { slug: true, updatedAt: true },
   })
 }

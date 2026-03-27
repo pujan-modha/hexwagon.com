@@ -6,6 +6,7 @@ import { Input } from "~/components/common/input"
 import { Label } from "~/components/common/label"
 import { Textarea } from "~/components/common/textarea"
 import { Switch } from "~/components/common/switch"
+import { LICENSE_SUGGESTIONS } from "~/config/licenses"
 
 type StepDetailsProps = {
   onNext: () => void
@@ -20,6 +21,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
     repositoryUrl,
     installUrl,
     websiteUrl,
+    license,
     submitterName,
     submitterEmail,
     submitterNote,
@@ -94,6 +96,22 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
       </div>
 
       <div className="flex flex-col gap-2">
+        <Label htmlFor="port-license">License</Label>
+        <Input
+          id="port-license"
+          value={license}
+          onChange={e => setPortDetails({ license: e.target.value })}
+          placeholder="MIT"
+          list="submission-license-suggestions"
+        />
+        <datalist id="submission-license-suggestions">
+          {LICENSE_SUGGESTIONS.map(option => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+      </div>
+
+      <div className="flex flex-col gap-2">
         <Label htmlFor="submitter-name">Your Name</Label>
         <Input
           id="submitter-name"
@@ -138,7 +156,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         <Button variant="secondary" onClick={onBack}>
           Back
         </Button>
-        <Button onClick={onNext} disabled={!name || !submitterName || !submitterEmail}>
+        <Button onClick={onNext} disabled={!name || !license || !submitterName || !submitterEmail}>
           Next
         </Button>
       </div>

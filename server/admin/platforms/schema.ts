@@ -31,7 +31,8 @@ export const platformSchema = z.object({
   installInstructions: z.string().optional(),
   themeCreationDocs: z.string().optional(),
   isFeatured: z.boolean().default(false),
-  licenseId: z.string().optional(),
+  order: z.preprocess((v) => parseInt(String(v), 10) || 0, z.number().int()).optional().default(0),
+  license: z.string().trim().max(120).optional().or(z.literal("")),
 })
 
 export type PlatformSchema = z.infer<typeof platformSchema>
