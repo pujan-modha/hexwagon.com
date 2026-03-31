@@ -10,21 +10,24 @@ import { H4 } from "~/components/common/heading";
 import { Link } from "~/components/common/link";
 import { Skeleton } from "~/components/common/skeleton";
 import { Favicon } from "~/components/web/ui/favicon";
+import { platformHref } from "~/lib/catalogue";
 import type { PlatformMany } from "~/server/web/platforms/payloads";
 type PlatformCardProps = Omit<ComponentProps<typeof Card>, "href"> & {
   platform: PlatformMany;
   showCount?: boolean;
+  href?: string;
 };
 
 const PlatformCard = ({
   platform,
   showCount,
+  href,
   className,
   ...props
 }: PlatformCardProps) => {
   return (
     <Card asChild className={className} {...props}>
-      <Link href={`/platforms/${platform.slug}`}>
+      <Link href={href ?? platformHref(platform.slug)}>
         <CardHeader wrap={false}>
           <Favicon src={platform.faviconUrl} title={platform.name} plain />
 

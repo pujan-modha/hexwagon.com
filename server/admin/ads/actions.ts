@@ -19,11 +19,11 @@ const adSpotPricingSchema = z.object({
   banner: z.number().positive(),
   listing: z.number().positive(),
   sidebar: z.number().positive(),
+  footer: z.number().positive(),
 });
 
 const adSettingsSchema = z.object({
   maxDiscountPercentage: z.number().int().min(0).max(100),
-  targetingUnitPrice: z.number().min(0),
 });
 
 const adIdSchema = z.object({ id: z.string() });
@@ -204,11 +204,12 @@ export const updateAd = adminProcedure
 export const updateAdPricing = adminProcedure
   .createServerAction()
   .input(adSpotPricingSchema)
-  .handler(async ({ input: { banner, listing, sidebar } }) => {
+  .handler(async ({ input: { banner, listing, sidebar, footer } }) => {
     const spots = [
       { spot: "Banner" as const, priceCents: Math.round(banner * 100) },
       { spot: "Listing" as const, priceCents: Math.round(listing * 100) },
       { spot: "Sidebar" as const, priceCents: Math.round(sidebar * 100) },
+      { spot: "Footer" as const, priceCents: Math.round(footer * 100) },
     ];
 
     for (const { spot, priceCents } of spots) {
@@ -229,18 +230,16 @@ export const updateAdPricing = adminProcedure
 export const updateAdSettings = adminProcedure
   .createServerAction()
   .input(adSettingsSchema)
-  .handler(async ({ input: { maxDiscountPercentage, targetingUnitPrice } }) => {
-    const targetingUnitPriceCents = Math.round(targetingUnitPrice * 100);
-
+  .handler(async ({ input: { maxDiscountPercentage } }) => {
     await db.adConfig.upsert({
       where: { id: 1 },
-      create: { id: 1, maxDiscountPercentage, targetingUnitPriceCents },
-      update: { maxDiscountPercentage, targetingUnitPriceCents },
+      create: { id: 1, maxDiscountPercentage },
+      update: { maxDiscountPercentage },
     });
 
     revalidatePath("/admin/ads");
     revalidatePath("/advertise");
     revalidateTag("ad-settings", "max");
 
-    return { maxDiscountPercentage, targetingUnitPrice };
+    return { maxDiscountPercentage };
   });

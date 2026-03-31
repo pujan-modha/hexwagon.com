@@ -11,13 +11,13 @@ export const findCommentsByPort = async (portId: string) => {
       id: true,
       content: true,
       createdAt: true,
-      author: { select: { id: true, name: true, image: true } },
+      author: { select: { id: true, name: true, email: true, image: true } },
       replies: {
         select: {
           id: true,
           content: true,
           createdAt: true,
-          author: { select: { id: true, name: true, image: true } },
+          author: { select: { id: true, name: true, email: true, image: true } },
         },
         orderBy: { createdAt: "asc" },
       },

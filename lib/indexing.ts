@@ -1,33 +1,40 @@
-import { type Prisma, PortStatus } from "@prisma/client"
-import { platformManyPayload } from "~/server/web/platforms/payloads"
-import { tagManyPayload } from "~/server/web/tags/payloads"
-import { themeManyPayload } from "~/server/web/themes/payloads"
-import { db } from "~/services/db"
-import { getMeiliIndex } from "~/services/meilisearch"
+import { type Prisma, PortStatus } from "@prisma/client";
+import { platformManyPayload } from "~/server/web/platforms/payloads";
+import { tagManyPayload } from "~/server/web/tags/payloads";
+import { themeManyPayload } from "~/server/web/themes/payloads";
+import { db } from "~/services/db";
+import { getMeiliIndex } from "~/services/meilisearch";
 
 /**
  * Index ports in MeiliSearch
  * @returns Enqueued task
  */
-export const indexPorts = async ({ where }: { where?: Prisma.PortWhereInput }) => {
+export const indexPorts = async ({
+  where,
+}: {
+  where?: Prisma.PortWhereInput;
+}) => {
   const ports = await db.port.findMany({
-    where: { status: { in: [PortStatus.Scheduled, PortStatus.Published] }, ...where },
+    where: {
+      status: { in: [PortStatus.Scheduled, PortStatus.Published] },
+      ...where,
+    },
     include: {
       theme: { select: themeManyPayload },
       platform: { select: platformManyPayload },
       tags: { select: tagManyPayload },
     },
-  })
+  });
 
-  if (!ports.length) return
+  if (!ports.length) return;
 
   return await getMeiliIndex("ports").addDocuments(
-    ports.map(port => ({
+    ports.map((port) => ({
       id: port.id,
       name: port.name,
       slug: port.slug,
       description: port.description,
-      websiteUrl: port.websiteUrl,
+      websiteUrl: port.repositoryUrl,
       faviconUrl: port.faviconUrl,
       isFeatured: port.isFeatured,
       score: port.score,
@@ -35,22 +42,26 @@ export const indexPorts = async ({ where }: { where?: Prisma.PortWhereInput }) =
       status: port.status,
       theme: port.theme.name,
       platform: port.platform.name,
-      tags: port.tags.map(t => t.slug),
+      tags: port.tags.map((t) => t.slug),
     })),
-  )
-}
+  );
+};
 
 /**
  * Index themes in MeiliSearch
  * @returns Enqueued task
  */
-export const indexThemes = async ({ where }: { where?: Prisma.ThemeWhereInput }) => {
-  const themes = await db.theme.findMany({ where })
+export const indexThemes = async ({
+  where,
+}: {
+  where?: Prisma.ThemeWhereInput;
+}) => {
+  const themes = await db.theme.findMany({ where });
 
-  if (!themes.length) return
+  if (!themes.length) return;
 
   return await getMeiliIndex("themes").addDocuments(
-    themes.map(theme => ({
+    themes.map((theme) => ({
       id: theme.id,
       name: theme.name,
       slug: theme.slug,
@@ -59,21 +70,25 @@ export const indexThemes = async ({ where }: { where?: Prisma.ThemeWhereInput })
       faviconUrl: theme.faviconUrl,
       pageviews: theme.pageviews,
     })),
-  )
-}
+  );
+};
 
 /**
  * Index platforms in MeiliSearch
  * @param platforms
  * @returns Enqueued task
  */
-export const indexPlatforms = async ({ where }: { where?: Prisma.PlatformWhereInput }) => {
-  const platforms = await db.platform.findMany({ where })
+export const indexPlatforms = async ({
+  where,
+}: {
+  where?: Prisma.PlatformWhereInput;
+}) => {
+  const platforms = await db.platform.findMany({ where });
 
-  if (!platforms.length) return
+  if (!platforms.length) return;
 
   return await getMeiliIndex("platforms").addDocuments(
-    platforms.map(platform => ({
+    platforms.map((platform) => ({
       id: platform.id,
       name: platform.name,
       slug: platform.slug,
@@ -82,9 +97,9 @@ export const indexPlatforms = async ({ where }: { where?: Prisma.PlatformWhereIn
       faviconUrl: platform.faviconUrl,
       pageviews: platform.pageviews,
     })),
-  )
-}
+  );
+};
 
-export const indexTools = indexPorts
-export const indexAlternatives = indexThemes
-export const indexCategories = indexPlatforms
+export const indexTools = indexPorts;
+export const indexAlternatives = indexThemes;
+export const indexCategories = indexPlatforms;

@@ -9,7 +9,6 @@ type PortSearchResult = {
   slug: string
   name: string
   websiteUrl: string
-  faviconUrl?: string
 }
 
 type ThemeSearchResult = {
@@ -33,7 +32,7 @@ export const searchItems = createServerAction()
         getMeiliIndex("ports").search<PortSearchResult>(query, {
           rankingScoreThreshold: 0.5,
           hybrid: { embedder: "openAi", semanticRatio: 0.5 },
-          attributesToRetrieve: ["slug", "name", "websiteUrl", "faviconUrl"],
+          attributesToRetrieve: ["slug", "name", "websiteUrl"],
           filter: ["status = 'Published'"],
           sort: ["isFeatured:desc", "score:desc"],
         }),

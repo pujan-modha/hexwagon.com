@@ -1,25 +1,31 @@
-import type { Dispatch, SetStateAction } from "react"
+"use client";
+
+import type { Dispatch, SetStateAction } from "react";
 import {
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "~/components/common/dialog"
-import { Dialog } from "~/components/common/dialog"
-import { Login } from "~/components/web/auth/login"
-import { useSession } from "~/lib/auth-client"
+} from "~/components/common/dialog";
+import { Dialog } from "~/components/common/dialog";
+import { Login } from "~/components/web/auth/login";
+import { useSession } from "~/lib/auth-client";
 
 type LoginDialogProps = {
-  description?: string
-  isOpen: boolean
-  setIsOpen: Dispatch<SetStateAction<boolean>>
-}
+  description?: string;
+  isOpen: boolean;
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
+};
 
-export const LoginDialog = ({ description, isOpen, setIsOpen }: LoginDialogProps) => {
-  const { data: session } = useSession()
+export const LoginDialog = ({
+  description,
+  isOpen,
+  setIsOpen,
+}: LoginDialogProps) => {
+  const { data: session } = useSession();
 
   if (session?.user) {
-    return null
+    return null;
   }
 
   return (
@@ -30,7 +36,8 @@ export const LoginDialog = ({ description, isOpen, setIsOpen }: LoginDialogProps
 
           <DialogDescription>
             <p>
-              {description || "Join the open source community and get access to the dashboard."}
+              {description ||
+                "Join the open source community and get access to the dashboard."}
             </p>
           </DialogDescription>
         </DialogHeader>
@@ -38,5 +45,5 @@ export const LoginDialog = ({ description, isOpen, setIsOpen }: LoginDialogProps
         <Login />
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

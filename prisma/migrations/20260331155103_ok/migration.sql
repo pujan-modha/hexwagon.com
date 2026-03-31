@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "AdConfig" ALTER COLUMN "id" SET DEFAULT 1,
+ALTER COLUMN "updatedAt" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "AdSpotPricing" ALTER COLUMN "updatedAt" DROP DEFAULT;

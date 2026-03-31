@@ -10,8 +10,6 @@ type SubmissionState = {
   description: string;
   content: string;
   repositoryUrl: string;
-  installUrl: string;
-  websiteUrl: string;
   license: string;
   submitterName: string;
   submitterEmail: string;
@@ -26,8 +24,6 @@ type SubmissionState = {
     description?: string;
     content?: string;
     repositoryUrl?: string;
-    installUrl?: string;
-    websiteUrl?: string;
     license?: string;
     submitterName?: string;
     submitterEmail?: string;
@@ -47,8 +43,6 @@ const initialState = {
   description: "",
   content: "",
   repositoryUrl: "",
-  installUrl: "",
-  websiteUrl: "",
   license: "",
   submitterName: "",
   submitterEmail: "",

@@ -21,9 +21,6 @@
     "postinstall": "bun run db:generate"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.2.12",
-    "@ai-sdk/google": "^1.2.19",
-    "@ai-sdk/react": "^1.2.12",
     "@atproto/api": "^0.15.16",
     "@aws-sdk/client-s3": "^3.832.0",
     "@aws-sdk/lib-storage": "^3.832.0",
@@ -33,7 +30,6 @@
     "@hookform/resolvers": "^3.10.0",
     "@mantine/hooks": "^8.1.1",
     "@number-flow/react": "^0.5.10",
-    "@octokit/graphql": "^9.0.1",
     "@primoui/utils": "^1.1.8",
     "@prisma/client": "6.5.0",
     "@radix-ui/react-tabs": "^1.1.13",
@@ -42,7 +38,6 @@
     "@tanstack/react-table": "^8.21.3",
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.35.0",
-    "ai": "^4.3.16",
     "better-auth": "^1.2.9",
     "change-case": "^5.4.4",
     "cmdk": "^1.1.1",

@@ -19,8 +19,6 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
     description,
     content,
     repositoryUrl,
-    installUrl,
-    websiteUrl,
     license,
     submitterName,
     submitterEmail,
@@ -63,35 +61,13 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="repository-url">Repository URL</Label>
+        <Label htmlFor="repository-url">Port URL</Label>
         <Input
           id="repository-url"
           type="url"
           value={repositoryUrl}
           onChange={(e) => setPortDetails({ repositoryUrl: e.target.value })}
-          placeholder="https://github.com/..."
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="install-url">Install URL (optional)</Label>
-        <Input
-          id="install-url"
-          type="url"
-          value={installUrl}
-          onChange={(e) => setPortDetails({ installUrl: e.target.value })}
-          placeholder="https://..."
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="website-url">Website URL (optional)</Label>
-        <Input
-          id="website-url"
-          type="url"
-          value={websiteUrl}
-          onChange={(e) => setPortDetails({ websiteUrl: e.target.value })}
-          placeholder="https://..."
+          placeholder="https://example.com/..."
         />
       </div>
 
@@ -160,7 +136,13 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         </Button>
         <Button
           onClick={onNext}
-          disabled={!name || !license || !submitterName || !submitterEmail}
+          disabled={
+            !name ||
+            !repositoryUrl ||
+            !license ||
+            !submitterName ||
+            !submitterEmail
+          }
         >
           Next
         </Button>

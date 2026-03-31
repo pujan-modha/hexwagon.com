@@ -13,6 +13,7 @@ import { findPlatform } from "~/server/web/platforms/queries";
 import { findThemes } from "~/server/web/themes/queries";
 import { EntityHeader } from "~/components/catalogue/entity-header";
 import { EntityTabs } from "~/components/catalogue/entity-tabs";
+import { EntityReportButton } from "~/components/catalogue/entity-report-button";
 import { PlatformThemesTab } from "~/components/catalogue/platform-themes-tab";
 import { MarkdownContent } from "~/components/catalogue/markdown-content";
 import { PlatformThemeDocsTab } from "~/components/catalogue/platform-theme-docs-tab";
@@ -66,7 +67,7 @@ export default async function PlatformPage(props: PageProps) {
       label: `Themes (${platform._count.ports})`,
       content: (
         <Suspense fallback={<div>Loading...</div>}>
-          <PlatformThemesTab themes={themes} />
+          <PlatformThemesTab themes={themes} platformSlug={platform.slug} />
         </Suspense>
       ),
     },
@@ -101,7 +102,14 @@ export default async function PlatformPage(props: PageProps) {
           <EntityHeader
             name={platform.name}
             description={platform.description}
-            externalUrl={platform.websiteUrl ?? undefined}
+            logoSrc={platform.faviconUrl}
+            actions={(
+              <EntityReportButton
+                entityType="platform"
+                entityId={platform.id}
+                entityName={platform.name}
+              />
+            )}
           />
 
           <EntityTabs tabs={tabs} defaultTab="themes" />
@@ -147,10 +155,10 @@ export default async function PlatformPage(props: PageProps) {
             })}`}
           />
 
-          <Suspense fallback={<AdCardSkeleton />}>
+          <Suspense fallback={<AdCardSkeleton className="min-h-[190px]" />}>
             <AdCard
+              className="min-h-[190px]"
               where={{ type: { in: [AdType.Sidebar, AdType.PlatformPage] } }}
-              sidebarTargeting={{ platformSlug: platform.slug }}
             />
           </Suspense>
         </Section.Sidebar>

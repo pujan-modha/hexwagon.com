@@ -16,6 +16,7 @@ import { PortDetail } from "~/components/catalogue/port-detail";
 import { CommentThread } from "~/components/web/comments/comment-thread";
 import { CommentForm } from "~/components/web/comments/comment-form";
 import { PageViewEvent } from "~/components/analytics/page-view-event";
+import { EntityReportButton } from "~/components/catalogue/entity-report-button";
 
 type PageProps = {
   params: Promise<{ slug: string; platform: string; portId: string }>;
@@ -90,6 +91,13 @@ export default async function ThemePortPage(props: PageProps) {
           <PortDetail
             port={port}
             canonicalUrl={`/themes/${slug}/${platform}/${portId}`}
+            reportButton={(
+              <EntityReportButton
+                entityType="port"
+                entityId={port.id}
+                entityName={port.name ?? `${port.theme.name} for ${port.platform.name}`}
+              />
+            )}
           />
 
           <div className="mt-8">
@@ -110,24 +118,14 @@ export default async function ThemePortPage(props: PageProps) {
                   label: "Theme",
                   value: port.theme.name,
                   link: `/themes/${port.theme.slug}`,
-                  icon: <Icon name="lucide/layers-3" />,
+                  icon: <Icon name="lucide/badge-check" />,
                 },
                 {
                   label: "Platform",
                   value: port.platform.name,
                   link: `/platforms/${port.platform.slug}`,
-                  icon: <Icon name="lucide/layout-grid" />,
+                  icon: <Icon name="lucide/arrow-right" />,
                 },
-                port.websiteUrl
-                  ? {
-                      label: "Website",
-                      value: port.websiteUrl
-                        .replace(/^https?:\/\//, "")
-                        .replace(/\/$/, ""),
-                      link: port.websiteUrl,
-                      icon: <Icon name="lucide/globe" />,
-                    }
-                  : undefined,
                 {
                   label: "Submitted",
                   value: port.createdAt.toLocaleDateString("en-US", {
@@ -139,14 +137,8 @@ export default async function ThemePortPage(props: PageProps) {
                 },
               ].filter(Boolean) as any
             }
-            buttonHref={port.websiteUrl ?? port.repositoryUrl ?? undefined}
-            buttonLabel={
-              port.websiteUrl
-                ? "Visit Website"
-                : port.repositoryUrl
-                  ? "View Repository"
-                  : undefined
-            }
+            buttonHref={port.repositoryUrl ?? undefined}
+            buttonLabel={port.repositoryUrl ? "Open Port Link" : undefined}
             footer={`Updated ${port.updatedAt.toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
@@ -154,13 +146,10 @@ export default async function ThemePortPage(props: PageProps) {
             })}`}
           />
 
-          <Suspense fallback={<AdCardSkeleton />}>
+          <Suspense fallback={<AdCardSkeleton className="min-h-[190px]" />}>
             <AdCard
+              className="min-h-[190px]"
               where={{ type: { in: [AdType.Sidebar, AdType.PortPage] } }}
-              sidebarTargeting={{
-                themeSlug: port.theme.slug,
-                platformSlug: port.platform.slug,
-              }}
             />
           </Suspense>
         </Section.Sidebar>

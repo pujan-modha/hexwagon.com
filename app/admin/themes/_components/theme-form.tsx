@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { getRandomString, isValidUrl, slugify } from "@primoui/utils";
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
-import { use, useState } from "react";
+import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -36,7 +36,7 @@ import { upsertTheme } from "~/server/admin/themes/actions";
 import type { findThemeBySlug } from "~/server/admin/themes/queries";
 import { themeSchema } from "~/server/admin/themes/schema";
 import { ThemeActions } from "./theme-actions";
-import { ThemeGenerateDescription } from "./theme-generate-description";
+import { ThemeMaintainersManager } from "./theme-maintainers-manager";
 import { PaletteGroupEditor } from "./palette-group-editor";
 import { cx } from "~/utils/cva";
 
@@ -63,13 +63,9 @@ export function ThemeForm({
       repositoryUrl: theme?.repositoryUrl ?? "",
       description: theme?.description ?? "",
       faviconUrl: theme?.faviconUrl ?? "",
-      author: theme?.author ?? "",
-      authorUrl: theme?.authorUrl ?? "",
       guidelines: theme?.guidelines ?? "",
       isFeatured: theme?.isFeatured ?? false,
       order: theme?.order ?? 0,
-      discountCode: theme?.discountCode ?? "",
-      discountAmount: theme?.discountAmount ?? "",
       license: theme?.license ?? "",
       palettes: (() => {
         if (!theme?.colors || theme.colors.length === 0) return [];
@@ -155,8 +151,6 @@ export function ThemeForm({
           <H3 className="flex-1 truncate">{title}</H3>
 
           <Stack size="sm" className="-my-0.5">
-            <ThemeGenerateDescription />
-
             {theme && <ThemeActions theme={theme} className="ml-auto" />}
           </Stack>
 
@@ -180,6 +174,13 @@ export function ThemeForm({
           noValidate
           {...props}
         >
+          {theme && (
+            <ThemeMaintainersManager
+              themeId={theme.id}
+              maintainers={theme.maintainers}
+            />
+          )}
+
           <FormField
             control={form.control}
             name="name"
@@ -261,34 +262,6 @@ export function ThemeForm({
 
           <FormField
             control={form.control}
-            name="author"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Author</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="authorUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Author URL</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="description"
             render={({ field }) => (
               <FormItem className="col-span-full">
@@ -344,36 +317,6 @@ export function ThemeForm({
               </FormItem>
             )}
           />
-
-          <div className="grid gap-4 @2xl:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="discountCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Discount Code</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="discountAmount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Discount Amount</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
           <div className="grid gap-4 @2xl:grid-cols-2">
             <FormField

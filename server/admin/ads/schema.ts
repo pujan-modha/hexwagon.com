@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { adStatus } from "~/utils/ads";
 
-export const adSpotValues = ["Banner", "Listing", "Sidebar"] as const;
+export const adSpotValues = ["Banner", "Listing", "Sidebar", "Footer"] as const;
 
 export const adStatusValues = [
   adStatus.Pending,

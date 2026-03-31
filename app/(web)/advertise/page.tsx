@@ -46,7 +46,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
         <Testimonial key={testimonial.quote} {...testimonial} />
       ))}
 
-      <Advertisers />
+      {/* <Advertisers /> */}
 
       <hr />
 

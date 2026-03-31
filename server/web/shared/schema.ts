@@ -8,7 +8,6 @@ import {
 } from "nuqs/server";
 import { z } from "zod";
 import { config } from "~/config";
-import { githubRegex } from "~/lib/github/utils";
 
 export const filterParamsSchema = {
   q: parseAsString.withDefault(""),
@@ -23,24 +22,19 @@ export const filterParamsSchema = {
 export const filterParamsCache = createSearchParamsCache(filterParamsSchema);
 export type FilterSchema = Awaited<ReturnType<typeof filterParamsCache.parse>>;
 
-const repositoryMessage =
-  "Please enter a valid GitHub repository URL (e.g. https://github.com/owner/name)";
+const portUrlMessage = "Please enter a valid port URL";
 
 export const repositorySchema = z
   .string()
-  .min(1, "Repository is required")
-  .url(repositoryMessage)
-  .trim()
-  .toLowerCase()
-  .regex(githubRegex, repositoryMessage);
+  .min(1, "Port URL is required")
+  .url(portUrlMessage)
+  .trim();
 
 export const submitPortSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   content: z.string().optional(),
-  websiteUrl: z.string().url("Invalid URL").trim().optional().or(z.literal("")),
-  repositoryUrl: repositorySchema.optional(),
-  installUrl: z.string().url().optional().or(z.literal("")),
+  repositoryUrl: repositorySchema,
   submitterName: z.string().min(1, "Your name is required"),
   submitterEmail: z.string().email("Please enter a valid email address"),
   submitterNote: z.string().max(200),

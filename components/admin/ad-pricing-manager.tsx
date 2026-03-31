@@ -21,6 +21,7 @@ export const AdPricingManager = ({ initialPricing }: AdPricingManagerProps) => {
     Banner: centsToDollars(initialPricing.Banner),
     Listing: centsToDollars(initialPricing.Listing),
     Sidebar: centsToDollars(initialPricing.Sidebar),
+    Footer: centsToDollars(initialPricing.Footer),
   });
 
   const { execute, isPending } = useServerAction(updateAdPricing, {
@@ -32,9 +33,10 @@ export const AdPricingManager = ({ initialPricing }: AdPricingManagerProps) => {
     const banner = Number(prices.Banner);
     const listing = Number(prices.Listing);
     const sidebar = Number(prices.Sidebar);
+    const footer = Number(prices.Footer);
 
     if (
-      ![banner, listing, sidebar].every(
+      ![banner, listing, sidebar, footer].every(
         (value) => Number.isFinite(value) && value > 0,
       )
     ) {
@@ -42,7 +44,7 @@ export const AdPricingManager = ({ initialPricing }: AdPricingManagerProps) => {
       return;
     }
 
-    execute({ banner, listing, sidebar });
+    execute({ banner, listing, sidebar, footer });
   };
 
   return (

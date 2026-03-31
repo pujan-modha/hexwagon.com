@@ -14,55 +14,16 @@ import { stripe } from "~/services/stripe";
 import { adStatus, calculateAdsPrice } from "~/utils/ads";
 import { tryCatch } from "~/utils/helpers";
 
-export const createStripeToolCheckout = createServerAction()
-  .input(
-    z.object({
-      priceId: z.string(),
-      tool: z.string(),
-      mode: z.enum(["subscription", "payment"]),
-      coupon: z.string().optional(),
-    }),
-  )
-  .handler(async ({ input: { priceId, tool, mode, coupon } }) => {
-    const checkout = await stripe.checkout.sessions.create({
-      mode,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${env.NEXT_PUBLIC_SITE_URL}/submit/${tool}/success`,
-      cancel_url: `${env.NEXT_PUBLIC_SITE_URL}/submit/${tool}?cancelled=true`,
-      automatic_tax: { enabled: true },
-      tax_id_collection: { enabled: true },
-      invoice_creation: mode === "payment" ? { enabled: true } : undefined,
-      metadata: mode === "payment" ? { tool } : undefined,
-      subscription_data:
-        mode === "subscription" ? { metadata: { tool } } : undefined,
-      allow_promotion_codes: coupon ? undefined : true,
-      discounts: coupon ? [{ coupon }] : undefined,
-    });
-
-    if (!checkout.url) {
-      throw new Error("Unable to create a new Stripe Checkout Session.");
-    }
-
-    // Return the checkout session url
-    return checkout.url;
-  });
-
 export const createStripeAdsCheckout = createServerAction()
   .input(
     z.array(
       z.object({
-        type: z.enum([AdType.Banner, AdType.Listing, AdType.Sidebar]),
+        type: z.enum([AdType.Banner, AdType.Listing, AdType.Sidebar, AdType.Footer]),
         duration: z.coerce.number(),
         metadata: z.object({
           startDate: z.coerce.number(),
           endDate: z.coerce.number(),
         }),
-        targeting: z
-          .object({
-            themeSlugs: z.array(z.string()).default([]),
-            platformSlugs: z.array(z.string()).default([]),
-          })
-          .optional(),
       }),
     ),
   )
@@ -72,30 +33,9 @@ export const createStripeAdsCheckout = createServerAction()
       getAdSettings(),
     ]);
 
-    const normalizedAds = ads.map((ad) => ({
-      ...ad,
-      targeting: ad.targeting
-        ? {
-            themeSlugs: [...new Set(ad.targeting.themeSlugs)],
-            platformSlugs: [...new Set(ad.targeting.platformSlugs)],
-          }
-        : undefined,
-    }));
-
-    const hasInvalidTargeting = normalizedAds.some((ad) => {
-      const count =
-        (ad.targeting?.themeSlugs.length ?? 0) +
-        (ad.targeting?.platformSlugs.length ?? 0);
-      return ad.type !== AdType.Sidebar && count > 0;
-    });
-
-    if (hasInvalidTargeting) {
-      throw new Error("Only sidebar ads can include targeting.");
-    }
-
     const basePrice = Math.min(...Object.values(pricing));
     const pricingSummary = calculateAdsPrice(
-      normalizedAds.map(({ type, duration }) => ({
+      ads.map(({ type, duration }) => ({
         price: pricing[type],
         duration,
       })),
@@ -104,62 +44,24 @@ export const createStripeAdsCheckout = createServerAction()
     );
 
     const discountedMultiplier = 1 - pricingSummary.discountPercentage / 100;
-    const targetingUnitPriceCents = Math.round(
-      settings.targetingUnitPrice * 100,
-    );
+    const adData = ads.map(({ type, duration, metadata }) => {
+      const unitAmountCents = Math.round(
+        pricing[type] * discountedMultiplier * 100,
+      );
 
-    const adData = normalizedAds.map(
-      ({ type, duration, metadata, targeting }) => {
-        const targetThemeSlugs =
-          type === AdType.Sidebar ? (targeting?.themeSlugs ?? []) : [];
-        const targetPlatformSlugs =
-          type === AdType.Sidebar ? (targeting?.platformSlugs ?? []) : [];
-        const targetCount =
-          targetThemeSlugs.length + targetPlatformSlugs.length;
-        const unitAmountCents = Math.round(
-          pricing[type] * discountedMultiplier * 100,
-        );
-
-        return {
-          type,
-          startsAt: metadata.startDate,
-          endsAt: metadata.endDate,
-          priceCents:
-            unitAmountCents * duration + targetCount * targetingUnitPriceCents,
-          isTargetedSidebar: type === AdType.Sidebar && targetCount > 0,
-          targetThemeSlugs,
-          targetPlatformSlugs,
-        };
-      },
-    );
-
-    const targetingLineItems = normalizedAds.flatMap(({ type, targeting }) => {
-      if (type !== AdType.Sidebar || !targeting) return [];
-
-      const targetCount =
-        targeting.themeSlugs.length + targeting.platformSlugs.length;
-      if (!targetCount || targetingUnitPriceCents <= 0) return [];
-
-      return [
-        {
-          price_data: {
-            product_data: {
-              name: "Sidebar targeting add-on",
-              description: `${targetCount} ${targetCount === 1 ? "target" : "targets"}`,
-            },
-            unit_amount: targetingUnitPriceCents,
-            currency: "usd",
-          },
-          quantity: targetCount,
-        },
-      ];
+      return {
+        type,
+        startsAt: metadata.startDate,
+        endsAt: metadata.endDate,
+        priceCents: unitAmountCents * duration,
+      };
     });
 
     const checkout = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_creation: "if_required",
       line_items: [
-        ...normalizedAds.map(({ type, duration }) => ({
+        ...ads.map(({ type, duration }) => ({
           price_data: {
             product_data: { name: `${type} Ad` },
             unit_amount: Math.round(pricing[type] * discountedMultiplier * 100),
@@ -167,7 +69,6 @@ export const createStripeAdsCheckout = createServerAction()
           },
           quantity: duration,
         })),
-        ...targetingLineItems,
       ],
       metadata: { ads: JSON.stringify(adData) },
       allow_promotion_codes: true,
@@ -284,9 +185,6 @@ export const createAdFromCheckout = createServerAction()
             startsAt: z.coerce.number().transform((date) => new Date(date)),
             endsAt: z.coerce.number().transform((date) => new Date(date)),
             priceCents: z.coerce.number().int().nonnegative().optional(),
-            isTargetedSidebar: z.boolean().optional().default(false),
-            targetThemeSlugs: z.array(z.string()).default([]),
-            targetPlatformSlugs: z.array(z.string()).default([]),
           }),
         );
 
@@ -294,23 +192,7 @@ export const createAdFromCheckout = createServerAction()
         const parsedAds = adsSchema.parse(JSON.parse(session.metadata.ads));
 
         // Add ads to create later
-        ads.push(
-          ...parsedAds.map((ad) => {
-            const isSidebar = ad.type === AdType.Sidebar;
-            const targetThemeSlugs = isSidebar ? ad.targetThemeSlugs : [];
-            const targetPlatformSlugs = isSidebar ? ad.targetPlatformSlugs : [];
-            const isTargetedSidebar =
-              isSidebar &&
-              targetThemeSlugs.length + targetPlatformSlugs.length > 0;
-
-            return {
-              ...ad,
-              isTargetedSidebar,
-              targetThemeSlugs,
-              targetPlatformSlugs,
-            };
-          }),
-        );
+        ads.push(...parsedAds);
 
         break;
       }

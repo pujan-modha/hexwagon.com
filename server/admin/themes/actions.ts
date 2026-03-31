@@ -113,29 +113,62 @@ export const deleteThemes = adminProcedure
     return true
   })
 
-export const setOfficialPort = adminProcedure
+export const assignThemeMaintainer = adminProcedure
   .createServerAction()
-  .input(z.object({ portId: z.string() }))
-  .handler(async ({ input: { portId } }) => {
-    const port = await db.port.findUniqueOrThrow({
-      where: { id: portId },
-      select: { themeId: true, platformId: true },
+  .input(z.object({ themeId: z.string(), email: z.string().email() }))
+  .handler(async ({ input: { themeId, email } }) => {
+    const [theme, user] = await Promise.all([
+      db.theme.findUnique({ where: { id: themeId }, select: { slug: true } }),
+      db.user.findUnique({ where: { email }, select: { id: true } }),
+    ])
+
+    if (!theme) {
+      throw new Error("Theme not found")
+    }
+
+    if (!user) {
+      throw new Error("User with this email does not exist")
+    }
+
+    await db.themeMaintainer.upsert({
+      where: {
+        userId_themeId: {
+          userId: user.id,
+          themeId,
+        },
+      },
+      create: {
+        userId: user.id,
+        themeId,
+      },
+      update: {},
     })
 
-    // Clear existing official port for same theme+platform
-    await db.port.updateMany({
-      where: { themeId: port.themeId, platformId: port.platformId, isOfficial: true },
-      data: { isOfficial: false },
+    revalidatePath(`/admin/themes/${theme.slug}`)
+    revalidateTag(`theme-${theme.slug}`, "max")
+
+    return { success: true }
+  })
+
+export const removeThemeMaintainer = adminProcedure
+  .createServerAction()
+  .input(z.object({ themeId: z.string(), userId: z.string() }))
+  .handler(async ({ input: { themeId, userId } }) => {
+    const theme = await db.theme.findUnique({
+      where: { id: themeId },
+      select: { slug: true },
     })
 
-    // Set new official port
-    const updatedPort = await db.port.update({
-      where: { id: portId },
-      data: { isOfficial: true },
+    if (!theme) {
+      throw new Error("Theme not found")
+    }
+
+    await db.themeMaintainer.deleteMany({
+      where: { themeId, userId },
     })
 
-    revalidateTag("ports", "max")
-    revalidateTag(`port-${updatedPort.slug}`, "max")
+    revalidatePath(`/admin/themes/${theme.slug}`)
+    revalidateTag(`theme-${theme.slug}`, "max")
 
-    return updatedPort
+    return { success: true }
   })

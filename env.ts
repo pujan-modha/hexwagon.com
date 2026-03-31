@@ -1,5 +1,5 @@
-import { createEnv } from "@t3-oss/env-nextjs"
-import { z } from "zod"
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
 
 export const env = createEnv({
   shared: {
@@ -7,7 +7,7 @@ export const env = createEnv({
     VERCEL_URL: z
       .string()
       .optional()
-      .transform(v => (v ? `https://${v}` : undefined)),
+      .transform((v) => (v ? `https://${v}` : undefined)),
   },
 
   /**
@@ -15,8 +15,12 @@ export const env = createEnv({
    * built with invalid env vars.
    */
   server: {
-    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-    VERCEL_ENV: z.enum(["development", "preview", "production"]).default("development"),
+    NODE_ENV: z
+      .enum(["development", "test", "production"])
+      .default("development"),
+    VERCEL_ENV: z
+      .enum(["development", "preview", "production"])
+      .default("development"),
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.string().min(1).url(),
     AUTH_GOOGLE_ID: z.string().min(1),
@@ -37,8 +41,6 @@ export const env = createEnv({
     S3_PUBLIC_URL: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
-    GITHUB_TOKEN: z.string().min(1),
-    SCREENSHOTONE_ACCESS_KEY: z.string().min(1),
     PLAUSIBLE_API_KEY: z.string().min(1),
     BEEHIIV_API_KEY: z.string().min(1),
     BEEHIIV_PUBLICATION_ID: z.string().min(1),
@@ -49,10 +51,6 @@ export const env = createEnv({
     BLUESKY_USERNAME: z.string().optional(),
     BLUESKY_PASSWORD: z.string().optional(),
     MASTODON_ACCESS_TOKEN: z.string().optional(),
-    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
-    ANTHROPIC_API_KEY: z.string().min(1),
-    OPENAI_API_KEY: z.string().min(1),
-    JINA_API_KEY: z.string().optional(),
   },
 
   /**
@@ -93,8 +91,9 @@ export const env = createEnv({
    * `SOME_VAR: z.string()` and `SOME_VAR=''` will throw an error.
    */
   emptyStringAsUndefined: true,
-})
+});
 
 export const isProd =
-  process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production"
-export const isDev = !isProd
+  process.env.NODE_ENV === "production" ||
+  process.env.VERCEL_ENV === "production";
+export const isDev = !isProd;

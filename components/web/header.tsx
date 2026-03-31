@@ -3,13 +3,6 @@
 import { usePathname } from "next/navigation";
 import { type ComponentProps, useEffect, useState } from "react";
 import { Button } from "~/components/common/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/common/dropdown-menu";
 import { Icon } from "~/components/common/icon";
 import { Link } from "~/components/common/link";
 import { Stack } from "~/components/common/stack";
@@ -71,49 +64,6 @@ const Header = ({ children, className, session, ...props }: HeaderProps) => {
           </Stack>
 
           <nav className="flex flex-wrap gap-4 max-md:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className={cx(navLinkVariants({ className: "gap-1" }))}
-              >
-                Browse{" "}
-                <Icon
-                  name="lucide/chevron-down"
-                  className="group-data-[state=open]:-rotate-180 duration-200"
-                />
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem asChild>
-                  <NavLink href="/themes">
-                    <Icon
-                      name="lucide/tags"
-                      className="shrink-0 size-4 opacity-75"
-                    />{" "}
-                    Themes
-                  </NavLink>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <NavLink href="/platforms">
-                    <Icon
-                      name="lucide/blocks"
-                      className="shrink-0 size-4 opacity-75"
-                    />{" "}
-                    Platforms
-                  </NavLink>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <NavLink href="/coming-soon">
-                    <Icon
-                      name="lucide/clock"
-                      className="shrink-0 size-4 opacity-75"
-                    />{" "}
-                    Coming Soon
-                  </NavLink>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             <NavLink href="/themes">Themes</NavLink>
             <NavLink href="/platforms">Platforms</NavLink>
             <NavLink href="/advertise">Advertise</NavLink>
@@ -149,9 +99,6 @@ const Header = ({ children, className, session, ...props }: HeaderProps) => {
           </NavLink>
           <NavLink href="/platforms" className="text-base">
             Platforms
-          </NavLink>
-          <NavLink href="/coming-soon" className="text-base">
-            Coming Soon
           </NavLink>
           <NavLink href="/submit" className="text-base">
             Submit

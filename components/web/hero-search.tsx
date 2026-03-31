@@ -1,0 +1,350 @@
+"use client"
+
+import { useDebouncedState } from "@mantine/hooks"
+import { useRouter } from "next/navigation"
+import { type FormEvent, useEffect, useRef, useState } from "react"
+import { useServerAction } from "zsa-react"
+import { searchItems } from "~/actions/search"
+import { Button } from "~/components/common/button"
+import { Icon } from "~/components/common/icon"
+import { platformHref, themeHref, themePlatformHref } from "~/lib/catalogue"
+import { cx } from "~/utils/cva"
+
+const THEME_PLACEHOLDERS = [
+  "Tokyo Night",
+  "Catppuccin",
+  "Gruvbox",
+  "Nord",
+  "One Dark",
+  "Solarized",
+]
+
+const PLATFORM_PLACEHOLDERS = [
+  "VS Code",
+  "Neovim",
+  "JetBrains",
+  "Terminal",
+  "Sublime Text",
+  "Vim",
+]
+
+type ThemeHit = {
+  slug: string
+  name: string
+  faviconUrl?: string
+}
+
+type PlatformHit = {
+  slug: string
+  name: string
+}
+
+type ActiveField = "theme" | "platform" | null
+
+const normalize = (value: string) => value.trim()
+
+const queryHref = (pathname: string, query: string) => {
+  const params = new URLSearchParams({ q: query })
+  return `${pathname}?${params.toString()}`
+}
+
+export const HeroSearch = () => {
+  const router = useRouter()
+  const formRef = useRef<HTMLFormElement>(null)
+
+  const [theme, setTheme] = useState("")
+  const [platform, setPlatform] = useState("")
+  const [themePlaceholder, setThemePlaceholder] = useState(THEME_PLACEHOLDERS[0] ?? "")
+  const [platformPlaceholder, setPlatformPlaceholder] = useState(
+    PLATFORM_PLACEHOLDERS[0] ?? "",
+  )
+  const [themeResults, setThemeResults] = useState<ThemeHit[]>([])
+  const [platformResults, setPlatformResults] = useState<PlatformHit[]>([])
+  const [activeField, setActiveField] = useState<ActiveField>(null)
+
+  const [debouncedTheme, setDebouncedTheme] = useDebouncedState("", 350)
+  const [debouncedPlatform, setDebouncedPlatform] = useDebouncedState("", 350)
+
+  useEffect(() => {
+    let themeIndex = 0
+    let platformIndex = 0
+
+    const interval = setInterval(() => {
+      themeIndex = (themeIndex + 1) % THEME_PLACEHOLDERS.length
+      platformIndex = (platformIndex + 1) % PLATFORM_PLACEHOLDERS.length
+
+      setThemePlaceholder(THEME_PLACEHOLDERS[themeIndex] ?? "")
+      setPlatformPlaceholder(PLATFORM_PLACEHOLDERS[platformIndex] ?? "")
+    }, 4500)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target
+      if (!(target instanceof Node)) return
+
+      if (!formRef.current?.contains(target)) {
+        setActiveField(null)
+      }
+    }
+
+    document.addEventListener("mousedown", onMouseDown)
+    return () => document.removeEventListener("mousedown", onMouseDown)
+  }, [])
+
+  const themeSearch = useServerAction(searchItems, {
+    onSuccess: ({ data }) => {
+      const hits = data?.[1]?.hits
+      setThemeResults(Array.isArray(hits) ? (hits as ThemeHit[]).slice(0, 5) : [])
+    },
+    onError: () => setThemeResults([]),
+  })
+
+  const platformSearch = useServerAction(searchItems, {
+    onSuccess: ({ data }) => {
+      const hits = data?.[2]?.hits
+      setPlatformResults(Array.isArray(hits) ? (hits as PlatformHit[]).slice(0, 5) : [])
+    },
+    onError: () => setPlatformResults([]),
+  })
+
+  useEffect(() => {
+    const query = normalize(debouncedTheme)
+
+    if (query.length < 2) {
+      setThemeResults([])
+      return
+    }
+
+    themeSearch.execute({ query })
+  }, [debouncedTheme, themeSearch.execute])
+
+  useEffect(() => {
+    const query = normalize(debouncedPlatform)
+
+    if (query.length < 2) {
+      setPlatformResults([])
+      return
+    }
+
+    platformSearch.execute({ query })
+  }, [debouncedPlatform, platformSearch.execute])
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const themeQuery = normalize(theme)
+    const platformQuery = normalize(platform)
+
+    if (!themeQuery && !platformQuery) return
+
+    const topTheme = themeResults[0]
+    const topPlatform = platformResults[0]
+
+    if (themeQuery && platformQuery && topTheme?.slug && topPlatform?.slug) {
+      router.push(themePlatformHref(topTheme.slug, topPlatform.slug))
+      return
+    }
+
+    if (themeQuery && topTheme?.slug) {
+      router.push(themeHref(topTheme.slug))
+      return
+    }
+
+    if (platformQuery && topPlatform?.slug) {
+      router.push(platformHref(topPlatform.slug))
+      return
+    }
+
+    if (themeQuery && platformQuery) {
+      router.push(queryHref("/themes", `${themeQuery} ${platformQuery}`))
+      return
+    }
+
+    if (themeQuery) {
+      router.push(queryHref("/themes", themeQuery))
+      return
+    }
+
+    router.push(queryHref("/platforms", platformQuery))
+  }
+
+  const showThemeSuggestions = normalize(theme).length >= 2
+  const showPlatformSuggestions = normalize(platform).length >= 2
+  const showThemeDropdown = activeField === "theme" && showThemeSuggestions
+  const showPlatformDropdown = activeField === "platform" && showPlatformSuggestions
+  const isPending = themeSearch.isPending || platformSearch.isPending
+
+  return (
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      className="relative mx-auto w-full max-w-3xl px-2"
+      noValidate
+    >
+      <div className="rounded-2xl border border-border/70 bg-background/90 shadow-[0_20px_55px_-35px_hsl(var(--foreground)/0.55)] backdrop-blur">
+        <div className="grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <div className="relative">
+            <SearchField
+              label="Theme"
+              value={theme}
+              placeholder={themePlaceholder}
+              onFieldFocus={() => setActiveField("theme")}
+              onValueChange={(value) => {
+                setTheme(value)
+                setDebouncedTheme(value)
+                setActiveField("theme")
+              }}
+            />
+
+            {showThemeDropdown && (
+              <div className="absolute inset-x-0 top-full z-40 mt-2 px-2">
+                <SuggestionDropdown
+                  isPending={themeSearch.isPending}
+                  emptyText="No theme matches yet"
+                  items={themeResults}
+                  onSelect={(item) => router.push(themeHref(item.slug))}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="relative border-t border-border/70 sm:border-t-0 sm:border-l">
+            <SearchField
+              label="Platform"
+              value={platform}
+              placeholder={platformPlaceholder}
+              onFieldFocus={() => setActiveField("platform")}
+              onValueChange={(value) => {
+                setPlatform(value)
+                setDebouncedPlatform(value)
+                setActiveField("platform")
+              }}
+            />
+
+            {showPlatformDropdown && (
+              <div className="absolute inset-x-0 top-full z-40 mt-2 px-2">
+                <SuggestionDropdown
+                  isPending={platformSearch.isPending}
+                  emptyText="No platform matches yet"
+                  items={platformResults}
+                  onSelect={(item) => router.push(platformHref(item.slug))}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-border/70 p-2 sm:border-t-0 sm:border-l">
+            <Button
+              type="submit"
+              variant="fancy"
+              size="lg"
+              isPending={isPending}
+              prefix={<Icon name="lucide/search" className="size-[1.1em]" />}
+              className="h-full min-h-11 w-full rounded-lg sm:w-auto"
+            >
+              Search
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <p className="mt-3 text-center text-xs text-muted-foreground">
+        Enter both fields to jump to a likely theme-platform pair, or search each independently.
+      </p>
+    </form>
+  )
+}
+
+type SearchFieldProps = {
+  label: string
+  value: string
+  placeholder: string
+  className?: string
+  onFieldFocus: () => void
+  onValueChange: (value: string) => void
+}
+
+const SearchField = ({
+  label,
+  value,
+  placeholder,
+  className,
+  onFieldFocus,
+  onValueChange,
+}: SearchFieldProps) => {
+  return (
+    <label
+      className={cx(
+        "flex min-h-18 flex-col justify-center gap-1 px-4 py-3 text-start transition-colors hover:bg-card/50",
+        className,
+      )}
+    >
+      <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </span>
+
+      <input
+        value={value}
+        onChange={(event) => onValueChange(event.target.value)}
+        onFocus={onFieldFocus}
+        placeholder={placeholder}
+        className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/70 sm:text-base"
+      />
+    </label>
+  )
+}
+
+type SuggestionItem = {
+  slug: string
+  name: string
+}
+
+type SuggestionDropdownProps<T extends SuggestionItem> = {
+  items: T[]
+  isPending: boolean
+  emptyText: string
+  onSelect: (item: T) => void
+}
+
+const SuggestionDropdown = <T extends SuggestionItem>({
+  items,
+  isPending,
+  emptyText,
+  onSelect,
+}: SuggestionDropdownProps<T>) => {
+  return (
+    <div className="rounded-xl border border-border/80 bg-background/95 p-2 shadow-lg backdrop-blur-sm">
+
+      {isPending && (
+        <p className="rounded-md border border-dashed border-border/70 px-3 py-2 text-xs text-muted-foreground/80">
+          Searching...
+        </p>
+      )}
+
+      {!isPending && !items.length && (
+        <p className="rounded-md border border-dashed border-border/70 px-3 py-2 text-xs text-muted-foreground/80">
+          {emptyText}
+        </p>
+      )}
+
+      {!!items.length && (
+        <div className="max-h-52 space-y-1 overflow-y-auto">
+          {items.map((item) => (
+            <button
+              key={item.slug}
+              type="button"
+              className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-sm font-medium text-secondary-foreground hover:bg-accent hover:text-foreground"
+              onClick={() => onSelect(item)}
+            >
+              <span className="truncate">{item.name}</span>
+              <Icon name="lucide/chevron-right" className="size-4 opacity-50" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

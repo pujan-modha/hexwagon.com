@@ -34,12 +34,15 @@ export const searchPorts = async (
     { score: "desc" },
   ];
 
-  if (sort !== "default") {
+  if (sort && sort !== "default" && sort.includes(".")) {
     const [sortBy, sortOrder] = sort.split(".") as [
       keyof typeof orderBy,
       Prisma.SortOrder,
     ];
-    orderBy = { [sortBy]: sortOrder };
+
+    if (sortOrder === "asc" || sortOrder === "desc") {
+      orderBy = { [sortBy]: sortOrder };
+    }
   }
 
   const whereQuery: Prisma.PortWhereInput = {
@@ -79,27 +82,30 @@ export const searchPorts = async (
 export const findPortsByThemeAndPlatform = async (
   themeSlug: string,
   platformSlug: string,
-  search: FilterSchema,
+  search: Partial<FilterSchema> = {},
 ) => {
   "use cache";
 
   cacheTag("ports", `ports-${themeSlug}-${platformSlug}`);
   cacheLife("max");
 
-  const { q, sort, perPage } = search;
-  const take = perPage ?? 20;
+  const { q = "", sort = "default", perPage = 20 } = search;
+  const take = perPage;
 
   let orderBy: Prisma.PortFindManyArgs["orderBy"] = [
     { isFeatured: "desc" },
     { score: "desc" },
   ];
 
-  if (sort !== "default") {
+  if (sort && sort !== "default" && sort.includes(".")) {
     const [sortBy, sortOrder] = sort.split(".") as [
       keyof typeof orderBy,
       Prisma.SortOrder,
     ];
-    orderBy = { [sortBy]: sortOrder };
+
+    if (sortOrder === "asc" || sortOrder === "desc") {
+      orderBy = { [sortBy]: sortOrder };
+    }
   }
 
   const whereQuery: Prisma.PortWhereInput = {

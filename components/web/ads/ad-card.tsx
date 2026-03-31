@@ -14,20 +14,13 @@ import { Skeleton } from "~/components/common/skeleton";
 import { Favicon } from "~/components/web/ui/favicon";
 import { config } from "~/config";
 import type { AdOne } from "~/server/web/ads/payloads";
-import { findAd, findSidebarAdForContext } from "~/server/web/ads/queries";
+import { findAd } from "~/server/web/ads/queries";
 import { cx } from "~/utils/cva";
 import { AdPreviewCard } from "./ad-preview";
-
-type AdSidebarTargeting = {
-  themeSlug?: string | null;
-  platformSlug?: string | null;
-};
 
 type AdCardProps = CardProps & {
   // Database query conditions to find a specific ad
   where?: Prisma.AdWhereInput;
-  // Optional sidebar context to resolve targeted ads for theme/platform/port pages
-  sidebarTargeting?: AdSidebarTargeting;
   // Override ad data without database query
   overrideAd?: AdOne | null;
   // Default values to merge with the fallback ad
@@ -37,7 +30,6 @@ type AdCardProps = CardProps & {
 const AdCard = async ({
   className,
   where,
-  sidebarTargeting,
   overrideAd,
   defaultOverride,
   ...props
@@ -47,11 +39,7 @@ const AdCard = async ({
 
   // Resolve the ad data from the override or database (don't query if override is defined)
   const resolvedAd =
-    overrideAd !== undefined
-      ? overrideAd
-      : sidebarTargeting
-        ? await findSidebarAdForContext({ where, targeting: sidebarTargeting })
-        : await findAd({ where });
+    overrideAd !== undefined ? overrideAd : await findAd({ where });
 
   // Final ad data to display
   const ad = resolvedAd ?? defaultAd;

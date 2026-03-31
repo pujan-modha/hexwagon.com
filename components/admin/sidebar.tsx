@@ -53,7 +53,7 @@ export const Sidebar = () => {
         {
           title: "Ads",
           href: "/admin/ads",
-          prefix: <Icon name="lucide/badge-dollar-sign" />,
+          prefix: <Icon name="lucide/gem" />,
         },
         {
           title: "Ports",
@@ -84,6 +84,11 @@ export const Sidebar = () => {
           title: "Suggestions",
           href: "/admin/suggestions",
           prefix: <Icon name="lucide/smile-plus" />,
+        },
+        {
+          title: "Theme Claims",
+          href: "/admin/theme-claims",
+          prefix: <Icon name="lucide/shield" />,
         },
         {
           title: "Port Edits",

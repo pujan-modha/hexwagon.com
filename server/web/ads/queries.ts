@@ -5,7 +5,6 @@ import {
 } from "next/cache";
 import { adsConfig, type AdSpotType } from "~/config/ads";
 import { adManyPayload, adOnePayload } from "~/server/web/ads/payloads";
-import type { AdOne } from "~/server/web/ads/payloads";
 import { db } from "~/services/db";
 import { adStatus } from "~/utils/ads";
 
@@ -17,51 +16,43 @@ export type AdPricingMap = Record<AdSpotType, number>;
 
 export type AdConfigSettings = {
   maxDiscountPercentage: number;
-  targetingUnitPrice: number;
 };
 
-const sidebarAdCandidatePayload = Prisma.validator<Prisma.AdSelect>()({
-  ...adOnePayload,
-  isTargetedSidebar: true,
-  targetThemeSlugs: true,
-  targetPlatformSlugs: true,
-});
-
-type SidebarAdTargeting = {
-  themeSlug?: string | null;
-  platformSlug?: string | null;
+const getActiveAdWhere = (where?: Prisma.AdWhereInput): Prisma.AdWhereInput => {
+  return {
+    startsAt: { lte: new Date() },
+    endsAt: { gt: new Date() },
+    status: adStatus.Approved,
+    ...where,
+  };
 };
 
-type SidebarAdCandidate = Prisma.AdGetPayload<{
-  select: typeof sidebarAdCandidatePayload;
-}>;
+const getWhereWithoutFooterType = (where?: Prisma.AdWhereInput) => {
+  const typeFilter = where?.type;
 
-const pickRandom = <T>(items: T[]): T | null => {
-  if (!items.length) return null;
-  return items[Math.floor(Math.random() * items.length)] ?? null;
-};
+  if (!typeFilter || typeof typeFilter !== "object" || !("in" in typeFilter)) {
+    return null;
+  }
 
-const toAdOne = ({
-  isTargetedSidebar,
-  targetThemeSlugs,
-  targetPlatformSlugs,
-  ...ad
-}: SidebarAdCandidate): AdOne => {
-  return ad;
-};
+  const typeIn = typeFilter.in;
 
-const isSidebarTargetMatch = (
-  ad: SidebarAdCandidate,
-  { themeSlug, platformSlug }: SidebarAdTargeting,
-) => {
-  const matchesTheme = themeSlug
-    ? ad.targetThemeSlugs.includes(themeSlug)
-    : false;
-  const matchesPlatform = platformSlug
-    ? ad.targetPlatformSlugs.includes(platformSlug)
-    : false;
+  if (!Array.isArray(typeIn) || !typeIn.includes("Footer")) {
+    return null;
+  }
 
-  return matchesTheme || matchesPlatform;
+  const filteredTypes = typeIn.filter((type) => type !== "Footer");
+
+  if (!filteredTypes.length) {
+    return null;
+  }
+
+  return {
+    ...where,
+    type: {
+      ...typeFilter,
+      in: filteredTypes,
+    },
+  } satisfies Prisma.AdWhereInput;
 };
 
 export const findAds = async ({
@@ -92,61 +83,31 @@ export const findAd = async ({
   cacheTag("ads");
   cacheLife("minutes");
 
-  return db.ad.findFirst({
-    ...args,
-    orderBy: orderBy ?? { startsAt: "desc" },
-    where: {
-      startsAt: { lte: new Date() },
-      endsAt: { gt: new Date() },
-      status: adStatus.Approved,
-      ...where,
-    },
-    select: adOnePayload,
-  });
-};
+  try {
+    return await db.ad.findFirst({
+      ...args,
+      orderBy: orderBy ?? { startsAt: "desc" },
+      where: getActiveAdWhere(where),
+      select: adOnePayload,
+    });
+  } catch (error) {
+    const fallbackWhere = getWhereWithoutFooterType(where);
+    const isFooterEnumValidationIssue =
+      error instanceof Prisma.PrismaClientValidationError &&
+      error.message.includes("Invalid value for argument `in`") &&
+      error.message.includes("Expected AdType");
 
-export const findSidebarAdForContext = async ({
-  where,
-  targeting,
-}: {
-  where?: Prisma.AdWhereInput;
-  targeting?: SidebarAdTargeting;
-}): Promise<AdOne | null> => {
-  const now = new Date();
+    if (!isFooterEnumValidationIssue || !fallbackWhere) {
+      throw error;
+    }
 
-  const candidates = await db.ad.findMany({
-    where: {
-      startsAt: { lte: now },
-      endsAt: { gt: now },
-      status: adStatus.Approved,
-      ...where,
-    },
-    select: sidebarAdCandidatePayload,
-  });
-
-  if (!candidates.length) return null;
-
-  const targetedCandidates = candidates.filter(
-    (ad) => ad.type === "Sidebar" && ad.isTargetedSidebar,
-  );
-  if (!targetedCandidates.length) {
-    const nonTargetedAd = pickRandom(
-      candidates.filter((ad) => !ad.isTargetedSidebar),
-    );
-    return nonTargetedAd ? toAdOne(nonTargetedAd) : null;
+    return db.ad.findFirst({
+      ...args,
+      orderBy: orderBy ?? { startsAt: "desc" },
+      where: getActiveAdWhere(fallbackWhere),
+      select: adOnePayload,
+    });
   }
-
-  const applicableTargetedAds = targeting
-    ? targetedCandidates.filter((ad) => isSidebarTargetMatch(ad, targeting))
-    : [];
-
-  if (applicableTargetedAds.length) {
-    const targetedAd = pickRandom(applicableTargetedAds);
-    return targetedAd ? toAdOne(targetedAd) : null;
-  }
-
-  const mixedAd = pickRandom(candidates);
-  return mixedAd ? toAdOne(mixedAd) : null;
 };
 
 export const getAdPricing = async (): Promise<AdPricingMap> => {
@@ -186,19 +147,16 @@ export const getAdSettings = async (): Promise<AdConfigSettings> => {
       where: { id: 1 },
       select: {
         maxDiscountPercentage: true,
-        targetingUnitPriceCents: true,
       },
     });
 
     return {
       maxDiscountPercentage: row?.maxDiscountPercentage ?? 30,
-      targetingUnitPrice: (row?.targetingUnitPriceCents ?? 0) / 100,
     };
   } catch (error) {
     console.warn("[getAdSettings] falling back to default ad settings", error);
     return {
       maxDiscountPercentage: 30,
-      targetingUnitPrice: 0,
     };
   }
 };

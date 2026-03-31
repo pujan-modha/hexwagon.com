@@ -14,6 +14,7 @@ enum AdType {
   Banner
   Listing
   Sidebar
+  Footer
   Themes
   ThemePage
   Platforms
@@ -67,6 +68,12 @@ enum ReportType {
   Other
 }
 
+enum ThemeMaintainerClaimStatus {
+  Pending
+  Approved
+  Rejected
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -91,6 +98,8 @@ model User {
   suggestions      Suggestion[]
   portEdits        PortEdit[]
   maintainedThemes ThemeMaintainer[]
+  themeMaintainerClaims         ThemeMaintainerClaim[] @relation("ThemeMaintainerClaimRequester")
+  reviewedThemeMaintainerClaims ThemeMaintainerClaim[] @relation("ThemeMaintainerClaimReviewer")
   updatedAdSpotPricing AdSpotPricing[] @relation("AdSpotPricingUpdatedBy")
   updatedAdConfigs     AdConfig[]      @relation("AdConfigUpdatedBy")
 
@@ -160,9 +169,6 @@ model Ad {
   startsAt       DateTime
   endsAt         DateTime
   priceCents     Int?
-  isTargetedSidebar Boolean @default(false)
-  targetThemeSlugs String[] @default([])
-  targetPlatformSlugs String[] @default([])
   approvedAt     DateTime?
   rejectedAt     DateTime?
   cancelledAt    DateTime?
@@ -191,7 +197,6 @@ model AdSpotPricing {
 model AdConfig {
   id                    Int      @id @default(1)
   maxDiscountPercentage Int      @default(30)
-  targetingUnitPriceCents Int    @default(0)
   updatedById           String?
   updatedBy             User?    @relation("AdConfigUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
   updatedAt             DateTime @updatedAt
@@ -223,6 +228,7 @@ model Theme {
   likes       Like[]
   reports     Report[]
   maintainers ThemeMaintainer[]
+  maintainerClaims ThemeMaintainerClaim[]
   ad          Ad?       @relation(fields: [adId], references: [id])
   adId        String?
 
@@ -262,9 +268,7 @@ model Port {
   name          String?    @db.Citext
   description   String?
   content       String?    @db.Text
-  websiteUrl    String?
   repositoryUrl String?
-  installUrl    String?
   screenshotUrl String?
   faviconUrl    String?
   isOfficial    Boolean    @default(false)
@@ -406,6 +410,33 @@ model ThemeMaintainer {
   @@unique([userId, themeId])
   @@index([userId])
   @@index([themeId])
+}
+
+model ThemeMaintainerClaim {
+  id            String                    @id @default(cuid())
+  claimantName  String
+  claimantEmail String
+  claimantUrl   String?
+  details       String?                   @db.Text
+  status        ThemeMaintainerClaimStatus @default(Pending)
+  adminNote     String?                   @db.Text
+  reviewedAt    DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  // Relations
+  theme         Theme   @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  themeId       String
+  requester     User?   @relation("ThemeMaintainerClaimRequester", fields: [requesterId], references: [id], onDelete: SetNull)
+  requesterId   String?
+  reviewer      User?   @relation("ThemeMaintainerClaimReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  reviewerId    String?
+
+  // Indexes
+  @@index([themeId])
+  @@index([requesterId])
+  @@index([reviewerId])
+  @@index([status])
 }
 
 model Report {

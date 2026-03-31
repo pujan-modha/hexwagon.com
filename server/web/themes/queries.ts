@@ -31,15 +31,18 @@ export const searchThemes = async (
 
   let orderBy: Prisma.ThemeFindManyArgs["orderBy"] = { pageviews: "desc" };
 
-  if (sort !== "default") {
+  if (sort && sort !== "default" && sort.includes(".")) {
     const [sortBy, sortOrder] = sort.split(".") as [
       keyof typeof orderBy,
       Prisma.SortOrder,
     ];
-    orderBy =
-      sortBy === "ports"
-        ? { ports: { _count: sortOrder } }
-        : { [sortBy]: sortOrder };
+
+    if (sortOrder === "asc" || sortOrder === "desc") {
+      orderBy =
+        sortBy === "ports"
+          ? { ports: { _count: sortOrder } }
+          : { [sortBy]: sortOrder };
+    }
   }
 
   const whereQuery: Prisma.ThemeWhereInput = {

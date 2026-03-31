@@ -48,16 +48,12 @@ export const themeSchema = z.object({
   repositoryUrl: z.string().url().optional().or(z.literal("")),
   description: z.string().optional(),
   faviconUrl: z.string().optional(),
-  author: z.string().optional(),
-  authorUrl: z.string().url().optional().or(z.literal("")),
   guidelines: z.string().optional(),
   isFeatured: z.boolean().default(false),
   order: z
     .preprocess((v) => parseInt(String(v), 10) || 0, z.number().int())
     .optional()
     .default(0),
-  discountCode: z.string().optional(),
-  discountAmount: z.string().optional(),
   license: z.string().trim().max(120).optional().or(z.literal("")),
   palettes: z.array(themePaletteSchema).optional(),
 });

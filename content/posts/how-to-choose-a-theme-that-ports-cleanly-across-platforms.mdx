@@ -1,0 +1,80 @@
+---
+title: "How to Choose a Theme That Ports Cleanly Across Platforms"
+description: "A practical checklist for evaluating theme quality across VS Code, Neovim, Zed, and other ecosystems."
+publishedAt: 2026-03-31
+author:
+  name: Mohit Vaswani
+  image: "/authors/mohitvaswani.webp"
+  twitterHandle: "hii_mohit"
+---
+
+Great themes look good in screenshots. Great ports hold up in daily work.
+
+If you are picking a theme for a team, or deciding which port to maintain, visual taste is only one part of the decision. Consistency, semantic coverage, and maintenance quality are what make a theme reliable across tools.
+
+## 1. Start with semantic coverage, not palette hype
+
+Many ports copy only the base palette and stop there. A complete port maps semantic tokens carefully:
+
+- syntax groups
+- diagnostics
+- diff colors
+- terminal ANSI colors
+- UI states (hover, active, selected, disabled)
+
+If those pieces are missing, the theme may look fine in a static preview but break in real workflows.
+
+## 2. Compare contrast in real editing scenarios
+
+Run a quick contrast pass in four views:
+
+- code editor
+- sidebar/tree
+- command palette
+- inline diagnostics
+
+A port that is too low contrast in any one of these becomes fatiguing over long sessions. Accessibility is not a nice-to-have for themes; it is baseline quality.
+
+## 3. Check language depth
+
+Open a few language samples before committing:
+
+- TypeScript or JavaScript
+- Markdown
+- JSON
+- your team's primary backend language
+
+If token differentiation collapses in one language, that usually means the scope mapping is shallow.
+
+## 4. Verify maintenance signals
+
+A trustworthy port normally has:
+
+- a clear maintainer
+- changelog or release cadence
+- issue responses
+- documented source theme/version
+
+No maintainer is the biggest risk signal. If nobody owns the port, regression fixes tend to stall.
+
+## 5. Prefer official or maintainer-verified ports
+
+When multiple ports exist for the same theme/platform pair, pick one with explicit maintainer ownership. In practice, ownership quality predicts long-term reliability better than star counts.
+
+## A lightweight decision rubric
+
+Use a simple score from 1 to 5 for each category:
+
+- semantic coverage
+- contrast and readability
+- language depth
+- maintenance activity
+- portability consistency
+
+Anything below 18/25 is usually not ready for broad team adoption.
+
+## Final thought
+
+The best theme is the one that disappears while you work. It stays consistent across your stack, keeps cognitive load low, and does not surprise you after updates.
+
+That is the difference between a nice color palette and a dependable theme port.

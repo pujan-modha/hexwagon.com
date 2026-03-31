@@ -35,7 +35,6 @@ import { upsertPlatform } from "~/server/admin/platforms/actions";
 import type { findPlatformBySlug } from "~/server/admin/platforms/queries";
 import { platformSchema } from "~/server/admin/platforms/schema";
 import { PlatformActions } from "./platform-actions";
-import { PlatformGenerateDescription } from "./platform-generate-description";
 import { cx } from "~/utils/cva";
 
 type PlatformFormProps = ComponentProps<"form"> & {
@@ -111,8 +110,6 @@ export function PlatformForm({
         <H3 className="flex-1 truncate">{title}</H3>
 
         <Stack size="sm" className="-my-0.5">
-          <PlatformGenerateDescription />
-
           {platform && (
             <PlatformActions platform={platform} className="ml-auto" />
           )}

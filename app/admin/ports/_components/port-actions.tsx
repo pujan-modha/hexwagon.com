@@ -1,60 +1,52 @@
-"use client"
+"use client";
 
-import { isValidUrl } from "@primoui/utils"
-import { usePathname, useRouter } from "next/navigation"
-import { useState } from "react"
-import { toast } from "sonner"
-import { useServerAction } from "zsa-react"
-import { PortsDeleteDialog } from "./ports-delete-dialog"
-import { Button } from "~/components/common/button"
+import { isValidUrl } from "@primoui/utils";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useServerAction } from "zsa-react";
+import { PortsDeleteDialog } from "./ports-delete-dialog";
+import { Button } from "~/components/common/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "~/components/common/dropdown-menu"
-import { Icon } from "~/components/common/icon"
-import { Link } from "~/components/common/link"
-import { fetchPortRepositoryData, setOfficialPort } from "~/server/admin/ports/actions"
-import { cx } from "~/utils/cva"
+} from "~/components/common/dropdown-menu";
+import { Icon } from "~/components/common/icon";
+import { Link } from "~/components/common/link";
+import { setOfficialPort } from "~/server/admin/ports/actions";
+import { cx } from "~/utils/cva";
 
 type PortActionsProps = {
   port: {
-    id: string
-    slug: string
-    websiteUrl: string | null
-    repositoryUrl: string | null
-    isOfficial: boolean
-    theme?: { slug: string; name: string }
-    platform?: { slug: string; name: string }
-  }
-  className?: string
-}
+    id: string;
+    slug: string;
+    repositoryUrl: string | null;
+    isOfficial: boolean;
+    theme?: { slug: string; name: string };
+    platform?: { slug: string; name: string };
+  };
+  className?: string;
+};
 
 export const PortActions = ({ className, port }: PortActionsProps) => {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const { execute: fetchRepository, isPending: isRepositoryPending } = useServerAction(
-    fetchPortRepositoryData,
-    {
-      onSuccess: () => toast.success("Repository data fetched successfully"),
+  const { execute: makeOfficial, isPending: isOfficialPending } =
+    useServerAction(setOfficialPort, {
+      onSuccess: () => toast.success("Port marked as official"),
       onError: ({ err }) => toast.error(err.message),
-    },
-  )
+    });
 
-  const { execute: makeOfficial, isPending: isOfficialPending } = useServerAction(setOfficialPort, {
-    onSuccess: () => toast.success("Port marked as official"),
-    onError: ({ err }) => toast.error(err.message),
-  })
-
-  const publicUrl = port.theme && port.platform
-    ? `/themes/${port.theme.slug}/${port.platform.slug}/${port.id}`
-    : "/"
-  const websiteUrl = port.websiteUrl ?? ""
-  const repositoryUrl = port.repositoryUrl ?? ""
+  const publicUrl =
+    port.theme && port.platform
+      ? `/themes/${port.theme.slug}/${port.platform.slug}/${port.id}`
+      : "/";
+  const repositoryUrl = port.repositoryUrl ?? "";
 
   return (
     <DropdownMenu modal={false}>
@@ -82,13 +74,6 @@ export const PortActions = ({ className, port }: PortActionsProps) => {
         </DropdownMenuItem>
 
         <DropdownMenuItem
-          onSelect={() => fetchRepository({ id: port.id })}
-          disabled={!port.repositoryUrl || isRepositoryPending}
-        >
-          Fetch Repository Data
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
           onSelect={() => makeOfficial({ portId: port.id })}
           disabled={port.isOfficial || isOfficialPending}
         >
@@ -97,25 +82,20 @@ export const PortActions = ({ className, port }: PortActionsProps) => {
 
         <DropdownMenuSeparator />
 
-        {isValidUrl(websiteUrl) && (
-          <DropdownMenuItem asChild>
-            <Link href={websiteUrl} target="_blank">
-              Visit website
-            </Link>
-          </DropdownMenuItem>
-        )}
-
         {isValidUrl(repositoryUrl) && (
           <DropdownMenuItem asChild>
             <Link href={repositoryUrl} target="_blank">
-              Visit repository
+              Open port link
             </Link>
           </DropdownMenuItem>
         )}
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onSelect={() => setIsDeleteOpen(true)} className="text-red-500">
+        <DropdownMenuItem
+          onSelect={() => setIsDeleteOpen(true)}
+          className="text-red-500"
+        >
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -128,5 +108,5 @@ export const PortActions = ({ className, port }: PortActionsProps) => {
         onSuccess={() => router.push("/admin/ports")}
       />
     </DropdownMenu>
-  )
-}
+  );
+};

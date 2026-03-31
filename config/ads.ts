@@ -1,8 +1,7 @@
-import type { AdType } from "@prisma/client";
 import { siteConfig } from "~/config/site";
 import type { AdOne } from "~/server/web/ads/payloads";
 
-export type AdSpotType = Extract<AdType, "Banner" | "Listing" | "Sidebar">;
+export type AdSpotType = "Banner" | "Listing" | "Sidebar" | "Footer";
 
 export type AdSpot = {
   label: string;
@@ -19,21 +18,28 @@ export const adsConfig = {
     {
       label: "Top Banner",
       type: "Banner",
-      description: "Visible at the top of the site across pages",
+      description: "Visible at the top of the site",
       price: 45,
       preview: "https://share.cleanshot.com/7CFqSw0b",
     },
     {
       label: "Listing Ad",
       type: "Listing",
-      description: "Visible in catalogue grids and listing pages",
+      description: "Visible in listing grids",
       price: 25,
       preview: "https://share.cleanshot.com/7CFqSw0b",
     },
     {
       label: "Sidebar Ad",
       type: "Sidebar",
-      description: "Visible in the sticky sidebar on detail pages",
+      description: "Visible in detail page sidebar",
+      price: 15,
+      preview: "https://share.cleanshot.com/7CFqSw0b",
+    },
+    {
+      label: "Footer Ad",
+      type: "Footer",
+      description: "Visible in the site footer",
       price: 15,
       preview: "https://share.cleanshot.com/7CFqSw0b",
     },

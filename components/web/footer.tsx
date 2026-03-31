@@ -1,7 +1,5 @@
-"use client";
-
 import { formatNumber } from "@primoui/utils";
-import type { ComponentProps } from "react";
+import { Suspense, type ComponentProps } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +13,13 @@ import { Tooltip } from "~/components/common/tooltip";
 import { BuiltWith } from "~/components/web/built-with";
 import { ExternalLink } from "~/components/web/external-link";
 import { NewsletterForm } from "~/components/web/newsletter-form";
-import { NavLink, navLinkVariants } from "~/components/web/ui/nav-link";
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card";
+import { NavLink } from "~/components/web/ui/nav-link";
 import { config } from "~/config";
 import { cx } from "~/utils/cva";
+
+const footerLinkClassName =
+  "group flex items-center gap-2 p-0.5 -m-0.5 cursor-pointer disabled:opacity-50 text-muted-foreground hover:text-foreground";
 
 type FooterProps = ComponentProps<"div"> & {
   hideNewsletter?: boolean;
@@ -66,7 +68,10 @@ export const Footer = ({
           <Stack className="text-xl opacity-75">
             <DropdownMenu modal={false}>
               <Tooltip tooltip="RSS Feeds">
-                <DropdownMenuTrigger aria-label="RSS Feeds">
+                <DropdownMenuTrigger
+                  id="footer-rss-menu-trigger"
+                  aria-label="RSS Feeds"
+                >
                   <Icon
                     name="lucide/rss"
                     className="text-muted-foreground hover:text-foreground"
@@ -77,7 +82,7 @@ export const Footer = ({
               <DropdownMenuContent align="start" side="top">
                 {config.links.feeds.map(({ url, title }) => (
                   <DropdownMenuItem key={url} asChild>
-                    <ExternalLink href={url} className={navLinkVariants()}>
+                    <ExternalLink href={url} className={footerLinkClassName}>
                       RSS &raquo; {title}
                     </ExternalLink>
                   </DropdownMenuItem>
@@ -88,7 +93,7 @@ export const Footer = ({
             <Tooltip tooltip="Contact us">
               <ExternalLink
                 href={`mailto:${config.site.email}`}
-                className={navLinkVariants()}
+                className={footerLinkClassName}
               >
                 <Icon name="lucide/at-sign" />
               </ExternalLink>
@@ -97,7 +102,7 @@ export const Footer = ({
             <Tooltip tooltip="Follow us on X/Twitter">
               <ExternalLink
                 href={config.links.twitter}
-                className={navLinkVariants()}
+                className={footerLinkClassName}
               >
                 <Icon name="tabler/brand-x" />
               </ExternalLink>
@@ -106,7 +111,7 @@ export const Footer = ({
             <Tooltip tooltip="Follow us on Bluesky">
               <ExternalLink
                 href={config.links.bluesky}
-                className={navLinkVariants()}
+                className={footerLinkClassName}
               >
                 <Icon name="tabler/brand-bluesky" />
               </ExternalLink>
@@ -115,7 +120,7 @@ export const Footer = ({
             <Tooltip tooltip="Follow us on Mastodon">
               <ExternalLink
                 href={config.links.mastodon}
-                className={navLinkVariants()}
+                className={footerLinkClassName}
               >
                 <Icon name="tabler/brand-mastodon" />
               </ExternalLink>
@@ -124,7 +129,7 @@ export const Footer = ({
             <Tooltip tooltip="Follow us on LinkedIn">
               <ExternalLink
                 href={config.links.linkedin}
-                className={navLinkVariants()}
+                className={footerLinkClassName}
               >
                 <Icon name="tabler/brand-linkedin" />
               </ExternalLink>
@@ -133,7 +138,7 @@ export const Footer = ({
             <Tooltip tooltip="Join our community on Reddit">
               <ExternalLink
                 href={config.links.reddit}
-                className={navLinkVariants()}
+                className={footerLinkClassName}
               >
                 <Icon name="tabler/brand-reddit" />
               </ExternalLink>
@@ -145,14 +150,6 @@ export const Footer = ({
           direction="column"
           className="text-sm md:col-span-3 md:col-start-8"
         >
-          <H6 as="strong">Browse:</H6>
-
-          <NavLink href="/themes">Themes</NavLink>
-          <NavLink href="/platforms">Platforms</NavLink>
-          <NavLink href="/coming-soon">Coming Soon</NavLink>
-        </Stack>
-
-        <Stack direction="column" className="text-sm md:col-span-3">
           <H6 as="strong">Quick Links:</H6>
 
           <NavLink href="/about">About Us</NavLink>
@@ -161,20 +158,24 @@ export const Footer = ({
           <NavLink href="/submit">Submit a Port</NavLink>
         </Stack>
 
-        <Stack direction="column" className="text-sm md:col-span-3">
-          <H6 as="strong">Other Products:</H6>
-
-          {config.links.family.map(({ href, title, description }) => (
-            <ExternalLink
-              key={href}
-              href={href}
-              title={description}
-              className={navLinkVariants()}
-              doFollow
-            >
-              {title}
-            </ExternalLink>
-          ))}
+        <Stack
+          direction="column"
+          className="text-sm col-span-full md:col-span-5 md:items-stretch"
+        >
+          <Suspense
+            fallback={<AdCardSkeleton className="w-full md:w-[328px] md:max-w-[328px] h-[190px] max-h-[190px] md:ml-auto" />}
+          >
+            <AdCard
+              className="w-full md:w-[328px] md:max-w-[328px] h-[190px] max-h-[190px] md:ml-auto"
+              where={{
+                type: {
+                  in: ["Footer", "Sidebar", "Listing"] as Array<
+                    "Footer" | "Sidebar" | "Listing"
+                  >,
+                },
+              }}
+            />
+          </Suspense>
         </Stack>
       </div>
 

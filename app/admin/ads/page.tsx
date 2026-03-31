@@ -33,7 +33,6 @@ const AdsPage = async () => {
           <AdPricingManager initialPricing={pricing} />
           <AdDiscountManager
             initialMaxDiscountPercentage={settings.maxDiscountPercentage}
-            initialTargetingUnitPrice={settings.targetingUnitPrice}
           />
         </div>
 

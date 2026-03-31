@@ -12,22 +12,22 @@ Transform the dirstarter (OpenAlternative) codebase into **HexWagon**: a central
 
 The existing dirstarter entities map to HexWagon as follows:
 
-| Dirstarter Entity | HexWagon Entity | Notes |
-|---|---|---|
-| **Tool** | **Port** | The core content item. A port is a specific implementation of a theme for a platform. |
-| **Alternative** | **Theme** | Top-level color scheme (Dracula, Nord, etc.). Admin-only creation. |
-| **Category** | **Platform** | App/tool a theme can be ported to (VS Code, Ghostty, etc.). Admin-only creation. |
-| **Stack** | *(remove)* | Not relevant to theme aggregation. |
-| **Topic** | **Tag** | Freeform tags for ports (e.g., "dark", "pastel", "high-contrast"). |
-| **License** | **License** | Keep — themes/ports can have licenses. |
-| **Like** | **Like** | Expand — users can like ports, themes, and platforms. |
-| **Report** | **Report** | Keep — users can report ports/themes/platforms. |
-| **Ad** | **Ad** | Keep — ad system carries over. |
-| **User** | **User** | Expand — add `themeMaintainer` role concept. |
-| *(new)* | **Suggestion** | Users suggest new themes or platforms for admin review. |
-| *(new)* | **PortEdit** | Pending edits to ports that require admin approval. |
-| *(new)* | **Comment** | Comments on port detail pages. |
-| *(new)* | **ColorPalette** | Official color swatches attached to a theme. |
+| Dirstarter Entity | HexWagon Entity  | Notes                                                                                 |
+| ----------------- | ---------------- | ------------------------------------------------------------------------------------- |
+| **Tool**          | **Port**         | The core content item. A port is a specific implementation of a theme for a platform. |
+| **Alternative**   | **Theme**        | Top-level color scheme (Dracula, Nord, etc.). Admin-only creation.                    |
+| **Category**      | **Platform**     | App/tool a theme can be ported to (VS Code, Ghostty, etc.). Admin-only creation.      |
+| **Stack**         | _(remove)_       | Not relevant to theme aggregation.                                                    |
+| **Topic**         | **Tag**          | Freeform tags for ports (e.g., "dark", "pastel", "high-contrast").                    |
+| **License**       | **License**      | Keep — themes/ports can have licenses.                                                |
+| **Like**          | **Like**         | Expand — users can like ports, themes, and platforms.                                 |
+| **Report**        | **Report**       | Keep — users can report ports/themes/platforms.                                       |
+| **Ad**            | **Ad**           | Keep — ad system carries over.                                                        |
+| **User**          | **User**         | Expand — add `themeMaintainer` role concept.                                          |
+| _(new)_           | **Suggestion**   | Users suggest new themes or platforms for admin review.                               |
+| _(new)_           | **PortEdit**     | Pending edits to ports that require admin approval.                                   |
+| _(new)_           | **Comment**      | Comments on port detail pages.                                                        |
+| _(new)_           | **ColorPalette** | Official color swatches attached to a theme.                                          |
 
 ---
 
@@ -118,6 +118,7 @@ Tag (was Topic)
 ```
 
 ### Expanded Like Model
+
 ```
 Like
 ├── id
@@ -132,6 +133,7 @@ Like
 ```
 
 ### Expanded Report Model
+
 ```
 Report
 ├── id
@@ -149,11 +151,13 @@ Report
 ```
 
 ### User Roles
+
 ```
 User.role: "user" | "themeMaintainer" | "admin"
 ```
 
 Plus a new **ThemeMaintainer** join table:
+
 ```
 ThemeMaintainer
 ├── user → User (FK)
@@ -185,6 +189,7 @@ ThemeMaintainer
 ```
 
 ### Content Mirroring Strategy
+
 - `/themes/dracula/vscode` ↔ `/platforms/vscode/dracula` render identical content
 - Implement via **shared components** — the route files import the same component tree, just swap the URL params
 - Use `canonical` meta tag pointing to the `/themes/...` version for SEO
@@ -194,12 +199,14 @@ ThemeMaintainer
 ## 5. Page Layouts
 
 ### Homepage
+
 - Hero section with search (find "theme for platform")
 - Popular Ports (admin-curated via `isFeatured`)
 - Popular Themes (admin-curated via `isFeatured`)
 - Popular Platforms (admin-curated via `isFeatured`)
 
 ### `/themes/[theme-slug]` — Theme Detail
+
 - Theme metadata (name, description, author, links)
 - Tabbed layout:
   1. **Platforms** — grid of platforms this theme has ports for, with port count per platform
@@ -207,6 +214,7 @@ ThemeMaintainer
   3. **Guidelines/Specs** — rendered markdown from `theme.guidelines`
 
 ### `/platforms/[platform-slug]` — Platform Detail
+
 - Platform metadata
 - Tabbed layout:
   1. **Themes** — grid of themes available for this platform, with port count per theme
@@ -214,18 +222,21 @@ ThemeMaintainer
   3. **Theme Docs** — rendered markdown from `platform.themeCreationDocs`
 
 ### `/themes/[theme]/[platform]/[port-id]` — Port Detail
+
 - Port metadata, screenshot, install URL, repository link
 - "Official" badge if `isOfficial`
 - Like button, report button, share buttons
 - Comments section (threaded)
 
 ### `/dashboard` — User Profile/Dashboard
+
 - **My Ports** — ports the user submitted (with status badges)
 - **My Suggestions** — theme/platform suggestions submitted
 - **Liked** — liked ports, themes, platforms
 - Edit own ports (triggers `PortEdit` for admin review)
 
 ### `/submit` — Submit Port (Multi-step Wizard)
+
 - **Step 1:** Search and select theme (combobox with async search)
 - **Step 2:** Search and select platform (combobox with async search)
 - **Step 3:** Port details (name, description, repo URL, install URL, screenshot, markdown content with preview)
@@ -235,12 +246,14 @@ ThemeMaintainer
 - Duplicate submission check (same user + theme + platform with pending status)
 
 ### `/suggest` — Suggest Theme/Platform
+
 - Radio: Theme or Platform
 - Name, description, website URL
 - Rate limited: max 5 per user per 24h
 - Submit → creates `Suggestion` record
 
 ### `/search` — Full Search Results Page
+
 - Displays categorized results: Themes, Platforms, Ports
 - Uses Meilisearch for fast, relevant results
 - Keyboard-accessible, permalink-friendly via `?q=` param
@@ -250,30 +263,35 @@ ThemeMaintainer
 ## 6. Admin Panel Changes
 
 ### Existing admin sections to **rename/repurpose**:
-| Old | New |
-|---|---|
-| Admin → Tools | Admin → Ports |
-| Admin → Alternatives | Admin → Themes |
-| Admin → Categories | Admin → Platforms |
+
+| Old                  | New               |
+| -------------------- | ----------------- |
+| Admin → Tools        | Admin → Ports     |
+| Admin → Alternatives | Admin → Themes    |
+| Admin → Categories   | Admin → Platforms |
 
 ### New admin sections:
+
 - **Admin → Suggestions** — review/approve/reject theme and platform suggestions
 - **Admin → Port Edits** — review/approve/reject pending port edits
 - **Admin → Comments** — moderate comments (delete, hide)
 - **Admin → Featured** — manage homepage featured ports/themes/platforms
 
 ### Admin → Themes
+
 - CRUD for themes
 - Manage color palette (add/edit/remove swatches)
 - Assign theme maintainers
 - Edit guidelines markdown
 
 ### Admin → Platforms
+
 - CRUD for platforms
 - Edit install instructions markdown
 - Edit theme creation docs markdown
 
 ### Admin → Ports
+
 - Review submitted ports (approve/reject with rejection reason/schedule)
 - Review port edits (approve/reject)
 - Set official port status (clears existing official for same theme+platform)
@@ -281,6 +299,7 @@ ThemeMaintainer
 - Bulk actions
 
 ### Admin → Reports
+
 - View open reports with entity type/id links
 - Resolve or dismiss reports (tracks who resolved and when)
 
@@ -289,6 +308,7 @@ ThemeMaintainer
 ## 7. Authentication & Roles
 
 Leverage existing Better Auth setup. Changes:
+
 - Add `themeMaintainer` role concept (via `ThemeMaintainer` join table, not a global role)
 - A user can be a theme maintainer for specific themes
 - Theme maintainers can mark ports as "official" for their theme
@@ -300,17 +320,17 @@ Leverage existing Better Auth setup. Changes:
 
 Repurpose existing Resend-based email templates:
 
-| Email | Trigger |
-|---|---|
-| Port Submitted | User submits a port |
-| Port Approved | Admin approves a port |
-| Port Rejected | Admin rejects a port |
+| Email                | Trigger                      |
+| -------------------- | ---------------------------- |
+| Port Submitted       | User submits a port          |
+| Port Approved        | Admin approves a port        |
+| Port Rejected        | Admin rejects a port         |
 | Suggestion Submitted | User suggests theme/platform |
-| Suggestion Approved | Admin approves suggestion |
-| Suggestion Rejected | Admin rejects suggestion |
-| Port Edit Approved | Admin approves an edit |
-| Port Edit Rejected | Admin rejects an edit |
-| Report Acknowledged | Admin reviews a report |
+| Suggestion Approved  | Admin approves suggestion    |
+| Suggestion Rejected  | Admin rejects suggestion     |
+| Port Edit Approved   | Admin approves an edit       |
+| Port Edit Rejected   | Admin rejects an edit        |
+| Report Acknowledged  | Admin reviews a report       |
 
 ---
 
@@ -365,25 +385,25 @@ Only these features are removed:
 
 Detailed custom event tracking:
 
-| Event | Trigger | Properties |
-|---|---|---|
-| `port_viewed` | Port detail page load | `portId`, `themeSlug`, `platformSlug` |
-| `port_liked` | User likes a port | `portId`, `themeSlug`, `platformSlug` |
-| `theme_viewed` | Theme detail page load | `themeSlug` |
-| `theme_liked` | User likes a theme | `themeSlug` |
-| `platform_viewed` | Platform detail page load | `platformSlug` |
-| `platform_liked` | User likes a platform | `platformSlug` |
-| `search_performed` | User submits search | `query`, `resultCount` |
-| `port_submitted` | User submits a port | `themeSlug`, `platformSlug` |
-| `suggestion_submitted` | User submits a suggestion | `type` (theme/platform) |
-| `install_link_clicked` | User clicks port install URL | `portId`, `installUrl` |
-| `repo_link_clicked` | User clicks port repo URL | `portId`, `repositoryUrl` |
+| Event                  | Trigger                   | Properties                            |
+| ---------------------- | ------------------------- | ------------------------------------- |
+| `port_viewed`          | Port detail page load     | `portId`, `themeSlug`, `platformSlug` |
+| `port_liked`           | User likes a port         | `portId`, `themeSlug`, `platformSlug` |
+| `theme_viewed`         | Theme detail page load    | `themeSlug`                           |
+| `theme_liked`          | User likes a theme        | `themeSlug`                           |
+| `platform_viewed`      | Platform detail page load | `platformSlug`                        |
+| `platform_liked`       | User likes a platform     | `platformSlug`                        |
+| `search_performed`     | User submits search       | `query`, `resultCount`                |
+| `port_submitted`       | User submits a port       | `themeSlug`, `platformSlug`           |
+| `suggestion_submitted` | User submits a suggestion | `type` (theme/platform)               |
+| `repo_link_clicked`    | User clicks port repo URL | `portId`, `repositoryUrl`             |
 
 ---
 
 ## 13. Phased Implementation Roadmap
 
 ### Phase 1 — Foundation (Database + Core Config)
+
 1. Design and write new Prisma schema
 2. Create migration
 3. Update `config/site.ts`, `config/links.ts`, and all config files
@@ -391,6 +411,7 @@ Detailed custom event tracking:
 5. Update `package.json` — rename project
 
 ### Phase 2 — Server Layer (Queries, Payloads, Actions)
+
 1. Create `server/web/themes/` (queries, payloads)
 2. Create `server/web/platforms/` (queries, payloads)
 3. Refactor `server/web/tools/` → `server/web/ports/` (queries, payloads)
@@ -406,6 +427,7 @@ Detailed custom event tracking:
 13. Create `server/admin/comments/` (actions, queries, schema)
 
 ### Phase 3 — Actions (Server Actions / Mutations)
+
 1. Refactor `actions/submit.ts` → multi-step port submission with duplicate check
 2. Create `actions/suggest.ts` — theme/platform suggestions (rate limited: 5/day)
 3. Refactor `actions/report.ts` — expand for themes/platforms/comments, add resolution actions
@@ -415,6 +437,7 @@ Detailed custom event tracking:
 7. Adapt like action for ports/themes/platforms
 
 ### Phase 4 — Components
+
 1. Create shared `components/catalogue/` — entity-header, entity-tabs, catalogue-grid, port-list, port-detail, markdown-content, URL builders
 2. Create `components/catalogue/theme-card.tsx`, `platform-card.tsx`, `port-card.tsx`
 3. Refactor `components/web/tools/` → `components/web/ports/`
@@ -429,6 +452,7 @@ Detailed custom event tracking:
 12. Remove stacks and self-hosted components only (keep newsletter, blog, etc.)
 
 ### Phase 5 — Routes (Pages)
+
 1. Create `app/(web)/themes/` route group (list, detail, platform, port)
 2. Create `app/(web)/platforms/` route group (list, detail, theme, port — mirrored, with URL param validation)
 3. Refactor `app/(web)/(home)/` — new homepage layout
@@ -441,6 +465,7 @@ Detailed custom event tracking:
 10. Keep: `auth/`, `blog/`, `topics/` (→ tags), `licenses/`, `advertise/`, `coming-soon/`
 
 ### Phase 6 — Admin Panel
+
 1. Refactor `app/admin/tools/` → `app/admin/ports/`
 2. Refactor `app/admin/alternatives/` → `app/admin/themes/`
 3. Refactor `app/admin/categories/` → `app/admin/platforms/`
@@ -452,21 +477,25 @@ Detailed custom event tracking:
 9. Add theme maintainer assignment UI
 
 ### Phase 7 — Emails
+
 1. Refactor existing email templates for new entities
 2. Create new templates for suggestions, port edits
 3. Update notification lib functions
 
 ### Phase 8 — Search & Cron
+
 1. Update Meilisearch index configuration for ports, themes, platforms
 2. Refactor `functions/cron.*.ts` — remove GitHub analysis, add port/theme indexing
 3. Update sitemap generation
 
 ### Phase 9 — Analytics & Health
+
 1. Add PostHog custom events (all events from Section 12)
 2. Create `components/analytics/page-view-event.tsx` and `components/analytics/source-link-button.tsx`
 3. Create `app/api/health/route.ts`
 
 ### Phase 10 — Polish & Cleanup
+
 1. Remove all dead code (stacks, self-hosted, stack analyzer only)
 2. Update OG image generation for new entities
 3. Final SEO audit (meta tags, canonical URLs, JSON-LD)

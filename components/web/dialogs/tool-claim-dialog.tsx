@@ -1,12 +1,14 @@
-import { getUrlHostname } from "@primoui/utils"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
-import { toast } from "sonner"
-import { z } from "zod"
-import { useServerAction } from "zsa-react"
-import { sendToolClaimOtp, verifyToolClaimOtp } from "~/actions/claim"
-import { Button } from "~/components/common/button"
+"use client";
+
+import { getUrlHostname } from "@primoui/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { useServerAction } from "zsa-react";
+import { sendToolClaimOtp, verifyToolClaimOtp } from "~/actions/claim";
+import { Button } from "~/components/common/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +16,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/common/dialog"
+} from "~/components/common/dialog";
 import {
   Form,
   FormControl,
@@ -22,134 +24,149 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "~/components/common/form"
-import { Input } from "~/components/common/input"
-import { Stack } from "~/components/common/stack"
-import { LoginDialog } from "~/components/web/auth/login-dialog"
-import { claimsConfig } from "~/config/claims"
-import { siteConfig } from "~/config/site"
-import { useSession } from "~/lib/auth-client"
-import type { ToolOne } from "~/server/web/tools/payloads"
+} from "~/components/common/form";
+import { Input } from "~/components/common/input";
+import { Stack } from "~/components/common/stack";
+import { LoginDialog } from "~/components/web/auth/login-dialog";
+import { claimsConfig } from "~/config/claims";
+import { siteConfig } from "~/config/site";
+import { useSession } from "~/lib/auth-client";
+import type { ToolOne } from "~/server/web/tools/payloads";
 
 type ToolClaimDialogProps = {
-  tool: ToolOne
-  isOpen: boolean
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>
-}
+  tool: ToolOne;
+  isOpen: boolean;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+};
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-})
+});
 
 const otpSchema = z.object({
   otp: z.string().min(6, "Please enter a valid OTP code"),
-})
+});
 
-export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProps) => {
-  const { data: session } = useSession()
-  const [step, setStep] = useState<"email" | "otp">("email")
-  const [verificationEmail, setVerificationEmail] = useState("")
-  const [cooldownRemaining, setCooldownRemaining] = useState(0)
+export const ToolClaimDialog = ({
+  tool,
+  isOpen,
+  setIsOpen,
+}: ToolClaimDialogProps) => {
+  const { data: session } = useSession();
+  const [step, setStep] = useState<"email" | "otp">("email");
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   const emailForm = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
     defaultValues: { email: "" },
-  })
+  });
 
   const otpForm = useForm<z.infer<typeof otpSchema>>({
     resolver: zodResolver(otpSchema),
     defaultValues: { otp: "" },
-  })
+  });
 
   // Reset forms and state when dialog closes
   useEffect(() => {
     if (!isOpen) {
-      setStep("email")
-      emailForm.reset()
-      otpForm.reset()
-      setVerificationEmail("")
-      setCooldownRemaining(0)
+      setStep("email");
+      emailForm.reset();
+      otpForm.reset();
+      setVerificationEmail("");
+      setCooldownRemaining(0);
     }
-  }, [isOpen, emailForm, otpForm])
+  }, [isOpen, emailForm, otpForm]);
 
   // Cooldown timer effect
   useEffect(() => {
-    if (cooldownRemaining <= 0) return
+    if (cooldownRemaining <= 0) return;
 
     const interval = setInterval(() => {
-      setCooldownRemaining(prev => (prev > 0 ? prev - 1 : 0))
-    }, 1000)
+      setCooldownRemaining((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
 
-    return () => clearInterval(interval)
-  }, [cooldownRemaining])
+    return () => clearInterval(interval);
+  }, [cooldownRemaining]);
 
-  const { execute: sendOtp, isPending: isSendingOtp } = useServerAction(sendToolClaimOtp, {
-    onSuccess: () => {
-      toast.success("OTP code sent to your email")
-      setVerificationEmail(emailForm.getValues().email)
-      setStep("otp")
-      setCooldownRemaining(claimsConfig.resendCooldown)
+  const { execute: sendOtp, isPending: isSendingOtp } = useServerAction(
+    sendToolClaimOtp,
+    {
+      onSuccess: () => {
+        toast.success("OTP code sent to your email");
+        setVerificationEmail(emailForm.getValues().email);
+        setStep("otp");
+        setCooldownRemaining(claimsConfig.resendCooldown);
+      },
+      onError: ({ err }) => {
+        toast.error(err.message);
+      },
     },
-    onError: ({ err }) => {
-      toast.error(err.message)
-    },
-  })
+  );
 
-  const { execute: verifyOtp, isPending: isVerifying } = useServerAction(verifyToolClaimOtp, {
-    onSuccess: () => {
-      toast.success(`You've successfully claimed ${tool.name}`)
-      setIsOpen(false)
+  const { execute: verifyOtp, isPending: isVerifying } = useServerAction(
+    verifyToolClaimOtp,
+    {
+      onSuccess: () => {
+        toast.success(`You've successfully claimed ${tool.name}`);
+        setIsOpen(false);
+      },
+      onError: ({ err }) => {
+        toast.error(err.message);
+      },
     },
-    onError: ({ err }) => {
-      toast.error(err.message)
-    },
-  })
+  );
 
   const handleSendOtp = ({ email }: z.infer<typeof emailSchema>) => {
-    if (!tool.websiteUrl) {
+    if (!tool.repositoryUrl) {
       emailForm.setError("email", {
         type: "manual",
-        message: "This listing does not have a website URL yet.",
-      })
+        message: "This listing does not have a port URL yet.",
+      });
 
-      return
+      return;
     }
 
-    const toolDomain = getUrlHostname(tool.websiteUrl)
-    const emailDomain = email.split("@")[1]
+    const toolDomain = getUrlHostname(tool.repositoryUrl);
+    const emailDomain = email.split("@")[1];
+    const isPublicGitHost = [
+      "github.com",
+      "gitlab.com",
+      "bitbucket.org",
+    ].includes(toolDomain);
 
-    if (toolDomain !== emailDomain) {
+    if (!isPublicGitHost && toolDomain !== emailDomain) {
       emailForm.setError("email", {
         type: "manual",
-        message: `Email must match the website domain (${toolDomain})`,
-      })
+        message: `Email must match the port link domain (${toolDomain})`,
+      });
 
-      return
+      return;
     }
 
-    sendOtp({ portSlug: tool.slug, email })
-  }
+    sendOtp({ portSlug: tool.slug, email });
+  };
 
   const handleVerifyOtp = (data: z.infer<typeof otpSchema>) => {
-    verifyOtp({ portSlug: tool.slug, otp: data.otp })
-  }
+    verifyOtp({ portSlug: tool.slug, otp: data.otp });
+  };
 
   const handleResendOtp = () => {
-    if (cooldownRemaining > 0 || isSendingOtp) return
+    if (cooldownRemaining > 0 || isSendingOtp) return;
 
-    sendOtp({ portSlug: tool.slug, email: verificationEmail })
-  }
+    sendOtp({ portSlug: tool.slug, email: verificationEmail });
+  };
 
   const getResendButtonText = () => {
     if (cooldownRemaining > 0) {
-      return `Resend in ${cooldownRemaining}s`
+      return `Resend in ${cooldownRemaining}s`;
     }
 
-    return "Resend code"
-  }
+    return "Resend code";
+  };
 
   if (!session?.user) {
-    return <LoginDialog isOpen={isOpen} setIsOpen={setIsOpen} />
+    return <LoginDialog isOpen={isOpen} setIsOpen={setIsOpen} />;
   }
 
   return (
@@ -161,23 +178,29 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
 
         {step === "email" ? (
           <Form {...emailForm}>
-            <form onSubmit={emailForm.handleSubmit(handleSendOtp)} className="space-y-6">
+            <form
+              onSubmit={emailForm.handleSubmit(handleSendOtp)}
+              className="space-y-6"
+            >
               <DialogDescription>
                 <p>
-                  To claim this listing, you need to verify the ownership of the{" "}
-                  <strong>{getUrlHostname(tool.websiteUrl ?? siteConfig.url)}</strong> domain. This helps us to ensure
-                  that you represent the organization.
+                  To claim this listing, you need to verify the ownership of the
+                  port link domain:{" "}
+                  <strong>
+                    {getUrlHostname(tool.repositoryUrl ?? siteConfig.url)}
+                  </strong>
+                  . This helps us to ensure that you represent the organization.
                 </p>
 
                 <p>
-                  By claiming this port, it will get a <strong>verified badge</strong> and you'll be
-                  able to:
+                  By claiming this port, it will get a{" "}
+                  <strong>verified badge</strong> and you'll be able to:
                 </p>
 
                 <ul className="mt-2 list-disc pl-4">
                   <li>Update port information</li>
                   <li>Manage its theme and platform links</li>
-                  <li>Promote it on {siteConfig.name}</li>
+                  <li>Keep listing details up to date on {siteConfig.name}</li>
                 </ul>
               </DialogDescription>
 
@@ -188,10 +211,10 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
                   <FormItem>
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                  <Input
+                      <Input
                         type="email"
                         data-1p-ignore
-                        placeholder={`e.g. hello@${getUrlHostname(tool.websiteUrl ?? siteConfig.url)}`}
+                        placeholder={`e.g. hello@${getUrlHostname(tool.repositoryUrl ?? siteConfig.url)}`}
                         {...field}
                       />
                     </FormControl>
@@ -201,11 +224,19 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
               />
 
               <DialogFooter>
-                <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setIsOpen(false)}
+                >
                   Cancel
                 </Button>
 
-                <Button type="submit" className="min-w-28" isPending={isSendingOtp}>
+                <Button
+                  type="submit"
+                  className="min-w-28"
+                  isPending={isSendingOtp}
+                >
                   Send Verification Code
                 </Button>
               </DialogFooter>
@@ -213,11 +244,15 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
           </Form>
         ) : (
           <Form {...otpForm}>
-            <form onSubmit={otpForm.handleSubmit(handleVerifyOtp)} className="space-y-6">
+            <form
+              onSubmit={otpForm.handleSubmit(handleVerifyOtp)}
+              className="space-y-6"
+            >
               <DialogDescription>
                 <p>
-                  We've sent a verification code to <strong>{verificationEmail}</strong>. Enter the
-                  code below to complete the verification process.
+                  We've sent a verification code to{" "}
+                  <strong>{verificationEmail}</strong>. Enter the code below to
+                  complete the verification process.
                 </p>
               </DialogDescription>
 
@@ -245,8 +280,8 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
                     variant="secondary"
                     type="button"
                     onClick={() => {
-                      setStep("email")
-                      otpForm.reset()
+                      setStep("email");
+                      otpForm.reset();
                     }}
                   >
                     Change email
@@ -266,11 +301,19 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
               </Stack>
 
               <DialogFooter>
-                <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setIsOpen(false)}
+                >
                   Cancel
                 </Button>
 
-                <Button type="submit" className="min-w-28" isPending={isVerifying}>
+                <Button
+                  type="submit"
+                  className="min-w-28"
+                  isPending={isVerifying}
+                >
                   Claim {tool.name}
                 </Button>
               </DialogFooter>
@@ -279,5 +322,5 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
         )}
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

@@ -57,13 +57,6 @@ export const RepositoryDetails = ({
           icon: <Icon name="lucide/copyright" />,
         }
       : undefined,
-    tool.isSelfHosted
-      ? {
-          label: "Self-hosted",
-          value: "Yes",
-          icon: <Icon name="lucide/server" />,
-        }
-      : undefined,
   ];
 
   return (
@@ -96,7 +89,7 @@ export const RepositoryDetails = ({
             eventName="click_repository"
             eventProps={{ url: tool.repositoryUrl }}
           >
-            View Repository
+            Open Port Link
           </ExternalLink>
         </Button>
       )}

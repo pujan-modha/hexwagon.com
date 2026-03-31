@@ -9,7 +9,7 @@ import { use, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useServerAction } from "zsa-react";
-import { generateFavicon, generateScreenshot } from "~/actions/media";
+import { generateFavicon } from "~/actions/media";
 import { Button } from "~/components/common/button";
 import {
   Form,
@@ -38,7 +38,6 @@ import { portSchema } from "~/server/admin/ports/schema";
 import type { findPlatformList } from "~/server/admin/platforms/queries";
 import type { findThemeList } from "~/server/admin/themes/queries";
 import { PortActions } from "./port-actions";
-import { PortGenerateDescription } from "./port-generate-description";
 import { PortPublishActions } from "./port-publish-actions";
 import { cx } from "~/utils/cva";
 import {
@@ -101,26 +100,20 @@ export function PortForm({
       slug: port?.slug ?? "",
       description: port?.description ?? "",
       content: port?.content ?? "",
-      websiteUrl: port?.websiteUrl ?? "",
       repositoryUrl: port?.repositoryUrl ?? "",
-      installUrl: port?.installUrl ?? "",
       faviconUrl: port?.faviconUrl ?? "",
       screenshotUrl: port?.screenshotUrl ?? "",
       isOfficial: port?.isOfficial ?? false,
       isFeatured: port?.isFeatured ?? false,
-      isSelfHosted: port?.isSelfHosted ?? false,
       submitterName: port?.submitterName ?? "",
       submitterEmail: port?.submitterEmail ?? "",
       submitterNote: port?.submitterNote ?? "",
-      discountCode: port?.discountCode ?? "",
-      discountAmount: port?.discountAmount ?? "",
       publishedAt: port?.publishedAt ?? null,
       status: port?.status ?? PortStatus.Draft,
       rejectionReason: port?.rejectionReason ?? "",
       themeId: port?.themeId ?? "",
       platformId: port?.platformId ?? "",
       license: port?.license ?? "",
-      notifySubmitter: true,
     },
   });
 
@@ -132,10 +125,10 @@ export function PortForm({
     enabled: !port,
   });
 
-  const [name, slug, websiteUrl, content] = form.watch([
+  const [name, slug, repositoryUrl, content] = form.watch([
     "name",
     "slug",
-    "websiteUrl",
+    "repositoryUrl",
     "content",
   ]);
 
@@ -166,16 +159,6 @@ export function PortForm({
     onError: ({ err }) => toast.error(err.message),
   });
 
-  const screenshotAction = useServerAction(generateScreenshot, {
-    onSuccess: ({ data }) => {
-      toast.success(
-        "Screenshot successfully generated. Please save the port to update.",
-      );
-      form.setValue("screenshotUrl", data);
-    },
-    onError: ({ err }) => toast.error(err.message),
-  });
-
   const handleSubmit = form.handleSubmit((data, event) => {
     const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
     const isStatusChange = submitter?.getAttribute("name") !== "submit";
@@ -197,8 +180,6 @@ export function PortForm({
         <H3 className="flex-1 truncate">{title}</H3>
 
         <Stack size="sm" className="-my-0.5">
-          <PortGenerateDescription />
-
           {port && <PortActions port={port} />}
         </Stack>
 
@@ -340,38 +321,10 @@ export function PortForm({
 
         <FormField
           control={form.control}
-          name="websiteUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Website URL</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="repositoryUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Repository URL</FormLabel>
-              <FormControl>
-                <Input type="url" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="installUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Install URL</FormLabel>
+              <FormLabel>Port URL</FormLabel>
               <FormControl>
                 <Input type="url" {...field} />
               </FormControl>
@@ -474,42 +427,6 @@ export function PortForm({
           />
         </div>
 
-        <div className="grid gap-4 @2xl:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="isSelfHosted"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Self-hosted</FormLabel>
-                <FormControl>
-                  <Switch
-                    onCheckedChange={field.onChange}
-                    checked={field.value}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="notifySubmitter"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Notify submitter</FormLabel>
-                <FormControl>
-                  <Switch
-                    onCheckedChange={field.onChange}
-                    checked={field.value}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
         <FormField
           control={form.control}
           name="faviconUrl"
@@ -529,10 +446,12 @@ export function PortForm({
                     />
                   }
                   className="-my-1"
-                  disabled={!isValidUrl(websiteUrl) || faviconAction.isPending}
+                  disabled={
+                    !isValidUrl(repositoryUrl) || faviconAction.isPending
+                  }
                   onClick={() => {
                     faviconAction.execute({
-                      url: websiteUrl,
+                      url: repositoryUrl,
                       path: `ports/${slug || getRandomString(12)}`,
                     });
                   }}
@@ -567,32 +486,6 @@ export function PortForm({
             <FormItem className="items-stretch">
               <Stack className="justify-between">
                 <FormLabel className="flex-1">Screenshot URL</FormLabel>
-
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  prefix={
-                    <Icon
-                      name="lucide/refresh-cw"
-                      className={cx(
-                        screenshotAction.isPending && "animate-spin",
-                      )}
-                    />
-                  }
-                  className="-my-1"
-                  disabled={
-                    !isValidUrl(websiteUrl) || screenshotAction.isPending
-                  }
-                  onClick={() => {
-                    screenshotAction.execute({
-                      url: websiteUrl,
-                      path: `ports/${slug || getRandomString(12)}`,
-                    });
-                  }}
-                >
-                  {field.value ? "Regenerate" : "Generate"}
-                </Button>
               </Stack>
 
               <Stack size="sm">
@@ -656,36 +549,6 @@ export function PortForm({
           )}
         />
 
-        <div className="grid gap-4 @2xl:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="discountCode"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Discount Code</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="discountAmount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Discount Amount</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
         <FormField
           control={form.control}
           name="rejectionReason"
@@ -708,6 +571,7 @@ export function PortForm({
           <PortPublishActions
             isPending={!isStatusPending && upsertAction.isPending}
             isStatusPending={isStatusPending}
+            canSchedule={Boolean(port)}
             onStatusSubmit={handleStatusSubmit}
           />
         </div>

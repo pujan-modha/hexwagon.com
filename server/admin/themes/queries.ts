@@ -60,6 +60,21 @@ export const findThemeList = async () => {
 export const findThemeBySlug = async (slug: string) => {
   return db.theme.findUnique({
     where: { slug },
-    include: { colors: true, maintainers: true },
+    include: {
+      colors: true,
+      maintainers: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: { assignedAt: "asc" },
+      },
+    },
   })
 }

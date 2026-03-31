@@ -1,37 +1,38 @@
-"use client"
+"use client";
 
-import { formatDate } from "@primoui/utils"
-import { PortStatus } from "@prisma/client"
-import type { ColumnDef } from "@tanstack/react-table"
-import { differenceInDays, formatDistanceToNowStrict } from "date-fns"
-import { useQueryStates } from "nuqs"
-import { use, useMemo } from "react"
-import { Button } from "~/components/common/button"
-import { Icon } from "~/components/common/icon"
-import { Link } from "~/components/common/link"
-import { Note } from "~/components/common/note"
-import { Stack } from "~/components/common/stack"
-import { DataTable } from "~/components/data-table/data-table"
-import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header"
-import { DataTableLink } from "~/components/data-table/data-table-link"
-import { DataTableToolbar } from "~/components/data-table/data-table-toolbar"
-import { useDataTable } from "~/hooks/use-data-table"
-import type { findTools } from "~/server/admin/tools/queries"
-import { toolsTableParamsSchema } from "~/server/admin/tools/schema"
-import type { DataTableFilterField } from "~/types"
+import { formatDate } from "@primoui/utils";
+import { PortStatus } from "@prisma/client";
+import type { ColumnDef } from "@tanstack/react-table";
+import { formatDistanceToNowStrict } from "date-fns";
+import { useQueryStates } from "nuqs";
+import { use, useMemo } from "react";
+import { Button } from "~/components/common/button";
+import { Icon } from "~/components/common/icon";
+import { Link } from "~/components/common/link";
+import { Note } from "~/components/common/note";
+import { Stack } from "~/components/common/stack";
+import { DataTable } from "~/components/data-table/data-table";
+import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import { DataTableLink } from "~/components/data-table/data-table-link";
+import { DataTableToolbar } from "~/components/data-table/data-table-toolbar";
+import { useDataTable } from "~/hooks/use-data-table";
+import { canonicalPortHref } from "~/lib/catalogue";
+import type { findTools } from "~/server/admin/tools/queries";
+import { toolsTableParamsSchema } from "~/server/admin/tools/schema";
+import type { DataTableFilterField } from "~/types";
 
-type DashboardRow = Awaited<ReturnType<typeof findTools>>["ports"][number]
+type DashboardRow = Awaited<ReturnType<typeof findTools>>["ports"][number];
 
 type DashboardTableProps = {
-  toolsPromise: ReturnType<typeof findTools>
-}
+  toolsPromise: ReturnType<typeof findTools>;
+};
 
 export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
   const { ports, pageCount } = use(toolsPromise) as {
-    ports: DashboardRow[]
-    pageCount: number
-  }
-  const [{ perPage, sort }] = useQueryStates(toolsTableParamsSchema)
+    ports: DashboardRow[];
+    pageCount: number;
+  };
+  const [{ perPage, sort }] = useQueryStates(toolsTableParamsSchema);
 
   // Memoize the columns so they don't re-render on every render
   const columns = useMemo((): ColumnDef<DashboardRow>[] => {
@@ -39,23 +40,33 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
       {
         accessorKey: "name",
         enableHiding: false,
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Name" />
+        ),
         cell: ({ row }) => {
-          const { name, slug, status, faviconUrl } = row.original
+          const { id, name, slug, status, theme, platform } =
+            row.original;
 
           if (status === PortStatus.Draft) {
-            return <Note className="font-medium">{name}</Note>
+            return <Note className="font-medium">{name}</Note>;
           }
 
-          return <DataTableLink href={`/${slug}`} image={faviconUrl} title={name ?? slug} />
+          return (
+            <DataTableLink
+              href={canonicalPortHref(theme.slug, platform.slug, id)}
+              title={name ?? slug}
+            />
+          );
         },
       },
       {
         accessorKey: "publishedAt",
         enableHiding: false,
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Published At" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Published At" />
+        ),
         cell: ({ row }) => {
-          const { status, publishedAt } = row.original
+          const { status, publishedAt } = row.original;
 
           switch (status) {
             case PortStatus.Published:
@@ -65,9 +76,11 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
                     name="lucide/circle"
                     className="stroke-3 text-green-600/75 dark:text-green-500/75"
                   />
-                  <Note className="font-medium">{formatDate(publishedAt!)}</Note>
+                  <Note className="font-medium">
+                    {formatDate(publishedAt!)}
+                  </Note>
                 </Stack>
-              )
+              );
             case PortStatus.Scheduled:
               return (
                 <Stack size="sm" wrap={false} title={formatDate(publishedAt!)}>
@@ -84,63 +97,46 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
                     })}
                   </Note>
                 </Stack>
-              )
+              );
             case PortStatus.Draft:
               return (
                 <Stack size="sm" wrap={false}>
-                  <Icon name="lucide/circle-dashed" className="stroke-3 text-muted-foreground/75" />
-                  <span className="text-muted-foreground/75">Awaiting review</span>
+                  <Icon
+                    name="lucide/circle-dashed"
+                    className="stroke-3 text-muted-foreground/75"
+                  />
+                  <span className="text-muted-foreground/75">
+                    Awaiting review
+                  </span>
                 </Stack>
-              )
+              );
             default:
-              return ""
+              return "";
           }
         },
       },
       {
         accessorKey: "pageviews",
         enableHiding: false,
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Views (last 30d)" />,
-        cell: ({ row }) => <Note>{row.getValue<number>("pageviews")?.toLocaleString()}</Note>,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Views (last 30d)" />
+        ),
+        cell: ({ row }) => (
+          <Note>{row.getValue<number>("pageviews")?.toLocaleString()}</Note>
+        ),
       },
       {
         accessorKey: "createdAt",
         enableHiding: false,
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" />,
-        cell: ({ row }) => <Note>{formatDate(row.getValue<Date>("createdAt"))}</Note>,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Created At" />
+        ),
+        cell: ({ row }) => (
+          <Note>{formatDate(row.getValue<Date>("createdAt"))}</Note>
+        ),
       },
-      {
-        id: "actions",
-        enableHiding: false,
-        cell: ({ row }) => {
-          const { slug, isFeatured, publishedAt } = row.original
-          const isLongQueue = !publishedAt || differenceInDays(publishedAt, new Date()) >= 7
-
-          return (
-            <Stack size="sm" className="float-right -my-1">
-              {isLongQueue && (
-                <Button size="sm" variant="secondary" asChild>
-                  <Link href={`/submit/${slug}`}>Expedite</Link>
-                </Button>
-              )}
-
-              {!isFeatured && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  prefix={<Icon name="lucide/sparkles" className="text-inherit" />}
-                  className="text-blue-600 dark:text-blue-400"
-                  asChild
-                >
-                  <Link href={`/submit/${slug}`}>Promote</Link>
-                </Button>
-              )}
-            </Stack>
-          )
-        },
-      },
-    ]
-  }, [])
+    ];
+  }, []);
 
   // Search filters
   const filterFields: DataTableFilterField<any>[] = [
@@ -149,7 +145,7 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
       label: "Name",
       placeholder: "Search by name...",
     },
-  ]
+  ];
 
   const { table } = useDataTable({
     data: ports as any,
@@ -161,19 +157,26 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
     initialState: {
       pagination: { pageIndex: 0, pageSize: perPage },
       sorting: sort,
-      columnPinning: { right: ["actions"] },
       columnVisibility: { createdAt: false },
     },
-    getRowId: originalRow => originalRow.slug,
-  })
+    getRowId: (originalRow) => originalRow.slug,
+  });
 
   return (
-    <DataTable table={table} emptyState="No ports found. Submit or claim a port to get started.">
+    <DataTable
+      table={table}
+      emptyState="No ports found. Submit or claim a port to get started."
+    >
       <DataTableToolbar table={table} filterFields={filterFields}>
-        <Button size="md" variant="primary" prefix={<Icon name="lucide/plus" />} asChild>
+        <Button
+          size="md"
+          variant="primary"
+          prefix={<Icon name="lucide/plus" />}
+          asChild
+        >
           <Link href="/submit">Submit a port</Link>
         </Button>
       </DataTableToolbar>
     </DataTable>
-  )
-}
+  );
+};

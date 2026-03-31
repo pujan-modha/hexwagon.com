@@ -50,7 +50,7 @@ type AdFormDialogProps = {
 
 const formSchema = z
   .object({
-    spot: z.enum(["Banner", "Listing", "Sidebar"]),
+    spot: z.enum(["Banner", "Listing", "Sidebar", "Footer"]),
     email: z.string().email("Must be a valid email address.").max(255),
     name: z.string().min(1, "Ad name is required.").max(255),
     description: z.string().max(500).optional().or(z.literal("")),
@@ -226,7 +226,9 @@ const AdFormDialog = ({
       ? "Banner placement"
       : watchedSpot === "Sidebar"
         ? "Sidebar placement"
-        : "Listing placement";
+        : watchedSpot === "Footer"
+          ? "Footer placement"
+          : "Listing placement";
 
   const onSubmit = (values: FormValues) => {
     const payload = {
@@ -529,7 +531,11 @@ const AdFormDialog = ({
               </div>
 
               <div
-                className={watchedSpot === "Sidebar" ? "max-w-sm" : "w-full"}
+                className={
+                  watchedSpot === "Sidebar" || watchedSpot === "Footer"
+                    ? "max-w-sm"
+                    : "w-full"
+                }
               >
                 <PreviewComponent ad={previewAd} interactive={false} />
               </div>

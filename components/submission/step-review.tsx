@@ -19,8 +19,6 @@ const StepReview = ({ onBack }: StepReviewProps) => {
     description,
     content,
     repositoryUrl,
-    installUrl,
-    websiteUrl,
     license,
     submitterName,
     submitterEmail,
@@ -37,9 +35,7 @@ const StepReview = ({ onBack }: StepReviewProps) => {
         name,
         description,
         content,
-        repositoryUrl: repositoryUrl || undefined,
-        installUrl: installUrl || undefined,
-        websiteUrl: websiteUrl || undefined,
+        repositoryUrl,
         license,
         submitterName,
         submitterEmail,
@@ -86,17 +82,9 @@ const StepReview = ({ onBack }: StepReviewProps) => {
           )}
           {repositoryUrl && (
             <div className="grid grid-cols-2 gap-2">
-              <span className="text-muted-foreground">Repository:</span>
+              <span className="text-muted-foreground">Port URL:</span>
               <a href={repositoryUrl} className="underline">
                 {repositoryUrl}
-              </a>
-            </div>
-          )}
-          {installUrl && (
-            <div className="grid grid-cols-2 gap-2">
-              <span className="text-muted-foreground">Install URL:</span>
-              <a href={installUrl} className="underline">
-                {installUrl}
               </a>
             </div>
           )}

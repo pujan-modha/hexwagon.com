@@ -13,6 +13,8 @@ import { findTheme } from "~/server/web/themes/queries";
 import { findPlatforms } from "~/server/web/platforms/queries";
 import { EntityHeader } from "~/components/catalogue/entity-header";
 import { EntityTabs } from "~/components/catalogue/entity-tabs";
+import { EntityReportButton } from "~/components/catalogue/entity-report-button";
+import { ThemeClaimButton } from "~/components/catalogue/theme-claim-button";
 import { ThemePlatformsTab } from "~/components/catalogue/theme-platforms-tab";
 import { ThemeGuidelinesTab } from "~/components/catalogue/theme-guidelines-tab";
 import { ColorPaletteTab } from "~/components/catalogue/color-palette-tab";
@@ -67,7 +69,7 @@ export default async function ThemePage(props: PageProps) {
       label: `Platforms (${theme._count.ports})`,
       content: (
         <Suspense fallback={<div>Loading...</div>}>
-          <ThemePlatformsTab platforms={platforms} />
+          <ThemePlatformsTab platforms={platforms} themeSlug={theme.slug} />
         </Suspense>
       ),
     },
@@ -97,7 +99,19 @@ export default async function ThemePage(props: PageProps) {
           <EntityHeader
             name={theme.name}
             description={theme.description}
-            externalUrl={theme.websiteUrl ?? undefined}
+            logoSrc={theme.faviconUrl}
+            actions={(
+              <>
+                {theme.maintainers.length === 0 && (
+                  <ThemeClaimButton themeId={theme.id} themeName={theme.name} />
+                )}
+                <EntityReportButton
+                  entityType="theme"
+                  entityId={theme.id}
+                  entityName={theme.name}
+                />
+              </>
+            )}
           />
 
           <EntityTabs tabs={tabs} defaultTab="platforms" />
@@ -108,11 +122,6 @@ export default async function ThemePage(props: PageProps) {
             title="Theme Details"
             insights={
               [
-                {
-                  label: "Author",
-                  value: theme.author,
-                  icon: <Icon name="lucide/user" />,
-                },
                 theme.websiteUrl
                   ? {
                       label: "Homepage",
@@ -148,10 +157,10 @@ export default async function ThemePage(props: PageProps) {
             })}`}
           />
 
-          <Suspense fallback={<AdCardSkeleton />}>
+          <Suspense fallback={<AdCardSkeleton className="min-h-[190px]" />}>
             <AdCard
+              className="min-h-[190px]"
               where={{ type: { in: [AdType.Sidebar, AdType.ThemePage] } }}
-              sidebarTargeting={{ themeSlug: theme.slug }}
             />
           </Suspense>
         </Section.Sidebar>

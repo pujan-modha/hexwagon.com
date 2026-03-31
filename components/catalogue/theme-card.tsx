@@ -10,22 +10,25 @@ import { H4 } from "~/components/common/heading";
 import { Link } from "~/components/common/link";
 import { Skeleton } from "~/components/common/skeleton";
 import { Favicon } from "~/components/web/ui/favicon";
+import { themeHref } from "~/lib/catalogue";
 import type { ThemeMany } from "~/server/web/themes/payloads";
 
 type ThemeCardProps = Omit<ComponentProps<typeof Card>, "href"> & {
   theme: ThemeMany;
   showCount?: boolean;
+  href?: string;
 };
 
 const ThemeCard = ({
   theme,
   showCount,
+  href,
   className,
   ...props
 }: ThemeCardProps) => {
   return (
     <Card asChild className={className} {...props}>
-      <Link href={`/themes/${theme.slug}`}>
+      <Link href={href ?? themeHref(theme.slug)}>
         <CardHeader wrap={false}>
           <Favicon src={theme.faviconUrl} title={theme.name} plain />
 

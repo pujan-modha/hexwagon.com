@@ -1,45 +1,58 @@
-import { isTruthy } from "@primoui/utils"
-import { PortStatus } from "@prisma/client"
-import { addDays, formatDate, isFriday, isMonday, isWednesday } from "date-fns"
-import { type ComponentProps, type ReactNode, useState } from "react"
-import { useFormContext } from "react-hook-form"
-import { Button, type ButtonProps } from "~/components/common/button"
-import { Calendar } from "~/components/common/calendar"
-import { Checkbox } from "~/components/common/checkbox"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/common/dialog"
-import { FormControl, FormField, FormLabel, FormItem } from "~/components/common/form"
-import { H5, H6 } from "~/components/common/heading"
-import { Icon } from "~/components/common/icon"
-import { Input } from "~/components/common/input"
-import { Note } from "~/components/common/note"
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/common/popover"
-import { RadioGroup, RadioGroupItem } from "~/components/common/radio-group"
-import { Stack } from "~/components/common/stack"
-import type { PortSchema } from "~/server/admin/ports/schema"
-import { cx } from "~/utils/cva"
+import { isTruthy } from "@primoui/utils";
+import { PortStatus } from "@prisma/client";
+import { addDays, formatDate, isFriday, isMonday, isWednesday } from "date-fns";
+import { type ComponentProps, type ReactNode, useState } from "react";
+import { useFormContext } from "react-hook-form";
+import { Button, type ButtonProps } from "~/components/common/button";
+import { Calendar } from "~/components/common/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/common/dialog";
+import { H5, H6 } from "~/components/common/heading";
+import { Icon } from "~/components/common/icon";
+import { Input } from "~/components/common/input";
+import { Note } from "~/components/common/note";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/common/popover";
+import { RadioGroup, RadioGroupItem } from "~/components/common/radio-group";
+import { Stack } from "~/components/common/stack";
+import type { PortSchema } from "~/server/admin/ports/schema";
 
 type PortPublishActionsProps = ComponentProps<typeof Stack> & {
-  isPending: boolean
-  isStatusPending: boolean
-  onStatusSubmit: (status: PortStatus, publishedAt: Date | null) => void
-}
+  isPending: boolean;
+  isStatusPending: boolean;
+  canSchedule: boolean;
+  onStatusSubmit: (status: PortStatus, publishedAt: Date | null) => void;
+};
 
 type PopoverOption = {
-  status: PortStatus
-  title: ReactNode
-  description?: ReactNode
-  button?: ButtonProps
-}
+  status: PortStatus;
+  title: ReactNode;
+  description?: ReactNode;
+  button?: ButtonProps;
+};
 
 type ActionConfig = Omit<ButtonProps, "popover"> & {
   popover?: {
-    title: ReactNode
-    description?: ReactNode
-    options: PopoverOption[]
-  }
-}
+    title: ReactNode;
+    description?: ReactNode;
+    options: PopoverOption[];
+  };
+};
 
-const getStatusConfig = (status: PortStatus, onPublished: () => void, onScheduled: () => void, onDraft: () => void): ActionConfig[] => {
+const getStatusConfig = (
+  status: PortStatus,
+  canSchedule: boolean,
+  onPublished: () => void,
+  onScheduled: () => void,
+  onDraft: () => void,
+): ActionConfig[] => {
   switch (status) {
     case PortStatus.Scheduled:
       return [
@@ -86,7 +99,7 @@ const getStatusConfig = (status: PortStatus, onPublished: () => void, onSchedule
           children: "Update",
           variant: "primary",
         },
-      ]
+      ];
     case PortStatus.Published:
       return [
         {
@@ -119,37 +132,43 @@ const getStatusConfig = (status: PortStatus, onPublished: () => void, onSchedule
           children: "Update",
           variant: "primary",
         },
-      ]
+      ];
     case PortStatus.PendingEdit:
     case PortStatus.Draft:
     default:
+      const options: PopoverOption[] = [
+        {
+          status: PortStatus.Published,
+          title: "Publish now",
+          description: "Set this port live immediately",
+          button: {
+            onClick: onPublished,
+            children: "Publish",
+          },
+        },
+      ];
+
+      if (canSchedule) {
+        options.push({
+          status: PortStatus.Scheduled,
+          title: "Schedule for later",
+          description: "Set automatic future publish date",
+          button: {
+            onClick: onScheduled,
+            children: "Schedule",
+          },
+        });
+      }
+
       return [
         {
           type: "button",
-          children: status === PortStatus.PendingEdit ? "Pending Edit" : "Publish",
+          children:
+            status === PortStatus.PendingEdit ? "Pending Edit" : "Publish",
           variant: "fancy",
           popover: {
             title: "Ready to publish this port?",
-            options: [
-              {
-                status: PortStatus.Published,
-                title: "Publish now",
-                description: "Set this port live immediately",
-                button: {
-                  onClick: onPublished,
-                  children: "Publish",
-                },
-              },
-              {
-                status: PortStatus.Scheduled,
-                title: "Schedule for later",
-                description: "Set automatic future publish date",
-                button: {
-                  onClick: onScheduled,
-                  children: "Schedule",
-                },
-              },
-            ],
+            options,
           },
         },
         {
@@ -157,44 +176,55 @@ const getStatusConfig = (status: PortStatus, onPublished: () => void, onSchedule
           children: "Save Draft",
           variant: "primary",
         },
-      ]
+      ];
   }
-}
+};
 
 export const PortPublishActions = ({
   isPending,
   isStatusPending,
+  canSchedule,
   onStatusSubmit,
   children,
   ...props
 }: PortPublishActionsProps) => {
-  const { control, watch } = useFormContext<PortSchema>()
-  const [status, submitterEmail, publishedAt] = watch(["status", "submitterEmail", "publishedAt"])
-  const publishedAtDate = new Date(publishedAt ?? new Date())
+  const { watch } = useFormContext<PortSchema>();
+  const [status, publishedAt] = watch(["status", "publishedAt"]);
+  const publishedAtDate = new Date(publishedAt ?? new Date());
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [currentStatus, setCurrentStatus] = useState(status)
-  const [isScheduleOpen, setIsScheduleOpen] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(formatDate(publishedAtDate, "yyyy-MM-dd"))
-  const [selectedTime, setSelectedTime] = useState(formatDate(publishedAtDate, "HH:mm"))
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(status);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(
+    formatDate(publishedAtDate, "yyyy-MM-dd"),
+  );
+  const [selectedTime, setSelectedTime] = useState(
+    formatDate(publishedAtDate, "HH:mm"),
+  );
 
   const handlePublished = () => {
-    onStatusSubmit(PortStatus.Published, new Date())
-    setIsOpen(false)
-  }
+    onStatusSubmit(PortStatus.Published, new Date());
+    setIsOpen(false);
+  };
 
   const handleScheduled = () => {
-    const scheduledDate = new Date(`${selectedDate}T${selectedTime}`)
-    onStatusSubmit(PortStatus.Scheduled, scheduledDate)
-    setIsOpen(false)
-  }
+    const scheduledDate = new Date(`${selectedDate}T${selectedTime}`);
+    onStatusSubmit(PortStatus.Scheduled, scheduledDate);
+    setIsOpen(false);
+  };
 
   const handleDraft = () => {
-    onStatusSubmit(PortStatus.Draft, null)
-    setIsOpen(false)
-  }
+    onStatusSubmit(PortStatus.Draft, null);
+    setIsOpen(false);
+  };
 
-  const portActions = getStatusConfig(status, handlePublished, handleScheduled, handleDraft)
+  const portActions = getStatusConfig(
+    status,
+    canSchedule,
+    handlePublished,
+    handleScheduled,
+    handleDraft,
+  );
 
   return (
     <Stack size="sm" {...props}>
@@ -202,11 +232,16 @@ export const PortPublishActions = ({
 
       {portActions.map(({ popover, ...action }) => {
         if (popover) {
-          const opts = popover.options
-          const currentOption = opts.find(o => o.status === currentStatus) || opts[0]
+          const opts = popover.options;
+          const currentOption =
+            opts.find((o) => o.status === currentStatus) || opts[0];
 
           return (
-            <Popover key={String(action.children)} open={isOpen} onOpenChange={setIsOpen}>
+            <Popover
+              key={String(action.children)}
+              open={isOpen}
+              onOpenChange={setIsOpen}
+            >
               <PopoverTrigger asChild>
                 <Button size="md" isPending={isStatusPending} {...action} />
               </PopoverTrigger>
@@ -216,10 +251,14 @@ export const PortPublishActions = ({
                 side="top"
                 sideOffset={8}
                 className="w-72"
-                onOpenAutoFocus={e => e.preventDefault()}
+                onOpenAutoFocus={(e) => e.preventDefault()}
                 asChild
               >
-                <Stack size="lg" direction="column" className="items-stretch gap-5 min-w-80">
+                <Stack
+                  size="lg"
+                  direction="column"
+                  className="items-stretch gap-5 min-w-80"
+                >
                   <Stack size="sm" direction="column">
                     <H5>{popover.title}</H5>
 
@@ -229,25 +268,42 @@ export const PortPublishActions = ({
                   <RadioGroup
                     defaultValue={currentOption.status}
                     className="contents"
-                    onValueChange={value => setCurrentStatus(value as PortStatus)}
+                    onValueChange={(value) =>
+                      setCurrentStatus(value as PortStatus)
+                    }
                   >
-                    {opts.map(option => (
-                      <Stack size="sm" className="items-start" key={option.status}>
+                    {opts.map((option) => (
+                      <Stack
+                        size="sm"
+                        className="items-start"
+                        key={option.status}
+                      >
                         <RadioGroupItem
                           id={option.status}
                           value={option.status}
                           className="mt-0.5"
                         />
 
-                        <Stack size="sm" direction="column" className="grow" asChild>
+                        <Stack
+                          size="sm"
+                          direction="column"
+                          className="grow"
+                          asChild
+                        >
                           <label htmlFor={option.status}>
                             <H6>{option.title}</H6>
 
-                            {option.description && <Note>{option.description}</Note>}
+                            {option.description && (
+                              <Note>{option.description}</Note>
+                            )}
 
                             {option.status === PortStatus.Scheduled &&
                               currentStatus === PortStatus.Scheduled && (
-                                <Stack size="sm" wrap={false} className="mt-2 items-stretch w-full">
+                                <Stack
+                                  size="sm"
+                                  wrap={false}
+                                  className="mt-2 items-stretch w-full"
+                                >
                                   <Button
                                     size="md"
                                     variant="secondary"
@@ -261,33 +317,49 @@ export const PortPublishActions = ({
                                   <Input
                                     type="time"
                                     value={selectedTime}
-                                    onChange={e => setSelectedTime(e.target.value)}
+                                    onChange={(e) =>
+                                      setSelectedTime(e.target.value)
+                                    }
                                     className="w-full tabular-nums"
                                   />
 
-                                  <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
+                                  <Dialog
+                                    open={isScheduleOpen}
+                                    onOpenChange={setIsScheduleOpen}
+                                  >
                                     <DialogContent className="max-w-sm">
                                       <DialogHeader>
-                                        <DialogTitle>Pick a date to publish</DialogTitle>
+                                        <DialogTitle>
+                                          Pick a date to publish
+                                        </DialogTitle>
                                       </DialogHeader>
 
                                       <Calendar
                                         mode="single"
                                         selected={new Date(selectedDate)}
                                         disabled={{ before: new Date() }}
-                                        onSelect={date => {
-                                          date && setSelectedDate(formatDate(date, "yyyy-MM-dd"))
-                                          setIsScheduleOpen(false)
+                                        onSelect={(date) => {
+                                          date &&
+                                            setSelectedDate(
+                                              formatDate(date, "yyyy-MM-dd"),
+                                            );
+                                          setIsScheduleOpen(false);
                                         }}
                                         modifiers={{
-                                          schedulable: Array.from({ length: 365 }, (_, i) => {
-                                            const date = addDays(new Date(), i)
-                                            return isMonday(date) ||
-                                              isWednesday(date) ||
-                                              isFriday(date)
-                                              ? date
-                                              : undefined
-                                          }).filter(isTruthy),
+                                          schedulable: Array.from(
+                                            { length: 365 },
+                                            (_, i) => {
+                                              const date = addDays(
+                                                new Date(),
+                                                i,
+                                              );
+                                              return isMonday(date) ||
+                                                isWednesday(date) ||
+                                                isFriday(date)
+                                                ? date
+                                                : undefined;
+                                            },
+                                          ).filter(isTruthy),
                                         }}
                                         modifiersClassNames={{
                                           schedulable:
@@ -304,45 +376,27 @@ export const PortPublishActions = ({
                     ))}
                   </RadioGroup>
 
-                  {submitterEmail &&
-                    status !== PortStatus.Published &&
-                    (currentOption.status === PortStatus.Published ||
-                      currentOption.status === PortStatus.Scheduled) && (
-                      <FormField
-                        control={control}
-                        name="notifySubmitter"
-                        render={({ field }) => (
-                          <FormItem size="sm" direction="row">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={() => field.onChange(!field.value)}
-                              />
-                            </FormControl>
-
-                            <FormLabel
-                              className={cx(!field.value && "font-normal text-muted-foreground")}
-                            >
-                              Notify submitter via email
-                            </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
                   <Stack className="justify-between">
-                    <Button size="md" variant="secondary" onClick={() => setIsOpen(false)}>
+                    <Button
+                      size="md"
+                      variant="secondary"
+                      onClick={() => setIsOpen(false)}
+                    >
                       Cancel
                     </Button>
 
                     {currentOption.button && (
-                      <Button size="md" isPending={isStatusPending} {...currentOption.button} />
+                      <Button
+                        size="md"
+                        isPending={isStatusPending}
+                        {...currentOption.button}
+                      />
                     )}
                   </Stack>
                 </Stack>
               </PopoverContent>
             </Popover>
-          )
+          );
         }
 
         return (
@@ -354,8 +408,8 @@ export const PortPublishActions = ({
             className="lg:min-w-24"
             {...action}
           />
-        )
+        );
       })}
     </Stack>
-  )
-}
+  );
+};
