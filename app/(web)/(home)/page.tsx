@@ -104,9 +104,7 @@ export default function Home(props: PageProps) {
       <Suspense
         fallback={
           <section className="flex flex-col gap-8">
-            <FeaturedSectionHeader
-              title="Trending Ports"
-            />
+            <FeaturedSectionHeader title="Trending Ports" />
             <CatalogueGrid className="gap-5 xl:grid-cols-3">
               {Array.from({ length: 4 }).flatMap((_, index) => {
                 const cards = [

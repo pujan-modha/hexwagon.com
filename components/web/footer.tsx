@@ -163,7 +163,9 @@ export const Footer = ({
           className="text-sm col-span-full md:col-span-5 md:items-stretch"
         >
           <Suspense
-            fallback={<AdCardSkeleton className="w-full md:w-[328px] md:max-w-[328px] h-[190px] max-h-[190px] md:ml-auto" />}
+            fallback={
+              <AdCardSkeleton className="w-full md:w-[328px] md:max-w-[328px] h-[190px] max-h-[190px] md:ml-auto" />
+            }
           >
             <AdCard
               className="w-full md:w-[328px] md:max-w-[328px] h-[190px] max-h-[190px] md:ml-auto"
@@ -182,9 +184,7 @@ export const Footer = ({
       <div className="flex flex-row flex-wrap items-end justify-between gap-x-4 gap-y-2 w-full text-sm text-muted-foreground **:[&[href]]:font-medium **:[&[href]]:text-foreground **:[&[href]]:hover:text-secondary-foreground">
         {/* <BuiltWith medium="footer" /> */}
 
-        <p>
-          Made with 🍕 and 🥤. Website may contain affiliate links.
-        </p>
+        <p>Made with 🍕 and 🥤. Website may contain affiliate links.</p>
       </div>
 
       {children}

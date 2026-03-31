@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useDebouncedState } from "@mantine/hooks"
-import { useRouter } from "next/navigation"
-import { type FormEvent, useEffect, useRef, useState } from "react"
-import { useServerAction } from "zsa-react"
-import { searchItems } from "~/actions/search"
-import { Button } from "~/components/common/button"
-import { Icon } from "~/components/common/icon"
-import { platformHref, themeHref, themePlatformHref } from "~/lib/catalogue"
-import { cx } from "~/utils/cva"
+import { useDebouncedState } from "@mantine/hooks";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useServerAction } from "zsa-react";
+import { searchItems } from "~/actions/search";
+import { Button } from "~/components/common/button";
+import { Icon } from "~/components/common/icon";
+import { platformHref, themeHref, themePlatformHref } from "~/lib/catalogue";
+import { cx } from "~/utils/cva";
 
 const THEME_PLACEHOLDERS = [
   "Tokyo Night",
@@ -17,7 +17,7 @@ const THEME_PLACEHOLDERS = [
   "Nord",
   "One Dark",
   "Solarized",
-]
+];
 
 const PLATFORM_PLACEHOLDERS = [
   "VS Code",
@@ -26,156 +26,163 @@ const PLATFORM_PLACEHOLDERS = [
   "Terminal",
   "Sublime Text",
   "Vim",
-]
+];
 
 type ThemeHit = {
-  slug: string
-  name: string
-  faviconUrl?: string
-}
+  slug: string;
+  name: string;
+  faviconUrl?: string;
+};
 
 type PlatformHit = {
-  slug: string
-  name: string
-}
+  slug: string;
+  name: string;
+};
 
-type ActiveField = "theme" | "platform" | null
+type ActiveField = "theme" | "platform" | null;
 
-const normalize = (value: string) => value.trim()
+const normalize = (value: string) => value.trim();
 
 const queryHref = (pathname: string, query: string) => {
-  const params = new URLSearchParams({ q: query })
-  return `${pathname}?${params.toString()}`
-}
+  const params = new URLSearchParams({ q: query });
+  return `${pathname}?${params.toString()}`;
+};
 
 export const HeroSearch = () => {
-  const router = useRouter()
-  const formRef = useRef<HTMLFormElement>(null)
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const [theme, setTheme] = useState("")
-  const [platform, setPlatform] = useState("")
-  const [themePlaceholder, setThemePlaceholder] = useState(THEME_PLACEHOLDERS[0] ?? "")
+  const [theme, setTheme] = useState("");
+  const [platform, setPlatform] = useState("");
+  const [themePlaceholder, setThemePlaceholder] = useState(
+    THEME_PLACEHOLDERS[0] ?? "",
+  );
   const [platformPlaceholder, setPlatformPlaceholder] = useState(
     PLATFORM_PLACEHOLDERS[0] ?? "",
-  )
-  const [themeResults, setThemeResults] = useState<ThemeHit[]>([])
-  const [platformResults, setPlatformResults] = useState<PlatformHit[]>([])
-  const [activeField, setActiveField] = useState<ActiveField>(null)
+  );
+  const [themeResults, setThemeResults] = useState<ThemeHit[]>([]);
+  const [platformResults, setPlatformResults] = useState<PlatformHit[]>([]);
+  const [activeField, setActiveField] = useState<ActiveField>(null);
 
-  const [debouncedTheme, setDebouncedTheme] = useDebouncedState("", 350)
-  const [debouncedPlatform, setDebouncedPlatform] = useDebouncedState("", 350)
+  const [debouncedTheme, setDebouncedTheme] = useDebouncedState("", 350);
+  const [debouncedPlatform, setDebouncedPlatform] = useDebouncedState("", 350);
 
   useEffect(() => {
-    let themeIndex = 0
-    let platformIndex = 0
+    let themeIndex = 0;
+    let platformIndex = 0;
 
     const interval = setInterval(() => {
-      themeIndex = (themeIndex + 1) % THEME_PLACEHOLDERS.length
-      platformIndex = (platformIndex + 1) % PLATFORM_PLACEHOLDERS.length
+      themeIndex = (themeIndex + 1) % THEME_PLACEHOLDERS.length;
+      platformIndex = (platformIndex + 1) % PLATFORM_PLACEHOLDERS.length;
 
-      setThemePlaceholder(THEME_PLACEHOLDERS[themeIndex] ?? "")
-      setPlatformPlaceholder(PLATFORM_PLACEHOLDERS[platformIndex] ?? "")
-    }, 4500)
+      setThemePlaceholder(THEME_PLACEHOLDERS[themeIndex] ?? "");
+      setPlatformPlaceholder(PLATFORM_PLACEHOLDERS[platformIndex] ?? "");
+    }, 4500);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const onMouseDown = (event: MouseEvent) => {
-      const target = event.target
-      if (!(target instanceof Node)) return
+      const target = event.target;
+      if (!(target instanceof Node)) return;
 
       if (!formRef.current?.contains(target)) {
-        setActiveField(null)
+        setActiveField(null);
       }
-    }
+    };
 
-    document.addEventListener("mousedown", onMouseDown)
-    return () => document.removeEventListener("mousedown", onMouseDown)
-  }, [])
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, []);
 
   const themeSearch = useServerAction(searchItems, {
     onSuccess: ({ data }) => {
-      const hits = data?.[1]?.hits
-      setThemeResults(Array.isArray(hits) ? (hits as ThemeHit[]).slice(0, 5) : [])
+      const hits = data?.[1]?.hits;
+      setThemeResults(
+        Array.isArray(hits) ? (hits as ThemeHit[]).slice(0, 5) : [],
+      );
     },
     onError: () => setThemeResults([]),
-  })
+  });
 
   const platformSearch = useServerAction(searchItems, {
     onSuccess: ({ data }) => {
-      const hits = data?.[2]?.hits
-      setPlatformResults(Array.isArray(hits) ? (hits as PlatformHit[]).slice(0, 5) : [])
+      const hits = data?.[2]?.hits;
+      setPlatformResults(
+        Array.isArray(hits) ? (hits as PlatformHit[]).slice(0, 5) : [],
+      );
     },
     onError: () => setPlatformResults([]),
-  })
+  });
 
   useEffect(() => {
-    const query = normalize(debouncedTheme)
+    const query = normalize(debouncedTheme);
 
     if (query.length < 2) {
-      setThemeResults([])
-      return
+      setThemeResults([]);
+      return;
     }
 
-    themeSearch.execute({ query })
-  }, [debouncedTheme, themeSearch.execute])
+    themeSearch.execute({ query });
+  }, [debouncedTheme, themeSearch.execute]);
 
   useEffect(() => {
-    const query = normalize(debouncedPlatform)
+    const query = normalize(debouncedPlatform);
 
     if (query.length < 2) {
-      setPlatformResults([])
-      return
+      setPlatformResults([]);
+      return;
     }
 
-    platformSearch.execute({ query })
-  }, [debouncedPlatform, platformSearch.execute])
+    platformSearch.execute({ query });
+  }, [debouncedPlatform, platformSearch.execute]);
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const themeQuery = normalize(theme)
-    const platformQuery = normalize(platform)
+    const themeQuery = normalize(theme);
+    const platformQuery = normalize(platform);
 
-    if (!themeQuery && !platformQuery) return
+    if (!themeQuery && !platformQuery) return;
 
-    const topTheme = themeResults[0]
-    const topPlatform = platformResults[0]
+    const topTheme = themeResults[0];
+    const topPlatform = platformResults[0];
 
     if (themeQuery && platformQuery && topTheme?.slug && topPlatform?.slug) {
-      router.push(themePlatformHref(topTheme.slug, topPlatform.slug))
-      return
+      router.push(themePlatformHref(topTheme.slug, topPlatform.slug));
+      return;
     }
 
     if (themeQuery && topTheme?.slug) {
-      router.push(themeHref(topTheme.slug))
-      return
+      router.push(themeHref(topTheme.slug));
+      return;
     }
 
     if (platformQuery && topPlatform?.slug) {
-      router.push(platformHref(topPlatform.slug))
-      return
+      router.push(platformHref(topPlatform.slug));
+      return;
     }
 
     if (themeQuery && platformQuery) {
-      router.push(queryHref("/themes", `${themeQuery} ${platformQuery}`))
-      return
+      router.push(queryHref("/themes", `${themeQuery} ${platformQuery}`));
+      return;
     }
 
     if (themeQuery) {
-      router.push(queryHref("/themes", themeQuery))
-      return
+      router.push(queryHref("/themes", themeQuery));
+      return;
     }
 
-    router.push(queryHref("/platforms", platformQuery))
-  }
+    router.push(queryHref("/platforms", platformQuery));
+  };
 
-  const showThemeSuggestions = normalize(theme).length >= 2
-  const showPlatformSuggestions = normalize(platform).length >= 2
-  const showThemeDropdown = activeField === "theme" && showThemeSuggestions
-  const showPlatformDropdown = activeField === "platform" && showPlatformSuggestions
-  const isPending = themeSearch.isPending || platformSearch.isPending
+  const showThemeSuggestions = normalize(theme).length >= 2;
+  const showPlatformSuggestions = normalize(platform).length >= 2;
+  const showThemeDropdown = activeField === "theme" && showThemeSuggestions;
+  const showPlatformDropdown =
+    activeField === "platform" && showPlatformSuggestions;
+  const isPending = themeSearch.isPending || platformSearch.isPending;
 
   return (
     <form
@@ -201,9 +208,9 @@ export const HeroSearch = () => {
               placeholder={themePlaceholder}
               onFieldFocus={() => setActiveField("theme")}
               onValueChange={(value) => {
-                setTheme(value)
-                setDebouncedTheme(value)
-                setActiveField("theme")
+                setTheme(value);
+                setDebouncedTheme(value);
+                setActiveField("theme");
               }}
             />
 
@@ -226,9 +233,9 @@ export const HeroSearch = () => {
               placeholder={platformPlaceholder}
               onFieldFocus={() => setActiveField("platform")}
               onValueChange={(value) => {
-                setPlatform(value)
-                setDebouncedPlatform(value)
-                setActiveField("platform")
+                setPlatform(value);
+                setDebouncedPlatform(value);
+                setActiveField("platform");
               }}
             />
 
@@ -260,20 +267,21 @@ export const HeroSearch = () => {
       </div>
 
       <p className="mt-3 text-center text-xs text-muted-foreground">
-        Enter both fields to jump to a likely theme-platform pair, or search each independently.
+        Enter both fields to jump to a likely theme-platform pair, or search
+        each independently.
       </p>
     </form>
-  )
-}
+  );
+};
 
 type SearchFieldProps = {
-  label: string
-  value: string
-  placeholder: string
-  className?: string
-  onFieldFocus: () => void
-  onValueChange: (value: string) => void
-}
+  label: string;
+  value: string;
+  placeholder: string;
+  className?: string;
+  onFieldFocus: () => void;
+  onValueChange: (value: string) => void;
+};
 
 const SearchField = ({
   label,
@@ -302,20 +310,20 @@ const SearchField = ({
         className="w-full bg-transparent text-base font-medium text-foreground outline-none placeholder:text-muted-foreground/60"
       />
     </label>
-  )
-}
+  );
+};
 
 type SuggestionItem = {
-  slug: string
-  name: string
-}
+  slug: string;
+  name: string;
+};
 
 type SuggestionDropdownProps<T extends SuggestionItem> = {
-  items: T[]
-  isPending: boolean
-  emptyText: string
-  onSelect: (item: T) => void
-}
+  items: T[];
+  isPending: boolean;
+  emptyText: string;
+  onSelect: (item: T) => void;
+};
 
 const SuggestionDropdown = <T extends SuggestionItem>({
   items,
@@ -325,7 +333,6 @@ const SuggestionDropdown = <T extends SuggestionItem>({
 }: SuggestionDropdownProps<T>) => {
   return (
     <div className="rounded-xl border border-white/12 bg-background/75 p-2 shadow-[0_24px_45px_-28px_hsl(var(--foreground)/0.9)] backdrop-blur-lg">
-
       {isPending && (
         <p className="rounded-md border border-dashed border-border/70 px-3 py-2 text-xs text-muted-foreground/80">
           Searching...
@@ -354,5 +361,5 @@ const SuggestionDropdown = <T extends SuggestionItem>({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

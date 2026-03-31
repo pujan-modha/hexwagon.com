@@ -1,13 +1,13 @@
-import "./styles.css"
-import type { Metadata, Viewport } from "next"
-import { NuqsAdapter } from "nuqs/adapters/next/app"
-import type { PropsWithChildren } from "react"
-import { Search } from "~/components/common/search"
-import { Toaster } from "~/components/common/toaster"
-import { TooltipProvider } from "~/components/common/tooltip"
-import { config } from "~/config"
-import { SearchProvider } from "~/contexts/search-context"
-import { fontDisplay } from "~/lib/fonts"
+import "./styles.css";
+import type { Metadata, Viewport } from "next";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import type { PropsWithChildren } from "react";
+import { Search } from "~/components/common/search";
+import { Toaster } from "~/components/common/toaster";
+import { TooltipProvider } from "~/components/common/tooltip";
+import { config } from "~/config";
+import { SearchProvider } from "~/contexts/search-context";
+import { fontDisplay } from "~/lib/fonts";
 
 export const metadata: Metadata = {
   metadataBase: new URL(config.site.url),
@@ -20,12 +20,12 @@ export const metadata: Metadata = {
     icon: [{ type: "image/png", url: "/favicon.png" }],
   },
   ...config.metadata,
-}
+};
 
 export const viewport: Viewport = {
   colorScheme: "dark",
   themeColor: "black",
-}
+};
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
@@ -46,5 +46,5 @@ export default function RootLayout({ children }: PropsWithChildren) {
         </NuqsAdapter>
       </body>
     </html>
-  )
+  );
 }
