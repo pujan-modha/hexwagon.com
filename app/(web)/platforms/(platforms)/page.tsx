@@ -56,7 +56,7 @@ export default async function PlatformsPage(props: PageProps) {
         </IntroDescription>
       </Intro>
 
-      <CatalogueListHeader title="All Platforms" count={totalCount} />
+      {/* <CatalogueListHeader title="All Platforms" count={totalCount} /> */}
 
       <Suspense
         fallback={

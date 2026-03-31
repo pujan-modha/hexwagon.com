@@ -6,10 +6,10 @@ import { Button } from "~/components/common/button";
 import { Icon } from "~/components/common/icon";
 import { Link } from "~/components/common/link";
 import { BuiltWith } from "~/components/web/built-with";
-import { ContributionGraph } from "~/components/web/contribution-graph";
 import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card";
 import { HeroSearch } from "~/components/web/hero-search";
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro";
+import { WebGLShader } from "~/components/web/ui/web-gl-shader";
 import { config } from "~/config";
 import { findPorts } from "~/server/web/ports/queries";
 import { findFeaturedThemes } from "~/server/web/themes/queries";
@@ -32,26 +32,28 @@ type PageProps = {
 export default function Home(props: PageProps) {
   return (
     <>
-      <section className="relative flex flex-col justify-center gap-y-6 pb-18">
-        <div className="absolute left-1/2 bottom-0 -z-10 w-dvw h-3/5 border-b bg-gradient-to-t from-card to-transparent -translate-x-1/2 overflow-hidden select-none dark:from-background/95 dark:border-card-dark">
-          <ContributionGraph className="size-full object-cover mask-t-from-0% opacity-10 translate-y-1 dark:mix-blend-color-dodge" />
+      <section className="relative left-1/2 flex w-dvw -translate-x-1/2 flex-col items-center justify-center overflow-hidden bg-background pb-18">
+        <div className="pointer-events-none absolute inset-0 z-0 border-b-2 opacity-60">
+          <WebGLShader />
         </div>
 
-        <Intro alignment="center">
-          <IntroTitle className="max-w-[16em] sm:text-4xl md:text-5xl lg:text-6xl">
-            Discover {config.site.tagline}
-          </IntroTitle>
+        <div className="relative z-20 flex w-full flex-col justify-center gap-y-6">
+          <Intro alignment="center">
+            <IntroTitle className="max-w-[16em] sm:text-4xl md:text-5xl lg:text-6xl">
+              Discover {config.site.tagline}
+            </IntroTitle>
 
-          <IntroDescription className="lg:mt-2">
-            {config.site.description}
-          </IntroDescription>
+            <IntroDescription className="lg:mt-2">
+              {config.site.description}
+            </IntroDescription>
 
-          <Suspense fallback={<CountBadgeSkeleton />}>
-            <CountBadge />
-          </Suspense>
-        </Intro>
+            <Suspense fallback={<CountBadgeSkeleton />}>
+              <CountBadge />
+            </Suspense>
+          </Intro>
 
-        <HeroSearch />
+          <HeroSearch />
+        </div>
 
         {/* <BuiltWith medium="hero" className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs" /> */}
       </section>

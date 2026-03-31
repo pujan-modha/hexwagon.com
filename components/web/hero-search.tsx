@@ -184,8 +184,16 @@ export const HeroSearch = () => {
       className="relative mx-auto w-full max-w-3xl px-2"
       noValidate
     >
-      <div className="rounded-2xl border border-border/70 bg-background/90 shadow-[0_20px_55px_-35px_hsl(var(--foreground)/0.55)] backdrop-blur">
-        <div className="grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+      <div
+        className="relative overflow-hidden rounded-2xl border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.18)]"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.48)), radial-gradient(circle at top left, rgba(255,255,255,0.08), transparent 35%), radial-gradient(circle at bottom right, rgba(255,255,255,0.04), transparent 30%)",
+          backdropFilter: "blur(15px)",
+          WebkitBackdropFilter: "blur(15px)",
+        }}
+      >
+        <div className="relative grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
           <div className="relative">
             <SearchField
               label="Theme"
@@ -211,7 +219,7 @@ export const HeroSearch = () => {
             )}
           </div>
 
-          <div className="relative border-t border-border/70 sm:border-t-0 sm:border-l">
+          <div className="relative border-t border-white/10 sm:border-t-0 sm:border-l">
             <SearchField
               label="Platform"
               value={platform}
@@ -236,7 +244,7 @@ export const HeroSearch = () => {
             )}
           </div>
 
-          <div className="border-t border-border/70 p-2 sm:border-t-0 sm:border-l">
+          <div className="border-t border-white/10 p-2 sm:border-t-0 sm:border-l">
             <Button
               type="submit"
               variant="fancy"
@@ -278,11 +286,11 @@ const SearchField = ({
   return (
     <label
       className={cx(
-        "flex min-h-18 flex-col justify-center gap-1 px-4 py-3 text-start transition-colors hover:bg-card/50",
+        "relative flex min-h-14 flex-col justify-center px-4 py-3 text-start backdrop-blur-2xl transition-colors focus-within:bg-white/8",
         className,
       )}
     >
-      <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <span className="mb-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/70">
         {label}
       </span>
 
@@ -291,7 +299,7 @@ const SearchField = ({
         onChange={(event) => onValueChange(event.target.value)}
         onFocus={onFieldFocus}
         placeholder={placeholder}
-        className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/70 sm:text-base"
+        className="w-full bg-transparent text-base font-medium text-foreground outline-none placeholder:text-muted-foreground/60"
       />
     </label>
   )
@@ -316,7 +324,7 @@ const SuggestionDropdown = <T extends SuggestionItem>({
   onSelect,
 }: SuggestionDropdownProps<T>) => {
   return (
-    <div className="rounded-xl border border-border/80 bg-background/95 p-2 shadow-lg backdrop-blur-sm">
+    <div className="rounded-xl border border-white/12 bg-background/75 p-2 shadow-[0_24px_45px_-28px_hsl(var(--foreground)/0.9)] backdrop-blur-lg">
 
       {isPending && (
         <p className="rounded-md border border-dashed border-border/70 px-3 py-2 text-xs text-muted-foreground/80">

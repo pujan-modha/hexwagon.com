@@ -23,18 +23,15 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: "dark light",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
+  colorScheme: "dark",
+  themeColor: "black",
 }
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html
       lang="en"
-      className={`${fontDisplay.variable} scroll-smooth`}
+      className={`${fontDisplay.variable} scroll-smooth dark`}
       suppressHydrationWarning
     >
       <body className="min-h-dvh flex flex-col bg-background text-foreground">

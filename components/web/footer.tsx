@@ -180,14 +180,10 @@ export const Footer = ({
       </div>
 
       <div className="flex flex-row flex-wrap items-end justify-between gap-x-4 gap-y-2 w-full text-sm text-muted-foreground **:[&[href]]:font-medium **:[&[href]]:text-foreground **:[&[href]]:hover:text-secondary-foreground">
-        <BuiltWith medium="footer" />
+        {/* <BuiltWith medium="footer" /> */}
 
         <p>
-          Made by{" "}
-          <ExternalLink href={config.links.author} data-link doFollow>
-            Piotr Kulpinski
-          </ExternalLink>
-          . Website may contain affiliate links.
+          Made with 🍕 and 🥤. Website may contain affiliate links.
         </p>
       </div>
 

@@ -56,7 +56,7 @@ export default async function ThemesPage(props: PageProps) {
         </IntroDescription>
       </Intro>
 
-      <CatalogueListHeader title="All Themes" count={totalCount} />
+      {/* <CatalogueListHeader title="All Themes" count={totalCount} /> */}
 
       <Suspense
         fallback={
