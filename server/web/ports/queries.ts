@@ -15,6 +15,29 @@ import { db } from "~/services/db";
 import { getMeiliIndex } from "~/services/meilisearch";
 import { tryCatch } from "~/utils/helpers";
 
+const getPortOrderBy = (sort: string): Prisma.PortFindManyArgs["orderBy"] => {
+  if (sort && sort !== "default" && sort.includes(".")) {
+    const [sortBy, sortOrder] = sort.split(".") as [string, Prisma.SortOrder];
+
+    if (
+      (sortOrder === "asc" || sortOrder === "desc") &&
+      [
+        "name",
+        "score",
+        "pageviews",
+        "updatedAt",
+        "createdAt",
+        "publishedAt",
+        "isFeatured",
+      ].includes(sortBy)
+    ) {
+      return { [sortBy]: sortOrder } as Prisma.PortFindManyArgs["orderBy"];
+    }
+  }
+
+  return [{ isFeatured: "desc" }, { score: "desc" }];
+};
+
 export const searchPorts = async (
   search: FilterSchema,
   where?: Prisma.PortWhereInput,
@@ -29,21 +52,7 @@ export const searchPorts = async (
   const skip = (page - 1) * perPage;
   const take = perPage;
 
-  let orderBy: Prisma.PortFindManyArgs["orderBy"] = [
-    { isFeatured: "desc" },
-    { score: "desc" },
-  ];
-
-  if (sort && sort !== "default" && sort.includes(".")) {
-    const [sortBy, sortOrder] = sort.split(".") as [
-      keyof typeof orderBy,
-      Prisma.SortOrder,
-    ];
-
-    if (sortOrder === "asc" || sortOrder === "desc") {
-      orderBy = { [sortBy]: sortOrder };
-    }
-  }
+  const orderBy = getPortOrderBy(sort);
 
   const whereQuery: Prisma.PortWhereInput = {
     status: PortStatus.Published,
@@ -92,33 +101,70 @@ export const findPortsByThemeAndPlatform = async (
   const { q = "", sort = "default", perPage = 20 } = search;
   const take = perPage;
 
-  let orderBy: Prisma.PortFindManyArgs["orderBy"] = [
-    { isFeatured: "desc" },
-    { score: "desc" },
-  ];
-
-  if (sort && sort !== "default" && sort.includes(".")) {
-    const [sortBy, sortOrder] = sort.split(".") as [
-      keyof typeof orderBy,
-      Prisma.SortOrder,
-    ];
-
-    if (sortOrder === "asc" || sortOrder === "desc") {
-      orderBy = { [sortBy]: sortOrder };
-    }
-  }
+  const orderBy = getPortOrderBy(sort);
 
   const whereQuery: Prisma.PortWhereInput = {
     status: PortStatus.Published,
     theme: { slug: themeSlug },
     platform: { slug: platformSlug },
-    ...(q && {
-      OR: [
-        { name: { contains: q, mode: "insensitive" } },
-        { description: { contains: q, mode: "insensitive" } },
-      ],
-    }),
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
   };
+
+  if (q) {
+    const meiliLimit = sort === "default" ? Math.max(take * 8, 200) : 5000;
+
+    const { data, error } = await tryCatch(
+      getMeiliIndex("ports").search<{ id: string }>(q, {
+        limit: meiliLimit,
+        rankingScoreThreshold: 0.5,
+        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
+        attributesToRetrieve: ["id"],
+        filter: ["status = 'Published'"],
+      }),
+    );
+
+    if (!error && data) {
+      const ids = Array.from(new Set(data.hits.map((hit) => hit.id)));
+
+      if (!ids.length) {
+        return [];
+      }
+
+      const whereIds: Prisma.PortWhereInput = {
+        id: { in: ids },
+        status: PortStatus.Published,
+        theme: { slug: themeSlug },
+        platform: { slug: platformSlug },
+      };
+
+      if (sort === "default") {
+        const ports = await db.port.findMany({
+          where: whereIds,
+          select: portManyPayload,
+        });
+
+        const portMap = new Map(ports.map((port) => [port.id, port]));
+        return ids
+          .map((id) => portMap.get(id))
+          .filter((port): port is (typeof ports)[number] => Boolean(port))
+          .slice(0, take);
+      }
+
+      return db.port.findMany({
+        where: whereIds,
+        select: portManyPayload,
+        orderBy,
+        take,
+      });
+    }
+  }
 
   return db.port.findMany({
     where: whereQuery,
@@ -224,6 +270,57 @@ export const findPortSlugs = async ({
     where: { status: PortStatus.Published, ...where },
     select: { slug: true, updatedAt: true },
   });
+};
+
+export const findPortRouteParams = async () => {
+  "use cache";
+
+  cacheTag("ports");
+  cacheLife("max");
+
+  return db.port.findMany({
+    where: { status: PortStatus.Published },
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      updatedAt: true,
+      theme: { select: { slug: true } },
+      platform: { select: { slug: true } },
+    },
+  });
+};
+
+export const findThemePlatformRouteParams = async () => {
+  "use cache";
+
+  cacheTag("ports");
+  cacheLife("max");
+
+  const ports = await db.port.findMany({
+    where: { status: PortStatus.Published },
+    select: {
+      theme: { select: { slug: true } },
+      platform: { select: { slug: true } },
+    },
+  });
+
+  const seen = new Set<string>();
+  const params: { themeSlug: string; platformSlug: string }[] = [];
+
+  for (const port of ports) {
+    const themeSlug = port.theme.slug;
+    const platformSlug = port.platform.slug;
+    const key = `${themeSlug}:${platformSlug}`;
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    params.push({ themeSlug, platformSlug });
+  }
+
+  return params;
 };
 
 export const countSubmittedPorts = async ({

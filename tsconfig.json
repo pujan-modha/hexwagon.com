@@ -42,6 +42,5 @@
   "exclude": [
     "node_modules",
     ".next",
-    "legacy"
   ]
 }

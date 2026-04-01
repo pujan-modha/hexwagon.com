@@ -40,11 +40,11 @@ export default function Home(props: PageProps) {
         <div className="relative z-20 flex w-full flex-col justify-center gap-y-6">
           <Intro alignment="center">
             <IntroTitle className="max-w-[16em] sm:text-4xl md:text-5xl lg:text-6xl">
-              Discover {config.site.tagline}
+              Find Theme Ports Faster
             </IntroTitle>
 
             <IntroDescription className="lg:mt-2">
-              {config.site.description}
+              Search by theme, platform, or both.
             </IntroDescription>
 
             <Suspense fallback={<CountBadgeSkeleton />}>

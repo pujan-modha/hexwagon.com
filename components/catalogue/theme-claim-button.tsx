@@ -1,13 +1,14 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { toast } from "sonner"
-import { useServerAction } from "zsa-react"
-import { submitThemeMaintainerClaim } from "~/actions/theme-claims"
-import { Button } from "~/components/common/button"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { useServerAction } from "zsa-react";
+import { submitThemeMaintainerClaim } from "~/actions/theme-claims";
+import { Button } from "~/components/common/button";
+import { Icon } from "~/components/common/icon";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/common/dialog"
+} from "~/components/common/dialog";
 import {
   Form,
   FormControl,
@@ -23,24 +24,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "~/components/common/form"
-import { Input } from "~/components/common/input"
-import { TextArea } from "~/components/common/textarea"
+} from "~/components/common/form";
+import { Input } from "~/components/common/input";
+import { TextArea } from "~/components/common/textarea";
 
 const themeClaimSchema = z.object({
   claimantName: z.string().min(2, "Name is required"),
   claimantEmail: z.string().email("Valid email is required"),
-  claimantUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  claimantUrl: z
+    .string()
+    .url("Please enter a valid URL")
+    .optional()
+    .or(z.literal("")),
   details: z.string().min(10, "Please provide more details"),
-})
+});
 
 type ThemeClaimButtonProps = {
-  themeId: string
-  themeName: string
-}
+  themeId: string;
+  themeName: string;
+};
 
-export const ThemeClaimButton = ({ themeId, themeName }: ThemeClaimButtonProps) => {
-  const [isOpen, setIsOpen] = useState(false)
+export const ThemeClaimButton = ({
+  themeId,
+  themeName,
+}: ThemeClaimButtonProps) => {
+  const [isOpen, setIsOpen] = useState(false);
 
   const form = useForm<z.infer<typeof themeClaimSchema>>({
     resolver: zodResolver(themeClaimSchema),
@@ -50,28 +58,34 @@ export const ThemeClaimButton = ({ themeId, themeName }: ThemeClaimButtonProps) 
       claimantUrl: "",
       details: "",
     },
-  })
+  });
 
   const submitAction = useServerAction(submitThemeMaintainerClaim, {
     onSuccess: () => {
-      toast.success("Your claim has been submitted for review")
-      form.reset()
-      setIsOpen(false)
+      toast.success("Your claim has been submitted for review");
+      form.reset();
+      setIsOpen(false);
     },
     onError: ({ err }) => toast.error(err.message),
-  })
+  });
 
-  const handleSubmit = form.handleSubmit(values => {
+  const handleSubmit = form.handleSubmit((values) => {
     submitAction.execute({
       themeId,
       ...values,
-    })
-  })
+    });
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button type="button" size="sm" variant="secondary">
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          prefix={<Icon name="lucide/badge-check" />}
+          className="h-8 rounded-lg border-border/80 bg-background/70 px-2.5 text-[13px] text-amber-200/85 hover:bg-card hover:text-amber-200"
+        >
           Claim
         </Button>
       </DialogTrigger>
@@ -80,7 +94,8 @@ export const ThemeClaimButton = ({ themeId, themeName }: ThemeClaimButtonProps) 
         <DialogHeader>
           <DialogTitle>Claim {themeName}</DialogTitle>
           <DialogDescription>
-            Share your details and why you should maintain this theme. Admin will review your request.
+            Share your details and why you should maintain this theme. Admin
+            will review your request.
           </DialogDescription>
         </DialogHeader>
 
@@ -121,7 +136,10 @@ export const ThemeClaimButton = ({ themeId, themeName }: ThemeClaimButtonProps) 
                 <FormItem>
                   <FormLabel>Proof URL (optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://github.com/your-profile" {...field} />
+                    <Input
+                      placeholder="https://github.com/your-profile"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -143,7 +161,11 @@ export const ThemeClaimButton = ({ themeId, themeName }: ThemeClaimButtonProps) 
             />
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsOpen(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit" isPending={submitAction.isPending}>
@@ -154,5 +176,5 @@ export const ThemeClaimButton = ({ themeId, themeName }: ThemeClaimButtonProps) 
         </Form>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

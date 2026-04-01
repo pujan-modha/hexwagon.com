@@ -34,6 +34,7 @@ export const indexPorts = async ({
       name: port.name,
       slug: port.slug,
       description: port.description,
+      repositoryUrl: port.repositoryUrl,
       websiteUrl: port.repositoryUrl,
       faviconUrl: port.faviconUrl,
       isFeatured: port.isFeatured,
@@ -41,7 +42,9 @@ export const indexPorts = async ({
       pageviews: port.pageviews,
       status: port.status,
       theme: port.theme.name,
+      themeSlug: port.theme.slug,
       platform: port.platform.name,
+      platformSlug: port.platform.slug,
       tags: port.tags.map((t) => t.slug),
     })),
   );

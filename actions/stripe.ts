@@ -3,10 +3,12 @@
 import { getUrlHostname } from "@primoui/utils";
 import { AdType, type Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { createServerAction } from "zsa";
 import { env } from "~/env";
 import { uploadFavicon } from "~/lib/media";
+import { notifyAdvertiserOfAdSubmitted } from "~/lib/notifications";
 import { adDetailsSchema } from "~/server/web/shared/schema";
 import { getAdPricing, getAdSettings } from "~/server/web/ads/queries";
 import { db } from "~/services/db";
@@ -18,7 +20,12 @@ export const createStripeAdsCheckout = createServerAction()
   .input(
     z.array(
       z.object({
-        type: z.enum([AdType.Banner, AdType.Listing, AdType.Sidebar, AdType.Footer]),
+        type: z.enum([
+          AdType.Banner,
+          AdType.Listing,
+          AdType.Sidebar,
+          AdType.Footer,
+        ]),
         duration: z.coerce.number(),
         metadata: z.object({
           startDate: z.coerce.number(),
@@ -241,7 +248,7 @@ export const createAdFromCheckout = createServerAction()
     }
 
     // Create ads in a transaction
-    await db.$transaction(
+    const createdAds = await db.$transaction(
       ads.map((ad) =>
         db.ad.create({
           data: {
@@ -261,6 +268,16 @@ export const createAdFromCheckout = createServerAction()
     // Revalidate the cache
     revalidateTag("ads", "max");
     revalidateTag("alternatives", "max");
+
+    after(async () => {
+      await Promise.all(
+        createdAds
+          .filter((ad) => ad.email)
+          .map(async (ad) => {
+            await notifyAdvertiserOfAdSubmitted(ad);
+          }),
+      );
+    });
 
     return { success: true };
   });

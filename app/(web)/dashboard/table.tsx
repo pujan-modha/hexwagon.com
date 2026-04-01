@@ -20,6 +20,7 @@ import { canonicalPortHref } from "~/lib/catalogue";
 import type { findTools } from "~/server/admin/tools/queries";
 import { toolsTableParamsSchema } from "~/server/admin/tools/schema";
 import type { DataTableFilterField } from "~/types";
+import { PortEditDialog } from "./port-edit-dialog";
 
 type DashboardRow = Awaited<ReturnType<typeof findTools>>["ports"][number];
 
@@ -44,8 +45,7 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
           <DataTableColumnHeader column={column} title="Name" />
         ),
         cell: ({ row }) => {
-          const { id, name, slug, status, theme, platform } =
-            row.original;
+          const { id, name, slug, status, theme, platform } = row.original;
 
           if (status === PortStatus.Draft) {
             return <Note className="font-medium">{name}</Note>;
@@ -110,6 +110,18 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
                   </span>
                 </Stack>
               );
+            case PortStatus.PendingEdit:
+              return (
+                <Stack size="sm" wrap={false}>
+                  <Icon
+                    name="lucide/clock"
+                    className="stroke-3 text-amber-700/75 dark:text-amber-500/75"
+                  />
+                  <span className="text-amber-700/75 dark:text-amber-500/75">
+                    Edit pending review
+                  </span>
+                </Stack>
+              );
             default:
               return "";
           }
@@ -134,6 +146,13 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
         cell: ({ row }) => (
           <Note>{formatDate(row.getValue<Date>("createdAt"))}</Note>
         ),
+      },
+      {
+        id: "actions",
+        enableSorting: false,
+        enableHiding: false,
+        header: () => <span>Actions</span>,
+        cell: ({ row }) => <PortEditDialog port={row.original} />,
       },
     ];
   }, []);

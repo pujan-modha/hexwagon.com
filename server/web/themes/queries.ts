@@ -15,6 +15,21 @@ import { db } from "~/services/db";
 import { getMeiliIndex } from "~/services/meilisearch";
 import { tryCatch } from "~/utils/helpers";
 
+const getThemeOrderBy = (sort: string): Prisma.ThemeFindManyArgs["orderBy"] => {
+  if (sort && sort !== "default" && sort.includes(".")) {
+    const [sortBy, sortOrder] = sort.split(".") as [string, Prisma.SortOrder];
+
+    if (
+      (sortOrder === "asc" || sortOrder === "desc") &&
+      ["name", "pageviews", "createdAt", "updatedAt", "order"].includes(sortBy)
+    ) {
+      return { [sortBy]: sortOrder } as Prisma.ThemeFindManyArgs["orderBy"];
+    }
+  }
+
+  return { pageviews: "desc" };
+};
+
 export const searchThemes = async (
   search: FilterSchema,
   where?: Prisma.ThemeWhereInput,
@@ -29,29 +44,79 @@ export const searchThemes = async (
   const skip = (page - 1) * perPage;
   const take = perPage;
 
-  let orderBy: Prisma.ThemeFindManyArgs["orderBy"] = { pageviews: "desc" };
+  const orderBy = getThemeOrderBy(sort);
 
-  if (sort && sort !== "default" && sort.includes(".")) {
-    const [sortBy, sortOrder] = sort.split(".") as [
-      keyof typeof orderBy,
-      Prisma.SortOrder,
-    ];
+  if (q) {
+    const meiliLimit = sort === "default" ? take : 5000;
+    const meiliOffset = sort === "default" ? skip : 0;
 
-    if (sortOrder === "asc" || sortOrder === "desc") {
-      orderBy =
-        sortBy === "ports"
-          ? { ports: { _count: sortOrder } }
-          : { [sortBy]: sortOrder };
+    const { data, error } = await tryCatch(
+      getMeiliIndex("themes").search<{ id: string }>(q, {
+        limit: meiliLimit,
+        offset: meiliOffset,
+        rankingScoreThreshold: 0.5,
+        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
+        attributesToRetrieve: ["id"],
+      }),
+    );
+
+    if (!error && data) {
+      const ids = Array.from(new Set(data.hits.map((hit) => hit.id)));
+
+      if (!ids.length) {
+        return { themes: [], totalCount: 0, pageCount: 0 };
+      }
+
+      const whereIds: Prisma.ThemeWhereInput = {
+        id: { in: ids },
+        ...where,
+      };
+
+      if (sort === "default") {
+        const themes = await db.theme.findMany({
+          where: whereIds,
+          select: themeManyPayload,
+        });
+
+        const themeMap = new Map(themes.map((theme) => [theme.id, theme]));
+        const orderedThemes = ids
+          .map((id) => themeMap.get(id))
+          .filter((theme): theme is ThemeMany => Boolean(theme));
+
+        const totalCount = data.estimatedTotalHits ?? orderedThemes.length;
+        const pageCount = Math.ceil(totalCount / perPage);
+
+        console.log(
+          `Themes search: ${Math.round(performance.now() - start)}ms`,
+        );
+        return { themes: orderedThemes, totalCount, pageCount };
+      }
+
+      const themes = await db.theme.findMany({
+        where: whereIds,
+        select: themeManyPayload,
+        orderBy,
+        take,
+        skip,
+      });
+
+      const totalCount = data.estimatedTotalHits ?? ids.length;
+      const pageCount = Math.ceil(totalCount / perPage);
+
+      console.log(`Themes search: ${Math.round(performance.now() - start)}ms`);
+      return { themes, totalCount, pageCount };
     }
   }
 
   const whereQuery: Prisma.ThemeWhereInput = {
-    ...(q && {
-      OR: [
-        { name: { contains: q, mode: "insensitive" } },
-        { description: { contains: q, mode: "insensitive" } },
-      ],
-    }),
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
   };
 
   const [themes, totalCount] = await db.$transaction([

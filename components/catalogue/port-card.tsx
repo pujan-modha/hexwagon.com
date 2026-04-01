@@ -8,6 +8,7 @@ import {
 import { H4 } from "~/components/common/heading";
 import { Link } from "~/components/common/link";
 import { Skeleton } from "~/components/common/skeleton";
+import { VerifiedBadge } from "~/components/web/verified-badge";
 import { Favicon } from "~/components/web/ui/favicon";
 import type { PortMany } from "~/server/web/ports/payloads";
 
@@ -24,8 +25,11 @@ const PortCard = ({ port, href, className, ...props }: PortCardProps) => {
     <Card asChild className={className} {...props}>
       <Link href={href ?? getPortHref(port)}>
         <CardHeader>
-          <H4 as="h3" className="truncate">
-            {port.name ?? port.theme.name}
+          <H4 as="h3" className="inline-flex items-center gap-2 truncate">
+            <span className="truncate">{port.name ?? port.theme.name}</span>
+            {port.isOfficial ? (
+              <VerifiedBadge size="sm" className="-mb-[0.1em]" />
+            ) : null}
           </H4>
         </CardHeader>
 
@@ -35,7 +39,12 @@ const PortCard = ({ port, href, className, ...props }: PortCardProps) => {
 
         <CardFooter className="mt-auto text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <Favicon src={port.theme.faviconUrl} title={port.theme.name} plain className="size-4" />
+            <Favicon
+              src={port.theme.faviconUrl}
+              title={port.theme.name}
+              plain
+              className="size-4"
+            />
             <span className="truncate">{port.theme.name}</span>
           </span>
           <span aria-hidden="true">·</span>

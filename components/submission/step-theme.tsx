@@ -1,57 +1,65 @@
-"use client"
+"use client";
 
-import { useCallback, useState } from "react"
-import { useSubmissionStore } from "~/stores/submission-store"
-import { searchThemesAction } from "~/actions/widget-search"
+import { useCallback, useState } from "react";
+import { useSubmissionStore } from "~/stores/submission-store";
+import { searchThemesAction } from "~/actions/widget-search";
 import {
   Command,
   CommandEmpty,
   CommandInput,
   CommandItem,
   CommandList,
-} from "~/components/common/command"
-import { Dialog, DialogContent, DialogTrigger } from "~/components/common/dialog"
-import { Button } from "~/components/common/button"
-import { Label } from "~/components/common/label"
+} from "~/components/common/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "~/components/common/dialog";
+import { Button } from "~/components/common/button";
+import { Label } from "~/components/common/label";
 
 type StepThemeProps = {
-  onNext: () => void
-}
+  onNext: () => void;
+};
 
 const StepTheme = ({ onNext }: StepThemeProps) => {
-  const { themeName, setTheme } = useSubmissionStore()
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [themes, setThemes] = useState<Array<{ id: string; name: string }>>([])
+  const { themeName, setTheme } = useSubmissionStore();
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [themes, setThemes] = useState<Array<{ id: string; name: string }>>([]);
 
   const handleSearch = useCallback(async (q: string) => {
-    setSearch(q)
-    if (q.length < 2) {
-      setThemes([])
-      return
+    setSearch(q);
+    const normalizedQuery = q.trim();
+
+    if (normalizedQuery.length < 2) {
+      setThemes([]);
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const [results, error] = await searchThemesAction({ query: q })
+      const [results, error] = await searchThemesAction({
+        query: normalizedQuery,
+      });
 
       if (error) {
-        setThemes([])
-        return
+        setThemes([]);
+        return;
       }
 
-      setThemes(results ?? [])
+      setThemes(results ?? []);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [])
+  }, []);
 
   const handleSelect = (id: string, name: string) => {
-    setTheme(id, name)
-    setOpen(false)
-    onNext()
-  }
+    setTheme(id, name);
+    setOpen(false);
+    onNext();
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,7 +87,7 @@ const StepTheme = ({ onNext }: StepThemeProps) => {
                 <CommandEmpty>
                   {isLoading ? "Searching..." : "No theme found."}
                 </CommandEmpty>
-                {themes.map(theme => (
+                {themes.map((theme) => (
                   <CommandItem
                     key={theme.id}
                     value={theme.id}
@@ -96,7 +104,10 @@ const StepTheme = ({ onNext }: StepThemeProps) => {
 
       <p className="text-sm text-muted-foreground">
         Can&apos;t find your theme?{" "}
-        <a href="/suggest?type=Theme" className="underline hover:text-foreground">
+        <a
+          href="/suggest?type=Theme"
+          className="underline hover:text-foreground"
+        >
           Suggest a new theme
         </a>
       </p>
@@ -105,7 +116,7 @@ const StepTheme = ({ onNext }: StepThemeProps) => {
         Next
       </Button>
     </div>
-  )
-}
+  );
+};
 
-export { StepTheme }
+export { StepTheme };

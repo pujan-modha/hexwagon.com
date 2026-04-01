@@ -7,9 +7,8 @@ import { cx } from "~/utils/cva"
 export const Stats = ({ className, ...props }: ComponentProps<"div">) => {
   const stats = [
     { value: config.stats.pageviews, label: "Monthly Pageviews" },
-    { value: config.stats.tools, label: "Listed Projects" },
+    { value: config.stats.ports, label: "Listed Ports" },
     { value: config.stats.subscribers, label: "Newsletter Subscribers" },
-    { value: config.stats.stars, label: "GitHub Stars" },
   ]
 
   return (

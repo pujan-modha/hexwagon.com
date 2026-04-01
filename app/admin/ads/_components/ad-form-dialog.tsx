@@ -215,7 +215,7 @@ const AdFormDialog = ({
     name: watchedValues.name || "Ad preview",
     description:
       watchedValues.description || "Campaign description will appear here.",
-    buttonLabel: watchedValues.buttonLabel || undefined,
+    buttonLabel: watchedValues.buttonLabel || null,
     faviconUrl: watchedValues.faviconUrl ?? defaultValues.faviconUrl ?? null,
   };
 

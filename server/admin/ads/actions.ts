@@ -3,6 +3,7 @@
 import { after } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { getUrlHostname } from "@primoui/utils";
+import { AdType } from "@prisma/client";
 import { z } from "zod";
 import { adminProcedure } from "~/lib/safe-actions";
 import { uploadFavicon } from "~/lib/media";
@@ -11,6 +12,7 @@ import { db } from "~/services/db";
 import { adStatus } from "~/utils/ads";
 import {
   notifyAdvertiserOfAdApproved,
+  notifyAdvertiserOfAdLive,
   notifyAdvertiserOfAdRejected,
 } from "~/lib/notifications";
 import { createAdSchema, rejectAdSchema, updateAdSchema } from "./schema";
@@ -65,6 +67,11 @@ export const approveAd = adminProcedure
     revalidateTag("ads", "max");
 
     after(async () => {
+      if (ad.paidAt) {
+        await notifyAdvertiserOfAdLive(ad);
+        return;
+      }
+
       await notifyAdvertiserOfAdApproved(ad);
     });
 
@@ -205,12 +212,20 @@ export const updateAdPricing = adminProcedure
   .createServerAction()
   .input(adSpotPricingSchema)
   .handler(async ({ input: { banner, listing, sidebar, footer } }) => {
-    const spots = [
-      { spot: "Banner" as const, priceCents: Math.round(banner * 100) },
-      { spot: "Listing" as const, priceCents: Math.round(listing * 100) },
-      { spot: "Sidebar" as const, priceCents: Math.round(sidebar * 100) },
-      { spot: "Footer" as const, priceCents: Math.round(footer * 100) },
+    const spots: Array<{ spot: AdType; priceCents: number }> = [
+      { spot: AdType.Banner, priceCents: Math.round(banner * 100) },
+      { spot: AdType.Listing, priceCents: Math.round(listing * 100) },
+      { spot: AdType.Sidebar, priceCents: Math.round(sidebar * 100) },
     ];
+
+    const footerSpot = (AdType as Record<string, AdType>).Footer;
+
+    if (footerSpot) {
+      spots.push({
+        spot: footerSpot,
+        priceCents: Math.round(footer * 100),
+      });
+    }
 
     for (const { spot, priceCents } of spots) {
       await db.adSpotPricing.upsert({

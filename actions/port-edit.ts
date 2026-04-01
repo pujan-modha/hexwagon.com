@@ -1,34 +1,142 @@
-"use server"
+"use server";
 
-import type { Prisma } from "@prisma/client"
-import { z } from "zod"
-import { userProcedure } from "~/lib/safe-actions"
-import { db } from "~/services/db"
+import type { Prisma } from "@prisma/client";
+import { EditStatus } from "@prisma/client";
+import { z } from "zod";
+import { userProcedure } from "~/lib/safe-actions";
+import { db } from "~/services/db";
+
+const editableDiffSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    description: z.string().trim().max(500).nullable().optional(),
+    content: z.string().trim().max(50_000).nullable().optional(),
+    repositoryUrl: z.string().trim().url().nullable().optional(),
+    license: z.string().trim().max(120).nullable().optional(),
+  })
+  .refine((diff) => Object.keys(diff).length > 0, {
+    message: "Please change at least one field before submitting.",
+  });
 
 const portEditSchema = z.object({
   portId: z.string().min(1),
-  diff: z.record(z.unknown()),
-})
+  diff: editableDiffSchema,
+});
+
+const normalizeNullableString = (value?: string | null) => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
 
 export const submitPortEdit = userProcedure
   .createServerAction()
   .input(portEditSchema)
   .handler(async ({ input: { portId, diff }, ctx: { user } }) => {
-    // Verify the user is the author of the port
     const port = await db.port.findUniqueOrThrow({
       where: { id: portId },
-      select: { authorId: true },
-    })
+      select: {
+        id: true,
+        authorId: true,
+        submitterEmail: true,
+        name: true,
+        description: true,
+        content: true,
+        repositoryUrl: true,
+        license: true,
+      },
+    });
 
-    if (port.authorId !== user.id) {
-      throw new Error("You can only edit ports you submitted.")
+    const userEmail = user.email?.toLowerCase() ?? "";
+    const submitterEmail = port.submitterEmail?.toLowerCase() ?? "";
+    const isAuthor = port.authorId === user.id;
+    const isSubmitterByEmail =
+      userEmail.length > 0 && submitterEmail === userEmail;
+
+    if (!isAuthor && !isSubmitterByEmail) {
+      throw new Error("You can only edit ports you submitted.");
     }
 
-    return await db.portEdit.create({
-      data: {
-        portId,
-        editorId: user.id,
-        diff: diff as Prisma.InputJsonValue,
-      },
-    })
-  })
+    const normalizedDiff = {
+      name: diff.name?.trim(),
+      description: normalizeNullableString(diff.description),
+      content: normalizeNullableString(diff.content),
+      repositoryUrl: normalizeNullableString(diff.repositoryUrl),
+      license: normalizeNullableString(diff.license),
+    };
+
+    const changedDiff: Record<string, string | null> = {};
+
+    if (
+      normalizedDiff.name !== undefined &&
+      normalizedDiff.name !== (port.name ?? undefined)
+    ) {
+      changedDiff.name = normalizedDiff.name;
+    }
+
+    if (
+      normalizedDiff.description !== undefined &&
+      normalizedDiff.description !== port.description
+    ) {
+      changedDiff.description = normalizedDiff.description;
+    }
+
+    if (
+      normalizedDiff.content !== undefined &&
+      normalizedDiff.content !== port.content
+    ) {
+      changedDiff.content = normalizedDiff.content;
+    }
+
+    if (
+      normalizedDiff.repositoryUrl !== undefined &&
+      normalizedDiff.repositoryUrl !== port.repositoryUrl
+    ) {
+      changedDiff.repositoryUrl = normalizedDiff.repositoryUrl;
+    }
+
+    if (
+      normalizedDiff.license !== undefined &&
+      normalizedDiff.license !== port.license
+    ) {
+      changedDiff.license = normalizedDiff.license;
+    }
+
+    if (Object.keys(changedDiff).length === 0) {
+      throw new Error("No changes detected. Update at least one field.");
+    }
+
+    const portEdit = await db.$transaction(async (tx) => {
+      if (!port.authorId && isSubmitterByEmail) {
+        await tx.port.update({
+          where: { id: port.id },
+          data: { authorId: user.id },
+        });
+      }
+
+      await tx.portEdit.deleteMany({
+        where: {
+          portId,
+          editorId: user.id,
+          status: EditStatus.Pending,
+        },
+      });
+
+      return tx.portEdit.create({
+        data: {
+          portId,
+          editorId: user.id,
+          diff: changedDiff as Prisma.InputJsonValue,
+        },
+      });
+    });
+
+    return portEdit;
+  });

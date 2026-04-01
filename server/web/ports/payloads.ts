@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { EditStatus, Prisma } from "@prisma/client";
 import { platformManyPayload } from "~/server/web/platforms/payloads";
 import { tagManyPayload } from "~/server/web/tags/payloads";
 import { themeManyPayload } from "~/server/web/themes/payloads";
@@ -82,6 +82,12 @@ export const portManyExtendedPayload = Prisma.validator<Prisma.PortSelect>()({
   updatedAt: true,
   authorId: true,
   license: true,
+  pendingEdits: {
+    where: { status: EditStatus.Pending },
+    select: { id: true, createdAt: true, diff: true },
+    orderBy: { createdAt: "desc" },
+    take: 1,
+  },
   theme: { select: themeManyPayload },
   platform: { select: platformManyPayload },
 });

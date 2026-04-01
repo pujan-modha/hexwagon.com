@@ -1,26 +1,51 @@
-import type { ThemeMany } from "~/server/web/themes/payloads"
-import { platformThemeHref } from "~/lib/catalogue"
-import { CatalogueGrid } from "./catalogue-grid"
-import { ThemeCard } from "./theme-card"
+import type { ThemeMany } from "~/server/web/themes/payloads";
+import { platformThemeHref } from "~/lib/catalogue";
+import { CatalogueGrid } from "./catalogue-grid";
+import { ThemeCard } from "./theme-card";
+import { CatalogueSearchControls } from "~/components/web/catalogue-search-controls";
 
 type PlatformThemesTabProps = {
-  themes: ThemeMany[]
-  platformSlug: string
-}
+  themes: ThemeMany[];
+  platformSlug: string;
+  query: string;
+  sort: string;
+};
 
-const PlatformThemesTab = ({ themes, platformSlug }: PlatformThemesTabProps) => {
+const themeSortOptions = [
+  { value: "default", label: "Best match" },
+  { value: "pageviews.desc", label: "Most viewed" },
+  { value: "name.asc", label: "Name A-Z" },
+  { value: "name.desc", label: "Name Z-A" },
+  { value: "createdAt.desc", label: "Newest" },
+];
+
+const PlatformThemesTab = ({
+  themes,
+  platformSlug,
+  query,
+  sort,
+}: PlatformThemesTabProps) => {
   return (
-    <CatalogueGrid className="lg:grid-cols-2">
-      {themes.map(theme => (
-        <ThemeCard
-          key={theme.id}
-          theme={theme}
-          href={platformThemeHref(platformSlug, theme.slug)}
-          showCount
-        />
-      ))}
-    </CatalogueGrid>
-  )
-}
+    <div className="space-y-4">
+      <CatalogueSearchControls
+        query={query}
+        sort={sort}
+        placeholder="Search themes..."
+        sortOptions={themeSortOptions}
+      />
 
-export { PlatformThemesTab }
+      <CatalogueGrid className="lg:grid-cols-2">
+        {themes.map((theme) => (
+          <ThemeCard
+            key={theme.id}
+            theme={theme}
+            href={platformThemeHref(platformSlug, theme.slug)}
+            showCount
+          />
+        ))}
+      </CatalogueGrid>
+    </div>
+  );
+};
+
+export { PlatformThemesTab };

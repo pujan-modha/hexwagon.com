@@ -8,6 +8,7 @@ import { z } from "zod";
 import { removeS3Directories } from "~/lib/media";
 import {
   notifySubmitterOfPortApproved,
+  notifySubmitterOfPortRejected,
   notifySubmitterOfPortScheduled,
 } from "~/lib/notifications";
 import { adminProcedure, userProcedure } from "~/lib/safe-actions";
@@ -53,6 +54,23 @@ export const upsertPort = adminProcedure
     if (!existingPort || existingPort.status !== port.status) {
       after(async () => await notifySubmitterOfPortApproved(port));
       after(async () => await notifySubmitterOfPortScheduled(port));
+    }
+
+    const hasRejectionReason = Boolean(port.rejectionReason?.trim());
+    const hadRejectionReason = Boolean(existingPort?.rejectionReason?.trim());
+    const rejectionReasonChanged =
+      (existingPort?.rejectionReason ?? "") !== (port.rejectionReason ?? "");
+    const isRejectedState =
+      port.status !== PortStatus.Published &&
+      port.status !== PortStatus.Scheduled;
+
+    if (
+      existingPort &&
+      isRejectedState &&
+      hasRejectionReason &&
+      (!hadRejectionReason || rejectionReasonChanged)
+    ) {
+      after(async () => await notifySubmitterOfPortRejected(port));
     }
 
     return port;

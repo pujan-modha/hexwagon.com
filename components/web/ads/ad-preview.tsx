@@ -95,7 +95,12 @@ const AdPreviewBanner = ({
   className,
   ...props
 }: AdPreviewBaseProps) => {
-  const linkProps = getLinkProps(ad, interactive);
+  const linkProps = interactive
+    ? {
+        ...getLinkProps(ad, interactive),
+        eventProps: { url: ad.websiteUrl, type: ad.type, source: "banner" },
+      }
+    : {};
   const Wrapper = interactive ? ExternalLink : "div";
 
   return (

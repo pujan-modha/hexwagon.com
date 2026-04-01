@@ -21,8 +21,9 @@
   --color-popover: hsl(0 0% 4%);
   --color-popover-foreground: hsl(0 0% 90%);
 
-  --color-primary: hsl(15 63% 50%);
-  --color-primary-foreground: hsl(0 0% 98%);
+  /* make primary white and primary foreground black but like not literal white and black but what we are using as normal foreground and background */
+  --color-primary: hsl(0 0% 90%);
+  --color-primary-foreground: hsl(0 0% 4%);
 
   --color-secondary: hsl(0 0% 9%);
   --color-secondary-foreground: hsl(0 0% 70%);
@@ -45,9 +46,12 @@
   --tracking-micro: -0.0125em;
 
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  --font-display: var(--font-display-local), var(--font-sans);
+    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-geist-sans), var(--font-sans);
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
 
   --text-5xl: 2.75rem;
   --text-6xl: 3rem;

@@ -1,6 +1,7 @@
 import type { ComponentProps } from "react";
 import { Card } from "~/components/common/card";
 import { Link } from "~/components/common/link";
+import { VerifiedBadge } from "~/components/web/verified-badge";
 import type { PortOne } from "~/server/web/ports/payloads";
 
 type PortDetailProps = {
@@ -24,13 +25,11 @@ const PortDetail = ({
       <div className="flex items-start gap-4">
         <div className="flex-1">
           <div className="flex w-full items-start justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{portTitle}</h1>
-              {port.isOfficial && (
-                <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                  Official
-                </span>
-              )}
+            <div className="flex gap-x-3 gap-y-2 flex-row items-center place-content-start flex-wrap flex-1 min-w-0">
+              <h1 className="font-display font-semibold text-2xl tracking-micro leading-tight md:text-3xl truncate">
+                {portTitle}
+              </h1>
+              {port.isOfficial && <VerifiedBadge size="md" />}
             </div>
 
             <div className="flex shrink-0 items-center gap-2">

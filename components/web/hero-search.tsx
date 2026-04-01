@@ -98,7 +98,7 @@ export const HeroSearch = () => {
 
   const themeSearch = useServerAction(searchItems, {
     onSuccess: ({ data }) => {
-      const hits = data?.[1]?.hits;
+      const hits = data?.themes?.hits;
       setThemeResults(
         Array.isArray(hits) ? (hits as ThemeHit[]).slice(0, 5) : [],
       );
@@ -108,7 +108,7 @@ export const HeroSearch = () => {
 
   const platformSearch = useServerAction(searchItems, {
     onSuccess: ({ data }) => {
-      const hits = data?.[2]?.hits;
+      const hits = data?.platforms?.hits;
       setPlatformResults(
         Array.isArray(hits) ? (hits as PlatformHit[]).slice(0, 5) : [],
       );
@@ -124,7 +124,7 @@ export const HeroSearch = () => {
       return;
     }
 
-    themeSearch.execute({ query });
+    themeSearch.execute({ query, indexes: ["themes"] });
   }, [debouncedTheme, themeSearch.execute]);
 
   useEffect(() => {
@@ -135,7 +135,7 @@ export const HeroSearch = () => {
       return;
     }
 
-    platformSearch.execute({ query });
+    platformSearch.execute({ query, indexes: ["platforms"] });
   }, [debouncedPlatform, platformSearch.execute]);
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -265,11 +265,6 @@ export const HeroSearch = () => {
           </div>
         </div>
       </div>
-
-      <p className="mt-3 text-center text-xs text-muted-foreground">
-        Enter both fields to jump to a likely theme-platform pair, or search
-        each independently.
-      </p>
     </form>
   );
 };

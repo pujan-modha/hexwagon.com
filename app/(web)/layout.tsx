@@ -28,8 +28,6 @@ export default async function RootLayout({ children }: PropsWithChildren) {
         url: `${url}/`,
         sameAs: [
           config.links.twitter,
-          config.links.bluesky,
-          config.links.mastodon,
           config.links.linkedin,
         ],
         logo: {
@@ -44,7 +42,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
       {
         "@type": "Person",
         "@id": `${url}/#/schema/person/1`,
-        name: "Piotr Kulpinski",
+        name: "Pujan Modha",
         sameAs: [config.links.author],
       },
       {

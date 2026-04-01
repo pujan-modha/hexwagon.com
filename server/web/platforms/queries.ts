@@ -11,6 +11,25 @@ import {
 import type { PlatformMany } from "~/server/web/platforms/payloads";
 import type { FilterSchema } from "~/server/web/shared/schema";
 import { db } from "~/services/db";
+import { getMeiliIndex } from "~/services/meilisearch";
+import { tryCatch } from "~/utils/helpers";
+
+const getPlatformOrderBy = (
+  sort: string,
+): Prisma.PlatformFindManyArgs["orderBy"] => {
+  if (sort && sort !== "default" && sort.includes(".")) {
+    const [sortBy, sortOrder] = sort.split(".") as [string, Prisma.SortOrder];
+
+    if (
+      (sortOrder === "asc" || sortOrder === "desc") &&
+      ["name", "pageviews", "createdAt", "updatedAt", "order"].includes(sortBy)
+    ) {
+      return { [sortBy]: sortOrder } as Prisma.PlatformFindManyArgs["orderBy"];
+    }
+  }
+
+  return { pageviews: "desc" };
+};
 
 export const searchPlatforms = async (
   search: FilterSchema,
@@ -26,29 +45,83 @@ export const searchPlatforms = async (
   const skip = (page - 1) * perPage;
   const take = perPage;
 
-  let orderBy: Prisma.PlatformFindManyArgs["orderBy"] = { pageviews: "desc" };
+  const orderBy = getPlatformOrderBy(sort);
 
-  if (sort && sort !== "default" && sort.includes(".")) {
-    const [sortBy, sortOrder] = sort.split(".") as [
-      keyof typeof orderBy,
-      Prisma.SortOrder,
-    ];
+  if (q) {
+    const meiliLimit = sort === "default" ? take : 5000;
+    const meiliOffset = sort === "default" ? skip : 0;
 
-    if (sortOrder === "asc" || sortOrder === "desc") {
-      orderBy =
-        sortBy === "ports"
-          ? { ports: { _count: sortOrder } }
-          : { [sortBy]: sortOrder };
+    const { data, error } = await tryCatch(
+      getMeiliIndex("platforms").search<{ id: string }>(q, {
+        limit: meiliLimit,
+        offset: meiliOffset,
+        rankingScoreThreshold: 0.5,
+        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
+        attributesToRetrieve: ["id"],
+      }),
+    );
+
+    if (!error && data) {
+      const ids = Array.from(new Set(data.hits.map((hit) => hit.id)));
+
+      if (!ids.length) {
+        return { platforms: [], totalCount: 0, pageCount: 0 };
+      }
+
+      const whereIds: Prisma.PlatformWhereInput = {
+        id: { in: ids },
+        ...where,
+      };
+
+      if (sort === "default") {
+        const platforms = await db.platform.findMany({
+          where: whereIds,
+          select: platformManyPayload,
+        });
+
+        const platformMap = new Map(
+          platforms.map((platform) => [platform.id, platform]),
+        );
+        const orderedPlatforms = ids
+          .map((id) => platformMap.get(id))
+          .filter((platform): platform is PlatformMany => Boolean(platform));
+
+        const totalCount = data.estimatedTotalHits ?? orderedPlatforms.length;
+        const pageCount = Math.ceil(totalCount / perPage);
+
+        console.log(
+          `Platforms search: ${Math.round(performance.now() - start)}ms`,
+        );
+        return { platforms: orderedPlatforms, totalCount, pageCount };
+      }
+
+      const platforms = await db.platform.findMany({
+        where: whereIds,
+        select: platformManyPayload,
+        orderBy,
+        take,
+        skip,
+      });
+
+      const totalCount = data.estimatedTotalHits ?? ids.length;
+      const pageCount = Math.ceil(totalCount / perPage);
+
+      console.log(
+        `Platforms search: ${Math.round(performance.now() - start)}ms`,
+      );
+      return { platforms, totalCount, pageCount };
     }
   }
 
   const whereQuery: Prisma.PlatformWhereInput = {
-    ...(q && {
-      OR: [
-        { name: { contains: q, mode: "insensitive" } },
-        { description: { contains: q, mode: "insensitive" } },
-      ],
-    }),
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
   };
 
   const [platforms, totalCount] = await db.$transaction([

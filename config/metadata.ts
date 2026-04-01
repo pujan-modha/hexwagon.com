@@ -12,7 +12,7 @@ export const metadataConfig: Metadata = {
   },
   twitter: {
     site: "@hexwagon",
-    creator: "@piotrkulpinski",
+    creator: "@pujan_modha",
     card: "summary_large_image",
   },
   alternates: {

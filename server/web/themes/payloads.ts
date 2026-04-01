@@ -58,6 +58,7 @@ export const themeManyPayload = Prisma.validator<Prisma.ThemeSelect>()({
   _count: {
     select: {
       ports: { where: { status: PortStatus.Published } },
+      maintainers: true,
     },
   },
 });

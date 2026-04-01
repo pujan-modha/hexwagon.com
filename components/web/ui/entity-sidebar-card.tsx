@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
+import type { Properties } from "posthog-js";
 import { Button } from "~/components/common/button";
 import { Card } from "~/components/common/card";
 import { H5 } from "~/components/common/heading";
@@ -21,6 +22,8 @@ type EntitySidebarCardProps = ComponentProps<typeof Card> & {
   insights: EntitySidebarInsight[];
   buttonHref?: string;
   buttonLabel?: string;
+  buttonEventName?: string;
+  buttonEventProps?: Properties;
   footer?: ReactNode;
 };
 
@@ -29,6 +32,8 @@ export const EntitySidebarCard = ({
   insights,
   buttonHref,
   buttonLabel,
+  buttonEventName,
+  buttonEventProps,
   footer,
   className,
   ...props
@@ -56,7 +61,13 @@ export const EntitySidebarCard = ({
           className="mt-1 self-start"
           asChild
         >
-          <ExternalLink href={buttonHref}>{buttonLabel}</ExternalLink>
+          <ExternalLink
+            href={buttonHref}
+            eventName={buttonEventName}
+            eventProps={buttonEventProps}
+          >
+            {buttonLabel}
+          </ExternalLink>
         </Button>
       )}
 

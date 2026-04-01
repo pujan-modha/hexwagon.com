@@ -1,11 +1,11 @@
-import { formatDate } from "@primoui/utils"
-import { withAdminPage } from "~/components/admin/auth-hoc"
-import { H3 } from "~/components/common/heading"
-import { Note } from "~/components/common/note"
-import { findComments } from "~/server/admin/comments/queries"
+import { withAdminPage } from "~/components/admin/auth-hoc";
+import { H3 } from "~/components/common/heading";
+import { Note } from "~/components/common/note";
+import { findComments } from "~/server/admin/comments/queries";
+import { CommentsTable } from "./_components/comments-table";
 
 const CommentsPage = async () => {
-  const { comments, commentsTotal } = await findComments({})
+  const { comments, commentsTotal } = await findComments({});
 
   return (
     <div className="grid gap-6">
@@ -16,30 +16,9 @@ const CommentsPage = async () => {
         </Note>
       </div>
 
-      <div className="overflow-hidden rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium">Port</th>
-              <th className="px-4 py-3 text-left font-medium">Author</th>
-              <th className="px-4 py-3 text-left font-medium">Content</th>
-              <th className="px-4 py-3 text-left font-medium">Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {comments.map(comment => (
-              <tr key={comment.id} className="border-t">
-                <td className="px-4 py-3">{comment.port?.name ?? "Unknown"}</td>
-                <td className="px-4 py-3">{comment.author?.name ?? "Anonymous"}</td>
-                <td className="px-4 py-3">{comment.content}</td>
-                <td className="px-4 py-3">{formatDate(comment.createdAt)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <CommentsTable comments={comments} />
     </div>
-  )
-}
+  );
+};
 
-export default withAdminPage(CommentsPage)
+export default withAdminPage(CommentsPage);

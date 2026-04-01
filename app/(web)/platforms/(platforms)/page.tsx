@@ -7,6 +7,7 @@ import { metadataConfig } from "~/config/metadata";
 import { searchPlatforms } from "~/server/web/platforms/queries";
 import { CatalogueListHeader } from "~/components/catalogue/catalogue-list-header";
 import { CatalogueGrid } from "~/components/catalogue/catalogue-grid";
+import { CatalogueSearchControls } from "~/components/web/catalogue-search-controls";
 import {
   PlatformCard,
   PlatformCardSkeleton,
@@ -25,9 +26,20 @@ export const metadata: Metadata = {
 
 const PLATFORMS_PER_PAGE = 35;
 
+const platformSortOptions = [
+  { value: "default", label: "Best match" },
+  { value: "pageviews.desc", label: "Most viewed" },
+  { value: "name.asc", label: "Name A-Z" },
+  { value: "name.desc", label: "Name Z-A" },
+  { value: "createdAt.desc", label: "Newest" },
+];
+
 export default async function PlatformsPage(props: PageProps) {
   const search = await props.searchParams;
   const q = Array.isArray(search.q) ? (search.q[0] ?? "") : (search.q ?? "");
+  const sort = Array.isArray(search.sort)
+    ? (search.sort[0] ?? "default")
+    : (search.sort ?? "default");
   const page = Number(search.page) || 1;
 
   const { platforms, totalCount } = await searchPlatforms(
@@ -35,7 +47,7 @@ export default async function PlatformsPage(props: PageProps) {
       q,
       page,
       perPage: PLATFORMS_PER_PAGE,
-      sort: "default",
+      sort,
       theme: [],
       platform: [],
       tag: [],
@@ -55,6 +67,13 @@ export default async function PlatformsPage(props: PageProps) {
             : "Discover all platforms and their available theme ports."}
         </IntroDescription>
       </Intro>
+
+      <CatalogueSearchControls
+        query={q}
+        sort={sort}
+        placeholder="Search platforms..."
+        sortOptions={platformSortOptions}
+      />
 
       {/* <CatalogueListHeader title="All Platforms" count={totalCount} /> */}
 

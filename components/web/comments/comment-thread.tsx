@@ -127,9 +127,7 @@ const CommentItem = ({
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Delete comment?</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone.
-            </DialogDescription>
+            <DialogDescription>This action cannot be undone.</DialogDescription>
           </DialogHeader>
 
           <DialogFooter>
@@ -140,11 +138,7 @@ const CommentItem = ({
             >
               Cancel
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDelete}
-            >
+            <Button type="button" variant="destructive" onClick={handleDelete}>
               Delete
             </Button>
           </DialogFooter>

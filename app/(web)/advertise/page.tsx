@@ -17,7 +17,7 @@ type PageProps = {
 
 export const metadata: Metadata = {
   title: `Advertise on ${siteConfig.name}`,
-  description: `Promote your business or software on ${siteConfig.name} and reach a wide audience of open source enthusiasts.`,
+  description: `Promote your business or software on ${siteConfig.name} and reach a wide audience of tech enthusiasts.`,
   openGraph: { ...metadataConfig.openGraph, url: "/advertise" },
   alternates: { ...metadataConfig.alternates, canonical: "/advertise" },
 }
@@ -32,7 +32,7 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
         <IntroTitle>{`${metadata.title}`}</IntroTitle>
 
         <IntroDescription className="max-w-3xl">
-          Promote your business or software and reach a wide audience of open source enthusiasts.
+          Promote your business or software and reach a wide audience of tech enthusiasts.
           Check our <ExternalLink href={config.links.analytics}>real-time analytics</ExternalLink>{" "}
           to see what impact it could have on your business.
         </IntroDescription>
@@ -40,11 +40,11 @@ export default async function AdvertisePage({ searchParams }: PageProps) {
 
       <AdvertisePickers theme={theme} />
 
-      <Stats />
+      {/* <Stats /> */}
 
-      {config.ads.testimonials.map(testimonial => (
+      {/* {config.ads.testimonials.map(testimonial => (
         <Testimonial key={testimonial.quote} {...testimonial} />
-      ))}
+      ))} */}
 
       {/* <Advertisers /> */}
 

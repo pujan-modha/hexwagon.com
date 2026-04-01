@@ -24,7 +24,7 @@ export const NewsletterProof = ({ className, ...props }: ComponentProps<typeof S
       </div>
 
       <Note className="text-xs">
-        Join {formatNumber(config.stats.subscribers + config.stats.stars, "compact")}+ people
+        Join {formatNumber(config.stats.subscribers, "compact")}+ people
       </Note>
     </Stack>
   )

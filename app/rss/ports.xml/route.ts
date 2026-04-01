@@ -1,13 +1,16 @@
-import { getUrlHostname } from "@primoui/utils"
-import { PortStatus } from "@prisma/client"
-import RSS from "rss"
-import { config } from "~/config"
-import { db } from "~/services/db"
-import { addSearchParams } from "~/utils/search-params"
+import { getUrlHostname } from "@primoui/utils";
+import { PortStatus } from "@prisma/client";
+import RSS from "rss";
+import { config } from "~/config";
+import { db } from "~/services/db";
+import { addSearchParams } from "~/utils/search-params";
 
 export const GET = async () => {
-  const { url, name, tagline } = config.site
-  const rssSearchParams = { utm_source: getUrlHostname(url), utm_medium: "rss" }
+  const { url, name, tagline } = config.site;
+  const rssSearchParams = {
+    utm_source: getUrlHostname(url),
+    utm_medium: "rss",
+  };
 
   const ports = await db.port.findMany({
     where: { status: PortStatus.Published },
@@ -19,9 +22,10 @@ export const GET = async () => {
       slug: true,
       description: true,
       publishedAt: true,
-      platform: { select: { name: true } },
+      theme: { select: { slug: true } },
+      platform: { select: { name: true, slug: true } },
     },
-  })
+  });
 
   const feed = new RSS({
     title: name,
@@ -32,18 +36,20 @@ export const GET = async () => {
     language: "en",
     ttl: 14400,
     pubDate: new Date(),
-  })
+  });
 
-  ports.map(port => {
+  ports.map((port) => {
+    const canonicalUrl = `${url}/themes/${port.theme.slug}/${port.platform.slug}/${port.id}`;
+
     feed.item({
       guid: port.id,
       title: port.name ?? port.slug,
-      url: addSearchParams(`${url}/${port.slug}`, rssSearchParams),
+      url: addSearchParams(canonicalUrl, rssSearchParams),
       date: port.publishedAt?.toUTCString() ?? new Date().toUTCString(),
       description: port.description ?? "",
       categories: port.platform ? [port.platform.name] : [],
-    })
-  })
+    });
+  });
 
   return new Response(feed.xml({ indent: true }), {
     headers: {
@@ -51,5 +57,5 @@ export const GET = async () => {
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "public, max-age=14400",
     },
-  })
-}
+  });
+};

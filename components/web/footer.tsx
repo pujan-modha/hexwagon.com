@@ -1,4 +1,5 @@
 import { formatNumber } from "@primoui/utils";
+import { AdType } from "@prisma/client";
 import { Suspense, type ComponentProps } from "react";
 import {
   DropdownMenu,
@@ -55,11 +56,10 @@ export const Footer = ({
             <p className="-mt-2 px-0.5 text-xs text-muted-foreground first:mt-0">
               Join{" "}
               {formatNumber(
-                config.stats.subscribers + config.stats.stars,
+                config.stats.subscribers,
                 "standard",
               )}
-              + other members and get updates on new theme ports and platform
-              listings.
+              + other members and get updates on new theme ports.
             </p>
 
             <NewsletterForm medium="footer_form" />
@@ -108,23 +108,6 @@ export const Footer = ({
               </ExternalLink>
             </Tooltip>
 
-            <Tooltip tooltip="Follow us on Bluesky">
-              <ExternalLink
-                href={config.links.bluesky}
-                className={footerLinkClassName}
-              >
-                <Icon name="tabler/brand-bluesky" />
-              </ExternalLink>
-            </Tooltip>
-
-            <Tooltip tooltip="Follow us on Mastodon">
-              <ExternalLink
-                href={config.links.mastodon}
-                className={footerLinkClassName}
-              >
-                <Icon name="tabler/brand-mastodon" />
-              </ExternalLink>
-            </Tooltip>
 
             <Tooltip tooltip="Follow us on LinkedIn">
               <ExternalLink
@@ -148,18 +131,6 @@ export const Footer = ({
 
         <Stack
           direction="column"
-          className="text-sm md:col-span-3 md:col-start-8"
-        >
-          <H6 as="strong">Quick Links:</H6>
-
-          <NavLink href="/about">About Us</NavLink>
-          <NavLink href="/blog">Blog</NavLink>
-          <NavLink href="/advertise">Advertise</NavLink>
-          <NavLink href="/submit">Submit a Port</NavLink>
-        </Stack>
-
-        <Stack
-          direction="column"
           className="text-sm col-span-full md:col-span-5 md:items-stretch"
         >
           <Suspense
@@ -170,14 +141,22 @@ export const Footer = ({
             <AdCard
               className="w-full md:w-[328px] md:max-w-[328px] h-[190px] max-h-[190px] md:ml-auto"
               where={{
-                type: {
-                  in: ["Footer", "Sidebar", "Listing"] as Array<
-                    "Footer" | "Sidebar" | "Listing"
-                  >,
-                },
+                type: AdType.Footer,
               }}
             />
           </Suspense>
+        </Stack>
+
+        <Stack
+          direction="column"
+          className="text-sm md:col-span-3 md:col-start-14"
+        >
+          <H6 as="strong">Quick Links</H6>
+
+          <NavLink href="/about">About Us</NavLink>
+          <NavLink href="/blog">Blog</NavLink>
+          <NavLink href="/advertise">Advertise</NavLink>
+          <NavLink href="/submit">Submit a Port</NavLink>
         </Stack>
       </div>
 

@@ -74,11 +74,13 @@ export const Search = () => {
     useState<inferServerActionReturnData<typeof searchItems>>();
   const [query, setQuery] = useDebouncedState("", 500);
   const listRef = useRef<HTMLDivElement>(null);
-
-  const [tools, alternatives, categories] = results || [];
+  const normalizedQuery = query.trim();
+  const ports = results?.ports?.hits;
+  const themes = results?.themes?.hits;
+  const platforms = results?.platforms?.hits;
   const isAdmin = session?.user.role === "admin";
   const isAdminPath = pathname.startsWith("/admin");
-  const hasQuery = !!query.length;
+  const hasQuery = normalizedQuery.length > 0;
 
   const actions = [
     {
@@ -161,7 +163,7 @@ export const Search = () => {
     onSuccess: ({ data }) => {
       setResults(data);
 
-      const q = query.toLowerCase().trim();
+      const q = normalizedQuery.toLowerCase();
 
       if (q.length > 1) {
         posthog.capture("search", { query: q });
@@ -176,8 +178,8 @@ export const Search = () => {
 
   useEffect(() => {
     const performSearch = async () => {
-      if (hasQuery) {
-        execute({ query });
+      if (normalizedQuery.length > 0) {
+        execute({ query: normalizedQuery });
         listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setResults(undefined);
@@ -185,7 +187,7 @@ export const Search = () => {
     };
 
     performSearch();
-  }, [query, execute]);
+  }, [normalizedQuery, execute]);
 
   return (
     <CommandDialog
@@ -234,20 +236,37 @@ export const Search = () => {
 
         <SearchResults
           name="Ports"
-          items={tools?.hits}
+          items={ports}
           onItemSelect={navigateTo}
-          getHref={({ slug }) => `${isAdminPath ? "/admin/ports" : ""}/${slug}`}
-          renderItemDisplay={({ name, websiteUrl }) => (
-            <>
-              <span className="flex-1 truncate">{name}</span>
-              <span className="opacity-50">{getUrlHostname(websiteUrl)}</span>
-            </>
-          )}
+          getHref={({ id, slug, name, themeSlug, platformSlug }) => {
+            if (isAdminPath) {
+              return `/admin/ports/${slug}`;
+            }
+
+            if (id && themeSlug && platformSlug) {
+              return `/themes/${themeSlug}/${platformSlug}/${id}`;
+            }
+
+            const q = encodeURIComponent(name || slug);
+            return `/themes?q=${q}`;
+          }}
+          renderItemDisplay={({ name, repositoryUrl, websiteUrl }) => {
+            const url = repositoryUrl || websiteUrl;
+
+            return (
+              <>
+                <span className="flex-1 truncate">{name}</span>
+                <span className="opacity-50">
+                  {url ? getUrlHostname(url) : ""}
+                </span>
+              </>
+            );
+          }}
         />
 
         <SearchResults
           name="Themes"
-          items={alternatives?.hits}
+          items={themes}
           onItemSelect={navigateTo}
           getHref={({ slug }) =>
             `${isAdminPath ? "/admin" : ""}/themes/${slug}`
@@ -264,7 +283,7 @@ export const Search = () => {
 
         <SearchResults
           name="Platforms"
-          items={categories?.hits}
+          items={platforms}
           onItemSelect={navigateTo}
           getHref={({ slug }) =>
             isAdminPath ? `/admin/platforms/${slug}` : `/platforms/${slug}`
@@ -276,8 +295,16 @@ export const Search = () => {
       {!!results && (
         <div className="px-3 py-2 text-[10px] text-muted-foreground/50 not-first:border-t">
           Found{" "}
-          {results.reduce((acc, curr) => acc + curr.estimatedTotalHits, 0)}{" "}
-          results in {Math.max(...results.map((r) => r.processingTimeMs))}ms
+          {(results.ports?.estimatedTotalHits ?? 0) +
+            (results.themes?.estimatedTotalHits ?? 0) +
+            (results.platforms?.estimatedTotalHits ?? 0)}{" "}
+          results in{" "}
+          {Math.max(
+            results.ports?.processingTimeMs ?? 0,
+            results.themes?.processingTimeMs ?? 0,
+            results.platforms?.processingTimeMs ?? 0,
+          )}
+          ms
         </div>
       )}
     </CommandDialog>

@@ -9,6 +9,7 @@ import {
 import { H4 } from "~/components/common/heading";
 import { Link } from "~/components/common/link";
 import { Skeleton } from "~/components/common/skeleton";
+import { VerifiedBadge } from "~/components/web/verified-badge";
 import { Favicon } from "~/components/web/ui/favicon";
 import { themeHref } from "~/lib/catalogue";
 import type { ThemeMany } from "~/server/web/themes/payloads";
@@ -32,8 +33,9 @@ const ThemeCard = ({
         <CardHeader wrap={false}>
           <Favicon src={theme.faviconUrl} title={theme.name} plain />
 
-          <H4 as="h3" className="truncate">
-            {theme.name}
+          <H4 as="h3" className="inline-flex items-center gap-1.5 truncate">
+            <span className="truncate">{theme.name}</span>
+            {theme._count.maintainers > 0 ? <VerifiedBadge size="sm" /> : null}
           </H4>
         </CardHeader>
 

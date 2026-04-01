@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - openalternative-db-data:/var/lib/postgresql/data/
+      - hexwagon-db-data:/var/lib/postgresql/data/
     deploy:
       resources:
         limits:
@@ -44,5 +44,5 @@ services:
           memory: 512MB
 
 volumes:
-  openalternative-db-data:
+  hexwagon-db-data:
     driver: local

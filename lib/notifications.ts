@@ -1,10 +1,5 @@
-import { type Port, PortStatus } from "@prisma/client";
+import { type Ad, type Port, PortStatus } from "@prisma/client";
 import { config } from "~/config";
-import EmailAdminSubmissionPremium from "~/emails/admin-submission-premium";
-import EmailSubmission from "~/emails/submission";
-import EmailSubmissionPremium from "~/emails/submission-premium";
-import EmailSubmissionPublished from "~/emails/submission-published";
-import EmailSubmissionScheduled from "~/emails/submission-scheduled";
 import EmailPortSubmitted from "~/emails/port-submitted";
 import EmailPortApproved from "~/emails/port-approved";
 import EmailPortScheduled from "~/emails/port-scheduled";
@@ -15,6 +10,8 @@ import EmailSuggestionRejected from "~/emails/suggestion-rejected";
 import EmailPortEditApproved from "~/emails/port-edit-approved";
 import EmailPortEditRejected from "~/emails/port-edit-rejected";
 import EmailAdApproved from "~/emails/ad-approved";
+import EmailAdSubmitted from "~/emails/ad-submitted";
+import EmailAdLive from "~/emails/ad-live";
 import EmailAdRejected from "~/emails/ad-rejected";
 import { sendEmail } from "~/lib/email";
 import { countSubmittedPorts } from "~/server/web/ports/queries";
@@ -27,8 +24,7 @@ type SuggestionWithSubmitter = {
   } | null;
 };
 
-type AdWithContact = Port & {
-  email: string;
+type AdWithContact = Ad & {
   adminNote?: string | null;
 };
 
@@ -222,6 +218,34 @@ export const notifyAdvertiserOfAdApproved = async (ad: AdWithContact) => {
 };
 
 /**
+ * Notify the advertiser that an ad booking was submitted
+ */
+export const notifyAdvertiserOfAdSubmitted = async (ad: AdWithContact) => {
+  const to = ad.email;
+  const subject = `🙌 We received your ad booking for ${ad.name}`;
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailAdSubmitted({ to, ad }),
+  });
+};
+
+/**
+ * Notify the advertiser that an ad campaign is confirmed
+ */
+export const notifyAdvertiserOfAdLive = async (ad: AdWithContact) => {
+  const to = ad.email;
+  const subject = `✅ Your ad campaign for ${ad.name} is confirmed`;
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailAdLive({ to, ad }),
+  });
+};
+
+/**
  * Notify the advertiser of a rejected ad
  */
 export const notifyAdvertiserOfAdRejected = async (ad: AdWithContact) => {
@@ -232,58 +256,5 @@ export const notifyAdvertiserOfAdRejected = async (ad: AdWithContact) => {
     to,
     subject,
     react: EmailAdRejected({ to, ad }),
-  });
-};
-
-/**
- * @deprecated Use notifySubmitterOfPortApproved instead.
- */
-export const notifySubmitterOfToolPublished = async (_tool: {
-  name: string;
-  submitterEmail: string | null;
-}) => null;
-
-/**
- * @deprecated Use notifySubmitterOfPortScheduled instead.
- */
-export const notifySubmitterOfToolScheduled = async (_tool: {
-  name: string;
-  submitterEmail: string | null;
-}) => null;
-
-/**
- * Notify the submitter of a premium tool
- *
- * @deprecated - Use port-specific notifications
- */
-export const notifySubmitterOfPremiumTool = async (tool: Port) => {
-  if (!tool.submitterEmail) {
-    return;
-  }
-
-  const to = tool.submitterEmail;
-  const subject = `🙌 Thank you for ${tool.isFeatured ? "featuring" : "expediting"} ${tool.name}!`;
-
-  return await sendEmail({
-    to,
-    subject,
-    react: EmailSubmissionPremium({ to, tool }),
-  });
-};
-
-/**
- * Notify the admin of a premium tool
- *
- * @deprecated - Use port-specific notifications
- */
-export const notifyAdminOfPremiumTool = async (tool: Port) => {
-  const to = config.site.email;
-  const subject = `New tool ${tool.isFeatured ? "featured" : "expedited"}: ${tool.name}`;
-
-  return await sendEmail({
-    to,
-    subject,
-    replyTo: tool.submitterEmail ?? undefined,
-    react: EmailAdminSubmissionPremium({ to, tool }),
   });
 };

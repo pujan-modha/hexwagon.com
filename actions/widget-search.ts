@@ -1,11 +1,11 @@
-"use server"
+"use server";
 
-import { createServerAction } from "zsa"
-import { z } from "zod"
-import { db } from "~/services/db"
+import { createServerAction } from "zsa";
+import { z } from "zod";
+import { db } from "~/services/db";
 
 export const searchThemesAction = createServerAction()
-  .input(z.object({ query: z.string().min(1) }))
+  .input(z.object({ query: z.string().trim().min(2) }))
   .handler(async ({ input: { query } }) => {
     const themes = await db.theme.findMany({
       where: {
@@ -14,12 +14,12 @@ export const searchThemesAction = createServerAction()
       select: { id: true, name: true, slug: true },
       take: 10,
       orderBy: { name: "asc" },
-    })
-    return themes
-  })
+    });
+    return themes;
+  });
 
 export const searchPlatformsAction = createServerAction()
-  .input(z.object({ query: z.string().min(1) }))
+  .input(z.object({ query: z.string().trim().min(2) }))
   .handler(async ({ input: { query } }) => {
     const platforms = await db.platform.findMany({
       where: {
@@ -28,6 +28,6 @@ export const searchPlatformsAction = createServerAction()
       select: { id: true, name: true, slug: true },
       take: 10,
       orderBy: { name: "asc" },
-    })
-    return platforms
-  })
+    });
+    return platforms;
+  });

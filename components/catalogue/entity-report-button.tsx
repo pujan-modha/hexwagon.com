@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useServerAction } from "zsa-react";
 import { reportPlatform, reportPort, reportTheme } from "~/actions/report";
 import { Button } from "~/components/common/button";
+import { Icon } from "~/components/common/icon";
 import {
   Dialog,
   DialogContent,
@@ -38,12 +39,14 @@ type EntityReportButtonProps = {
   entityType: EntityType;
   entityId: string;
   entityName: string;
+  grouped?: boolean;
 };
 
 export const EntityReportButton = ({
   entityType,
   entityId,
   entityName,
+  grouped = false,
 }: EntityReportButtonProps) => {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
@@ -66,7 +69,10 @@ export const EntityReportButton = ({
 
   const portAction = useServerAction(reportPort, { onSuccess, onError });
   const themeAction = useServerAction(reportTheme, { onSuccess, onError });
-  const platformAction = useServerAction(reportPlatform, { onSuccess, onError });
+  const platformAction = useServerAction(reportPlatform, {
+    onSuccess,
+    onError,
+  });
 
   const isPending =
     portAction.isPending || themeAction.isPending || platformAction.isPending;
@@ -91,10 +97,17 @@ export const EntityReportButton = ({
         <Button
           type="button"
           size="sm"
-          variant="secondary"
+          variant={grouped ? "ghost" : "secondary"}
           onClick={() => setIsOpen(true)}
+          className={
+            grouped
+              ? "h-8 w-10 rounded-none px-0 text-muted-foreground hover:bg-muted/30 [&>span]:flex [&>span]:items-center [&>span]:justify-center"
+              : undefined
+          }
+          aria-label="Report"
+          title="Report"
         >
-          Report
+          {grouped ? <Icon name="lucide/flag" /> : "Report"}
         </Button>
 
         <LoginDialog
@@ -109,8 +122,19 @@ export const EntityReportButton = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button type="button" size="sm" variant="secondary">
-          Report
+        <Button
+          type="button"
+          size="sm"
+          variant={grouped ? "ghost" : "secondary"}
+          className={
+            grouped
+              ? "h-8 w-10 rounded-none px-0 text-muted-foreground hover:bg-muted/30 [&>span]:flex [&>span]:items-center [&>span]:justify-center"
+              : undefined
+          }
+          aria-label="Report"
+          title="Report"
+        >
+          {grouped ? <Icon name="lucide/flag" /> : "Report"}
         </Button>
       </DialogTrigger>
 
@@ -137,7 +161,10 @@ export const EntityReportButton = ({
                     >
                       {Object.values(ReportType).map((type) => (
                         <div key={type} className="flex items-center space-x-2">
-                          <RadioGroupItem value={type} id={`r-${entityType}-${type}`} />
+                          <RadioGroupItem
+                            value={type}
+                            id={`r-${entityType}-${type}`}
+                          />
                           <FormLabel htmlFor={`r-${entityType}-${type}`}>
                             {sentenceCase(type)}
                           </FormLabel>

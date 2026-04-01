@@ -1,26 +1,30 @@
-import type { ComponentProps } from "react"
-import { Icon } from "~/components/common/icon"
-import { Tooltip } from "~/components/common/tooltip"
-import { cx } from "~/utils/cva"
+import type { ComponentProps } from "react";
+import { Icon } from "~/components/common/icon";
+import { Tooltip } from "~/components/common/tooltip";
+import { cx } from "~/utils/cva";
 
 type VerifiedBadgeProps = Omit<ComponentProps<typeof Icon>, "name"> & {
-  size?: "sm" | "md" | "lg"
-}
+  size?: "sm" | "md" | "lg";
+};
 
-export const VerifiedBadge = ({ className, size = "md", ...props }: VerifiedBadgeProps) => {
+export const VerifiedBadge = ({
+  className,
+  size = "md",
+  ...props
+}: VerifiedBadgeProps) => {
   return (
     <Tooltip tooltip="Verified">
       <Icon
         name="verified-badge"
         className={cx(
-          "-ml-1 shrink-0 stroke-0",
-          size === "sm" && "-mb-[0.15em] size-4",
-          size === "md" && "-mb-[0.2em] size-5",
-          size === "lg" && "-mb-[0.25em] size-6",
+          "shrink-0 stroke-0",
+          size === "sm" && " size-5",
+          size === "md" && " size-6",
+          size === "lg" && " size-7",
           className,
         )}
         {...props}
       />
     </Tooltip>
-  )
-}
+  );
+};

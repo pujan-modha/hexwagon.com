@@ -95,7 +95,9 @@ export const AdActions = ({ ad, pricing }: AdActionsProps) => {
         title="Reject ad booking"
         description="Provide a reason. It will be emailed to the advertiser."
         pending={rejectAction.isPending}
-        onReject={(reason) => rejectAction.execute({ adId: ad.id, reason })}
+        onReject={async (reason) => {
+          await rejectAction.execute({ adId: ad.id, reason });
+        }}
       />
 
       <AdFormDialog
