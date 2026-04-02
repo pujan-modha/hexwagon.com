@@ -1,6 +1,7 @@
 "use client"
 
 import { AdType } from "@prisma/client"
+import Image from "next/image"
 import posthog from "posthog-js"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -74,9 +75,11 @@ export const AdsPickerThemes = ({
               name: (
                 <Stack size="xs">
                   {faviconUrl && (
-                    <img
+                    <Image
                       src={faviconUrl}
                       alt=""
+                      width={16}
+                      height={16}
                       className="shrink-0 size-4 rounded-sm mr-0.5"
                       loading="lazy"
                     />

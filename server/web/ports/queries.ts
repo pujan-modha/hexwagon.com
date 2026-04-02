@@ -15,6 +15,11 @@ import { db } from "~/services/db";
 import { getMeiliIndex } from "~/services/meilisearch";
 import { tryCatch } from "~/utils/helpers";
 
+const quoteMeiliValues = (values: string[]) =>
+  values
+    .map((value) => `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`)
+    .join(", ");
+
 const getPortOrderBy = (sort: string): Prisma.PortFindManyArgs["orderBy"] => {
   if (sort && sort !== "default" && sort.includes(".")) {
     const [sortBy, sortOrder] = sort.split(".") as [string, Prisma.SortOrder];
@@ -60,6 +65,85 @@ export const searchPorts = async (
     ...(!!platform.length && { platform: { slug: { in: platform } } }),
     ...(!!tag.length && { tags: { some: { slug: { in: tag } } } }),
   };
+
+  if (q) {
+    const meiliLimit = sort === "default" ? take : 5000;
+    const meiliOffset = sort === "default" ? skip : 0;
+
+    const meiliFilters = [`status = '${PortStatus.Published}'`];
+
+    if (theme.length) {
+      meiliFilters.push(`themeSlug IN [${quoteMeiliValues(theme)}]`);
+    }
+
+    if (platform.length) {
+      meiliFilters.push(`platformSlug IN [${quoteMeiliValues(platform)}]`);
+    }
+
+    if (tag.length) {
+      meiliFilters.push(`tags IN [${quoteMeiliValues(tag)}]`);
+    }
+
+    const { data, error } = await tryCatch(
+      getMeiliIndex("ports").search<{ id: string }>(q, {
+        limit: meiliLimit,
+        offset: meiliOffset,
+        rankingScoreThreshold: 0.5,
+        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
+        attributesToRetrieve: ["id"],
+        filter: meiliFilters,
+      }),
+    );
+
+    if (!error && data) {
+      const ids = Array.from(new Set(data.hits.map((hit) => hit.id)));
+
+      if (!ids.length) {
+        return { ports: [], totalCount: 0, pageCount: 0 };
+      }
+
+      const whereIds: Prisma.PortWhereInput = {
+        id: { in: ids },
+        status: PortStatus.Published,
+        ...(!!theme.length && { theme: { slug: { in: theme } } }),
+        ...(!!platform.length && { platform: { slug: { in: platform } } }),
+        ...(!!tag.length && { tags: { some: { slug: { in: tag } } } }),
+        ...where,
+      };
+
+      if (sort === "default") {
+        const ports = await db.port.findMany({
+          where: whereIds,
+          select: portManyPayload,
+        });
+
+        const portMap = new Map(ports.map((port) => [port.id, port]));
+        const orderedPorts = ids
+          .map((id) => portMap.get(id))
+          .filter((port): port is (typeof ports)[number] => Boolean(port));
+
+        const totalCount = data.estimatedTotalHits ?? orderedPorts.length;
+        const pageCount = Math.ceil(totalCount / perPage);
+
+        console.log(`Ports search: ${Math.round(performance.now() - start)}ms`);
+        return { ports: orderedPorts, totalCount, pageCount };
+      }
+
+      const ports = await db.port.findMany({
+        where: whereIds,
+        select: portManyPayload,
+        orderBy,
+        take,
+        skip,
+      });
+
+      const totalCount = data.estimatedTotalHits ?? ids.length;
+      const pageCount = Math.ceil(totalCount / perPage);
+
+      console.log(`Ports search: ${Math.round(performance.now() - start)}ms`);
+      return { ports, totalCount, pageCount };
+    }
+  }
 
   if (q) {
     whereQuery.OR = [

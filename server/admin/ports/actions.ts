@@ -145,3 +145,45 @@ export const setOfficialPort = userProcedure
 
     return updatedPort;
   });
+
+export const unsetOfficialPort = userProcedure
+  .createServerAction()
+  .input(z.object({ portId: z.string() }))
+  .handler(async ({ input: { portId }, ctx: { user } }) => {
+    const port = await db.port.findUniqueOrThrow({
+      where: { id: portId },
+      select: { themeId: true, platformId: true, slug: true, isOfficial: true },
+    });
+
+    if (user.role !== "admin") {
+      const isThemeMaintainer = await db.themeMaintainer.findUnique({
+        where: {
+          userId_themeId: {
+            userId: user.id,
+            themeId: port.themeId,
+          },
+        },
+        select: { id: true },
+      });
+
+      if (!isThemeMaintainer) {
+        throw new Error(
+          "Only admins or maintainers of this theme can unmark official ports",
+        );
+      }
+    }
+
+    if (!port.isOfficial) {
+      return port;
+    }
+
+    const updatedPort = await db.port.update({
+      where: { id: portId },
+      data: { isOfficial: false },
+    });
+
+    revalidateTag("ports", "max");
+    revalidateTag(`port-${updatedPort.slug}`, "max");
+
+    return updatedPort;
+  });

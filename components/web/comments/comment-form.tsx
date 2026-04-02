@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useAuth } from "~/lib/auth-client"
 import { addComment } from "~/actions/comment"
 import { Button } from "~/components/common/button"
+import { Link } from "~/components/common/link"
 import { Textarea } from "~/components/common/textarea"
 import { toast } from "sonner"
 
@@ -50,7 +51,7 @@ const CommentForm = ({
   if (!user) {
     return (
       <p className="text-sm text-muted-foreground">
-        <a href="/auth/login" className="underline">Sign in</a> to comment.
+        <Link href="/auth/login" className="underline">Sign in</Link> to comment.
       </p>
     )
   }

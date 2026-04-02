@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getRandomString, isValidUrl, slugify } from "@primoui/utils";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
 import { useState } from "react";
@@ -387,9 +388,11 @@ export function ThemeForm({
 
                   <Stack size="sm">
                     {field.value && (
-                      <img
+                        <Image
                         src={field.value}
                         alt="Favicon"
+                          width={32}
+                          height={32}
                         className="size-8 border box-content rounded-md object-contain"
                       />
                     )}

@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getRandomString, isValidUrl, slugify } from "@primoui/utils";
 import { type Port, PortStatus } from "@prisma/client";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
 import { use, useState } from "react";
@@ -462,9 +463,11 @@ export function PortForm({
 
               <Stack size="sm">
                 {field.value && (
-                  <img
+                  <Image
                     src={field.value}
                     alt="Favicon"
+                    width={32}
+                    height={32}
                     className="size-8 border box-content rounded-md object-contain"
                   />
                 )}
@@ -490,9 +493,11 @@ export function PortForm({
 
               <Stack size="sm">
                 {field.value && (
-                  <img
+                  <Image
                     src={field.value}
                     alt="Screenshot"
+                    width={128}
+                    height={32}
                     className="h-8 max-w-32 border box-content rounded-md object-contain"
                   />
                 )}

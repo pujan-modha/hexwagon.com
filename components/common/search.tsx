@@ -2,6 +2,7 @@
 
 import { type HotkeyItem, useDebouncedState, useHotkeys } from "@mantine/hooks";
 import { getUrlHostname } from "@primoui/utils";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { posthog } from "posthog-js";
 import { type ReactNode, useEffect, useRef, useState } from "react";
@@ -163,6 +164,16 @@ export const Search = () => {
     onSuccess: ({ data }) => {
       setResults(data);
 
+      if (data?.telemetry.usedFallback) {
+        posthog.capture("search_meili_fallback", {
+          source: "command_search",
+          queryLength: data.telemetry.queryLength,
+          fallbackIndexes: data.telemetry.fallbackIndexes,
+          fallbackReasons: data.telemetry.fallbackReasons,
+          meiliFailures: data.telemetry.meiliFailures,
+        });
+      }
+
       const q = normalizedQuery.toLowerCase();
 
       if (q.length > 1) {
@@ -274,7 +285,7 @@ export const Search = () => {
           renderItemDisplay={({ name, faviconUrl }) => (
             <>
               {faviconUrl && (
-                <img src={faviconUrl} alt="" width={16} height={16} />
+                <Image src={faviconUrl} alt="" width={16} height={16} />
               )}
               <span className="flex-1 truncate">{name}</span>
             </>

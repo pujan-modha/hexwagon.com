@@ -10,6 +10,7 @@ import {
   CommandItem,
   CommandList,
 } from "~/components/common/command";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import {
   Dialog,
   DialogContent,
@@ -77,6 +78,7 @@ const StepTheme = ({ onNext }: StepThemeProps) => {
           </DialogTrigger>
 
           <DialogContent className="p-0">
+            <DialogPrimitive.Title className="sr-only">Search for a theme</DialogPrimitive.Title>
             <Command>
               <CommandInput
                 placeholder="Search themes..."

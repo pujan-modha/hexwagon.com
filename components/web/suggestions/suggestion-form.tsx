@@ -7,6 +7,7 @@ import { SuggestionType } from "@prisma/client"
 import { Button } from "~/components/common/button"
 import { Input } from "~/components/common/input"
 import { Label } from "~/components/common/label"
+import { Link } from "~/components/common/link"
 import { RadioGroup, RadioGroupItem } from "~/components/common/radio-group"
 import { Textarea } from "~/components/common/textarea"
 import { toast } from "sonner"
@@ -55,13 +56,13 @@ const SuggestionForm = ({ defaultType = "Theme", onSuccess }: SuggestionFormProp
   if (!user) {
     return (
       <p className="text-sm text-muted-foreground">
-        <a href="/auth/login" className="underline">Sign in</a> to submit a suggestion.
+        <Link href="/auth/login" className="underline">Sign in</Link> to submit a suggestion.
       </p>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 min-w-md mx-auto">
       <div className="flex flex-col gap-2">
         <Label>What are you suggesting?</Label>
         <RadioGroup

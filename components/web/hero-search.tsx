@@ -1,13 +1,17 @@
 "use client";
 
 import { useDebouncedState } from "@mantine/hooks";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useServerAction } from "zsa-react";
 import { searchItems } from "~/actions/search";
 import { Button } from "~/components/common/button";
 import { Icon } from "~/components/common/icon";
+import { VerifiedBadge } from "~/components/web/verified-badge";
 import { platformHref, themeHref, themePlatformHref } from "~/lib/catalogue";
+import type { IconName } from "~/types/icons";
 import { cx } from "~/utils/cva";
 
 const THEME_PLACEHOLDERS = [
@@ -32,11 +36,14 @@ type ThemeHit = {
   slug: string;
   name: string;
   faviconUrl?: string;
+  isVerified?: boolean;
 };
 
 type PlatformHit = {
   slug: string;
   name: string;
+  faviconUrl?: string;
+  isVerified?: boolean;
 };
 
 type ActiveField = "theme" | "platform" | null;
@@ -51,6 +58,8 @@ const queryHref = (pathname: string, query: string) => {
 export const HeroSearch = () => {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const themeFieldRef = useRef<HTMLDivElement>(null);
+  const platformFieldRef = useRef<HTMLDivElement>(null);
 
   const [theme, setTheme] = useState("");
   const [platform, setPlatform] = useState("");
@@ -63,6 +72,11 @@ export const HeroSearch = () => {
   const [themeResults, setThemeResults] = useState<ThemeHit[]>([]);
   const [platformResults, setPlatformResults] = useState<PlatformHit[]>([]);
   const [activeField, setActiveField] = useState<ActiveField>(null);
+  const [dropdownAnchor, setDropdownAnchor] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
 
   const [debouncedTheme, setDebouncedTheme] = useDebouncedState("", 350);
   const [debouncedPlatform, setDebouncedPlatform] = useDebouncedState("", 350);
@@ -96,8 +110,54 @@ export const HeroSearch = () => {
     return () => document.removeEventListener("mousedown", onMouseDown);
   }, []);
 
+  useEffect(() => {
+    if (!activeField || !formRef.current) {
+      setDropdownAnchor(null);
+      return;
+    }
+
+    const targetRef = activeField === "theme" ? themeFieldRef : platformFieldRef;
+
+    const updateAnchor = () => {
+      const targetEl = targetRef.current;
+      const formEl = formRef.current;
+
+      if (!targetEl || !formEl) return;
+
+      const fieldRect = targetEl.getBoundingClientRect();
+      const formRect = formEl.getBoundingClientRect();
+
+      setDropdownAnchor({
+        left: fieldRect.left - formRect.left,
+        top: fieldRect.bottom - formRect.top + 8,
+        width: fieldRect.width,
+      });
+    };
+
+    updateAnchor();
+
+    window.addEventListener("resize", updateAnchor);
+    window.addEventListener("scroll", updateAnchor, true);
+
+    return () => {
+      window.removeEventListener("resize", updateAnchor);
+      window.removeEventListener("scroll", updateAnchor, true);
+    };
+  }, [activeField, theme, platform]);
+
   const themeSearch = useServerAction(searchItems, {
     onSuccess: ({ data }) => {
+      if (data?.telemetry.usedFallback) {
+        posthog.capture("search_meili_fallback", {
+          source: "hero_search",
+          field: "theme",
+          queryLength: data.telemetry.queryLength,
+          fallbackIndexes: data.telemetry.fallbackIndexes,
+          fallbackReasons: data.telemetry.fallbackReasons,
+          meiliFailures: data.telemetry.meiliFailures,
+        });
+      }
+
       const hits = data?.themes?.hits;
       setThemeResults(
         Array.isArray(hits) ? (hits as ThemeHit[]).slice(0, 5) : [],
@@ -108,6 +168,17 @@ export const HeroSearch = () => {
 
   const platformSearch = useServerAction(searchItems, {
     onSuccess: ({ data }) => {
+      if (data?.telemetry.usedFallback) {
+        posthog.capture("search_meili_fallback", {
+          source: "hero_search",
+          field: "platform",
+          queryLength: data.telemetry.queryLength,
+          fallbackIndexes: data.telemetry.fallbackIndexes,
+          fallbackReasons: data.telemetry.fallbackReasons,
+          meiliFailures: data.telemetry.meiliFailures,
+        });
+      }
+
       const hits = data?.platforms?.hits;
       setPlatformResults(
         Array.isArray(hits) ? (hits as PlatformHit[]).slice(0, 5) : [],
@@ -188,7 +259,7 @@ export const HeroSearch = () => {
     <form
       ref={formRef}
       onSubmit={onSubmit}
-      className="relative mx-auto w-full max-w-3xl px-2"
+      className="relative z-20 mx-auto w-full max-w-3xl px-6 md:px-2"
       noValidate
     >
       <div
@@ -201,7 +272,7 @@ export const HeroSearch = () => {
         }}
       >
         <div className="relative grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-          <div className="relative">
+          <div ref={themeFieldRef} className="relative">
             <SearchField
               label="Theme"
               value={theme}
@@ -213,20 +284,12 @@ export const HeroSearch = () => {
                 setActiveField("theme");
               }}
             />
-
-            {showThemeDropdown && (
-              <div className="absolute inset-x-0 top-full z-40 mt-2 px-2">
-                <SuggestionDropdown
-                  isPending={themeSearch.isPending}
-                  emptyText="No theme matches yet"
-                  items={themeResults}
-                  onSelect={(item) => router.push(themeHref(item.slug))}
-                />
-              </div>
-            )}
           </div>
 
-          <div className="relative border-t border-white/10 sm:border-t-0 sm:border-l">
+          <div
+            ref={platformFieldRef}
+            className="relative border-t border-white/10 sm:border-t-0 sm:border-l"
+          >
             <SearchField
               label="Platform"
               value={platform}
@@ -238,17 +301,6 @@ export const HeroSearch = () => {
                 setActiveField("platform");
               }}
             />
-
-            {showPlatformDropdown && (
-              <div className="absolute inset-x-0 top-full z-40 mt-2 px-2">
-                <SuggestionDropdown
-                  isPending={platformSearch.isPending}
-                  emptyText="No platform matches yet"
-                  items={platformResults}
-                  onSelect={(item) => router.push(platformHref(item.slug))}
-                />
-              </div>
-            )}
           </div>
 
           <div className="border-t border-white/10 p-2 sm:border-t-0 sm:border-l">
@@ -257,14 +309,48 @@ export const HeroSearch = () => {
               variant="fancy"
               size="lg"
               isPending={isPending}
-              prefix={<Icon name="lucide/search" className="size-[1.1em]" />}
-              className="h-full min-h-11 w-full rounded-lg sm:w-auto"
+              prefix={
+                <Icon
+                  name="lucide/search"
+                  className="hidden size-[1.1em] md:block"
+                />
+              }
+              className="h-full min-h-11 w-full rounded-lg text-center sm:w-auto"
             >
               Search
             </Button>
           </div>
         </div>
       </div>
+
+      {(showThemeDropdown || showPlatformDropdown) && dropdownAnchor && (
+        <div
+          className="absolute z-50"
+          style={{
+            left: `${dropdownAnchor.left}px`,
+            top: `${dropdownAnchor.top}px`,
+            width: `${dropdownAnchor.width}px`,
+          }}
+        >
+          {showThemeDropdown ? (
+            <SuggestionDropdown
+              iconName="lucide/star"
+              isPending={themeSearch.isPending}
+              emptyText="No theme matches yet"
+              items={themeResults}
+              onSelect={(item) => router.push(themeHref(item.slug))}
+            />
+          ) : (
+            <SuggestionDropdown
+              iconName="lucide/server"
+              isPending={platformSearch.isPending}
+              emptyText="No platform matches yet"
+              items={platformResults}
+              onSelect={(item) => router.push(platformHref(item.slug))}
+            />
+          )}
+        </div>
+      )}
     </form>
   );
 };
@@ -311,9 +397,12 @@ const SearchField = ({
 type SuggestionItem = {
   slug: string;
   name: string;
+  faviconUrl?: string;
+  isVerified?: boolean;
 };
 
 type SuggestionDropdownProps<T extends SuggestionItem> = {
+  iconName: IconName;
   items: T[];
   isPending: boolean;
   emptyText: string;
@@ -321,6 +410,7 @@ type SuggestionDropdownProps<T extends SuggestionItem> = {
 };
 
 const SuggestionDropdown = <T extends SuggestionItem>({
+  iconName,
   items,
   isPending,
   emptyText,
@@ -349,7 +439,23 @@ const SuggestionDropdown = <T extends SuggestionItem>({
               className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-sm font-medium text-secondary-foreground hover:bg-accent hover:text-foreground"
               onClick={() => onSelect(item)}
             >
-              <span className="truncate">{item.name}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="grid size-5 shrink-0 place-items-center overflow-hidden rounded bg-background/80">
+                  {item.faviconUrl ? (
+                    <Image
+                      src={item.faviconUrl}
+                      alt=""
+                      width={20}
+                      height={20}
+                      className="size-5 object-cover"
+                    />
+                  ) : (
+                    <Icon name={iconName} className="size-3.5 opacity-70" />
+                  )}
+                </span>
+                <span className="truncate">{item.name}</span>
+                {item.isVerified ? <VerifiedBadge size="xs" /> : null}
+              </span>
               <Icon name="lucide/chevron-right" className="size-4 opacity-50" />
             </button>
           ))}

@@ -10,6 +10,7 @@ import {
   CommandItem,
   CommandList,
 } from "~/components/common/command";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import {
   Dialog,
   DialogContent,
@@ -80,6 +81,7 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
           </DialogTrigger>
 
           <DialogContent className="p-0">
+            <DialogPrimitive.Title className="sr-only">Search for a platform</DialogPrimitive.Title>
             <Command>
               <CommandInput
                 placeholder="Search platforms..."

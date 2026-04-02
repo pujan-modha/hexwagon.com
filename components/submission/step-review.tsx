@@ -4,6 +4,7 @@ import { useSubmissionStore } from "~/stores/submission-store";
 import { submitPort } from "~/actions/submit";
 import { Button } from "~/components/common/button";
 import { Card } from "~/components/common/card";
+import { Link } from "~/components/common/link";
 import { useRouter } from "next/navigation";
 
 type StepReviewProps = {
@@ -83,9 +84,14 @@ const StepReview = ({ onBack }: StepReviewProps) => {
           {repositoryUrl && (
             <div className="grid grid-cols-2 gap-2">
               <span className="text-muted-foreground">Port URL:</span>
-              <a href={repositoryUrl} className="underline">
+              <Link
+                href={repositoryUrl}
+                className="underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {repositoryUrl}
-              </a>
+              </Link>
             </div>
           )}
           <div className="grid grid-cols-2 gap-2">

@@ -48,10 +48,10 @@ export const adsConfig = {
   defaultAd: {
     type: "All",
     websiteUrl: "/advertise",
-    name: "Your brand here",
+    name: "Your Ad here",
     description: "Reach out to our audience of developers.",
-    buttonLabel: `Advertise on ${siteConfig.name}`,
-    faviconUrl: null,
+    buttonLabel: `Learn More`,
+    faviconUrl: "/favicon.svg",
   } satisfies AdOne,
 
   testimonials: [

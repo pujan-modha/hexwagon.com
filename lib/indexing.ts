@@ -59,7 +59,23 @@ export const indexThemes = async ({
 }: {
   where?: Prisma.ThemeWhereInput;
 }) => {
-  const themes = await db.theme.findMany({ where });
+  const themes = await db.theme.findMany({
+    where,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      websiteUrl: true,
+      faviconUrl: true,
+      pageviews: true,
+      _count: {
+        select: {
+          maintainers: true,
+        },
+      },
+    },
+  });
 
   if (!themes.length) return;
 
@@ -72,6 +88,7 @@ export const indexThemes = async ({
       websiteUrl: theme.websiteUrl,
       faviconUrl: theme.faviconUrl,
       pageviews: theme.pageviews,
+      isVerified: theme._count.maintainers > 0,
     })),
   );
 };
@@ -99,6 +116,7 @@ export const indexPlatforms = async ({
       websiteUrl: platform.websiteUrl,
       faviconUrl: platform.faviconUrl,
       pageviews: platform.pageviews,
+      isVerified: platform.isFeatured,
     })),
   );
 };

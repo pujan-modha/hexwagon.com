@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import Image from "next/image";
 import { Card } from "~/components/common/card";
 import { Link } from "~/components/common/link";
 import { VerifiedBadge } from "~/components/web/verified-badge";
@@ -56,10 +57,12 @@ const PortDetail = ({
       {/* Screenshot */}
       {port.screenshotUrl && (
         <div>
-          <img
+          <Image
             src={port.screenshotUrl}
             alt={`Screenshot of ${port.name}`}
-            className="rounded-lg border"
+            width={1920}
+            height={1080}
+            className="h-auto w-full rounded-lg border"
           />
         </div>
       )}

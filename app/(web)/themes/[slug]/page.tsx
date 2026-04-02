@@ -189,7 +189,7 @@ export default async function ThemePage(props: PageProps) {
                 primaryAction={
                   isMaintainer ? (
                     <Button size="sm" variant="secondary" asChild>
-                      <Link href="/dashboard">Manage</Link>
+                      <Link href="/dashboard/maintainer">Manage</Link>
                     </Button>
                   ) : theme.maintainers.length === 0 ? (
                     <ThemeClaimButton

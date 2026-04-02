@@ -4,7 +4,7 @@ import { Tooltip } from "~/components/common/tooltip";
 import { cx } from "~/utils/cva";
 
 type VerifiedBadgeProps = Omit<ComponentProps<typeof Icon>, "name"> & {
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 };
 
 export const VerifiedBadge = ({
@@ -18,6 +18,7 @@ export const VerifiedBadge = ({
         name="verified-badge"
         className={cx(
           "shrink-0 stroke-0",
+          size === "xs" && "size-4",
           size === "sm" && " size-5",
           size === "md" && " size-6",
           size === "lg" && " size-7",

@@ -75,9 +75,13 @@ export const WebGLShader = ({ className }: WebGLShaderProps) => {
 
       const width = window.innerWidth;
       const height = window.innerHeight;
+      const isMobile = width < 768;
 
       refs.renderer.setSize(width, height, false);
       refs.uniforms.resolution.value = [width, height];
+      refs.uniforms.xScale.value = isMobile ? 0.72 : 1;
+      refs.uniforms.yScale.value = isMobile ? 0.68 : 0.5;
+      refs.uniforms.distortion.value = isMobile ? 0.07 : 0.05;
     };
 
     const initScene = () => {

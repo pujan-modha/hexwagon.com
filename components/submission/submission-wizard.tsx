@@ -18,7 +18,7 @@ const SubmissionWizard = () => {
   const { step, setStep } = useSubmissionStore()
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
       {/* Progress indicator */}
       <div className="flex items-center gap-2">
         {steps.map((s, i) => (
