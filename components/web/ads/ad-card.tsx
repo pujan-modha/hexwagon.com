@@ -54,7 +54,10 @@ const AdCardSkeleton = ({
   return (
     <Card
       hover={false}
-      className={cx("items-stretch select-none", className)}
+      className={cx(
+        "h-[190px] min-h-[190px] items-stretch select-none",
+        className,
+      )}
       {...props}
     >
       <CardBadges>

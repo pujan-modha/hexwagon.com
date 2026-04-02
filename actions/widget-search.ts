@@ -12,15 +12,16 @@ export const searchThemesAction = createServerAction()
   .input(z.object({ query: z.string().trim().min(2) }))
   .handler(async ({ input: { query } }) => {
     const { data, error } = await tryCatch(
-      getMeiliIndex("themes").search<{ id: string; name: string; slug: string }>(
-        query,
-        {
-          limit: SEARCH_LIMIT,
-          rankingScoreThreshold: 0.5,
-          hybrid: { embedder: "openAi", semanticRatio: 0.5 },
-          attributesToRetrieve: ["id", "name", "slug"],
-        },
-      ),
+      getMeiliIndex("themes").search<{
+        id: string;
+        name: string;
+        slug: string;
+      }>(query, {
+        limit: SEARCH_LIMIT,
+        rankingScoreThreshold: 0.5,
+        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
+        attributesToRetrieve: ["id", "name", "slug"],
+      }),
     );
 
     if (!error && data?.hits.length) {

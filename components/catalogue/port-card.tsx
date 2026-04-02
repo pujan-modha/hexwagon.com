@@ -11,6 +11,7 @@ import { Skeleton } from "~/components/common/skeleton";
 import { VerifiedBadge } from "~/components/web/verified-badge";
 import { Favicon } from "~/components/web/ui/favicon";
 import type { PortMany } from "~/server/web/ports/payloads";
+import { cx } from "~/utils/cva";
 
 type PortCardProps = Omit<ComponentProps<typeof Card>, "href"> & {
   port: PortMany;
@@ -22,7 +23,11 @@ const getPortHref = (port: PortMany) =>
 
 const PortCard = ({ port, href, className, ...props }: PortCardProps) => {
   return (
-    <Card asChild className={className} {...props}>
+    <Card
+      asChild
+      className={cx(className, "h-[190px] min-h-[190px]")}
+      {...props}
+    >
       <Link href={href ?? getPortHref(port)}>
         <CardHeader>
           <H4 as="h3" className="inline-flex items-center gap-2 truncate">
@@ -65,7 +70,10 @@ const PortCard = ({ port, href, className, ...props }: PortCardProps) => {
 
 const PortCardSkeleton = () => {
   return (
-    <Card hover={false} className="items-stretch select-none">
+    <Card
+      hover={false}
+      className="h-[190px] min-h-[190px] items-stretch select-none"
+    >
       <CardHeader>
         <H4 className="w-2/3">
           <Skeleton>&nbsp;</Skeleton>

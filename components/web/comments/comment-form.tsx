@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useAuth } from "~/lib/auth-client"
-import { addComment } from "~/actions/comment"
-import { Button } from "~/components/common/button"
-import { Link } from "~/components/common/link"
-import { Textarea } from "~/components/common/textarea"
-import { toast } from "sonner"
+import { useState } from "react";
+import { useAuth } from "~/lib/auth-client";
+import { addComment } from "~/actions/comment";
+import { Button } from "~/components/common/button";
+import { Link } from "~/components/common/link";
+import { Textarea } from "~/components/common/textarea";
+import { toast } from "sonner";
 
 type CommentFormProps = {
-  portId: string
-  parentId?: string
-  onSuccess?: () => void
-  onCancel?: () => void
-  placeholder?: string
-}
+  portId: string;
+  parentId?: string;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+  placeholder?: string;
+};
 
 const CommentForm = ({
   portId,
@@ -23,44 +23,47 @@ const CommentForm = ({
   onCancel,
   placeholder = "Write a comment...",
 }: CommentFormProps) => {
-  const { user } = useAuth()
-  const [content, setContent] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const { user } = useAuth();
+  const [content, setContent] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!content.trim()) {
-      toast.error("Comment cannot be empty")
-      return
+      toast.error("Comment cannot be empty");
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await addComment({ portId, parentId, content })
-      setContent("")
-      onSuccess?.()
-      toast.success("Comment added")
+      await addComment({ portId, parentId, content });
+      setContent("");
+      onSuccess?.();
+      toast.success("Comment added");
     } catch {
-      toast.error("Failed to add comment")
+      toast.error("Failed to add comment");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (!user) {
     return (
       <p className="text-sm text-muted-foreground">
-        <Link href="/auth/login" className="underline">Sign in</Link> to comment.
+        <Link href="/auth/login" className="underline">
+          Sign in
+        </Link>{" "}
+        to comment.
       </p>
-    )
+    );
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <Textarea
         value={content}
-        onChange={e => setContent(e.target.value)}
+        onChange={(e) => setContent(e.target.value)}
         placeholder={placeholder}
         rows={3}
       />
@@ -76,7 +79,7 @@ const CommentForm = ({
         </Button>
       </div>
     </form>
-  )
-}
+  );
+};
 
-export { CommentForm }
+export { CommentForm };

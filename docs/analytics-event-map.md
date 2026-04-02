@@ -52,12 +52,12 @@ Primary wiring:
 
 ### Search, Subscription, Commerce
 
-| Event                  | Transport | Required Props          | Emitted From          |
-| ---------------------- | --------- | ----------------------- | --------------------- |
-| `search`               | PostHog   | `query`                 | command/search dialog |
-| `search_meili_fallback`| PostHog + Server Log | `source`, `queryLength`, `fallbackIndexes`, `fallbackReasons`, `meiliFailures` | hero search, command/search dialog, `actions/search.ts` |
-| `subscribe_newsletter` | PostHog   | `email`                 | newsletter form       |
-| `stripe_checkout_ad`   | PostHog   | checkout totals payload | ads checkout flows    |
+| Event                   | Transport            | Required Props                                                                 | Emitted From                                            |
+| ----------------------- | -------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `search`                | PostHog              | `query`                                                                        | command/search dialog                                   |
+| `search_meili_fallback` | PostHog + Server Log | `source`, `queryLength`, `fallbackIndexes`, `fallbackReasons`, `meiliFailures` | hero search, command/search dialog, `actions/search.ts` |
+| `subscribe_newsletter`  | PostHog              | `email`                                                                        | newsletter form                                         |
+| `stripe_checkout_ad`    | PostHog              | checkout totals payload                                                        | ads checkout flows                                      |
 
 ## Deprecated / Legacy Names
 

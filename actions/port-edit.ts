@@ -1,8 +1,10 @@
 "use server";
 
 import type { Prisma } from "@prisma/client";
-import { EditStatus } from "@prisma/client";
+import { EditStatus, PortStatus } from "@prisma/client";
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
+import { notifyEditorOfPortEditApproved } from "~/lib/notifications";
 import { userProcedure } from "~/lib/safe-actions";
 import { db } from "~/services/db";
 
@@ -44,6 +46,10 @@ export const submitPortEdit = userProcedure
       where: { id: portId },
       select: {
         id: true,
+        slug: true,
+        themeId: true,
+        status: true,
+        publishedAt: true,
         authorId: true,
         submitterEmail: true,
         name: true,
@@ -59,9 +65,22 @@ export const submitPortEdit = userProcedure
     const isAuthor = port.authorId === user.id;
     const isSubmitterByEmail =
       userEmail.length > 0 && submitterEmail === userEmail;
+    const isThemeMaintainer =
+      user.role === "admin" ||
+      Boolean(
+        await db.themeMaintainer.findUnique({
+          where: {
+            userId_themeId: {
+              userId: user.id,
+              themeId: port.themeId,
+            },
+          },
+          select: { id: true },
+        }),
+      );
 
-    if (!isAuthor && !isSubmitterByEmail) {
-      throw new Error("You can only edit ports you submitted.");
+    if (!isAuthor && !isSubmitterByEmail && !isThemeMaintainer) {
+      throw new Error("You can only edit ports you submitted or maintain.");
     }
 
     const normalizedDiff = {
@@ -113,12 +132,57 @@ export const submitPortEdit = userProcedure
       throw new Error("No changes detected. Update at least one field.");
     }
 
-    const portEdit = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx) => {
       if (!port.authorId && isSubmitterByEmail) {
         await tx.port.update({
           where: { id: port.id },
           data: { authorId: user.id },
         });
+      }
+
+      if (isThemeMaintainer) {
+        const directUpdate: Prisma.PortUpdateInput = {
+          ...(changedDiff.name !== undefined ? { name: changedDiff.name } : {}),
+          ...(changedDiff.description !== undefined
+            ? { description: changedDiff.description }
+            : {}),
+          ...(changedDiff.content !== undefined
+            ? { content: changedDiff.content }
+            : {}),
+          ...(changedDiff.repositoryUrl !== undefined
+            ? { repositoryUrl: changedDiff.repositoryUrl }
+            : {}),
+          ...(changedDiff.license !== undefined
+            ? { license: changedDiff.license }
+            : {}),
+          ...(port.status === PortStatus.PendingEdit
+            ? {
+                status: PortStatus.Published,
+                publishedAt: port.publishedAt ?? new Date(),
+              }
+            : {}),
+        };
+
+        await tx.port.update({
+          where: { id: port.id },
+          data: directUpdate,
+        });
+
+        const approvedEdit = await tx.portEdit.create({
+          data: {
+            portId,
+            editorId: user.id,
+            diff: changedDiff as Prisma.InputJsonValue,
+            status: EditStatus.Approved,
+            adminNote: "Auto-approved for theme maintainer.",
+          },
+          include: {
+            editor: { select: { email: true } },
+            port: { select: { name: true } },
+          },
+        });
+
+        return { portEdit: approvedEdit, appliedDirectly: true as const };
       }
 
       await tx.portEdit.deleteMany({
@@ -129,14 +193,23 @@ export const submitPortEdit = userProcedure
         },
       });
 
-      return tx.portEdit.create({
+      const pendingEdit = await tx.portEdit.create({
         data: {
           portId,
           editorId: user.id,
           diff: changedDiff as Prisma.InputJsonValue,
         },
       });
+
+      return { portEdit: pendingEdit, appliedDirectly: false as const };
     });
 
-    return portEdit;
+    if (result.appliedDirectly) {
+      revalidateTag("ports", "max");
+      revalidateTag("port-edits", "max");
+      revalidateTag(`port-${port.slug}`, "max");
+      await notifyEditorOfPortEditApproved(result.portEdit);
+    }
+
+    return result;
   });

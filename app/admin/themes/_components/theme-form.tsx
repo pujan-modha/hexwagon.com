@@ -388,11 +388,11 @@ export function ThemeForm({
 
                   <Stack size="sm">
                     {field.value && (
-                        <Image
+                      <Image
                         src={field.value}
                         alt="Favicon"
-                          width={32}
-                          height={32}
+                        width={32}
+                        height={32}
                         className="size-8 border box-content rounded-md object-contain"
                       />
                     )}

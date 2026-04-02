@@ -1,12 +1,17 @@
 "use server"
 
 import { getUrlHostname, slugify } from "@primoui/utils"
+import { PortStatus } from "@prisma/client"
+import { revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 import { after } from "next/server"
 import { createServerAction } from "zsa"
 import { subscribeToNewsletter } from "~/actions/subscribe"
 import { auth } from "~/lib/auth"
-import { notifySubmitterOfPortSubmitted } from "~/lib/notifications"
+import {
+  notifySubmitterOfPortApproved,
+  notifySubmitterOfPortSubmitted,
+} from "~/lib/notifications"
 import { getIP, isRateLimited } from "~/lib/rate-limiter"
 import { submitPortSchema } from "~/server/web/shared/schema"
 import { db } from "~/services/db"
@@ -37,6 +42,21 @@ export const submitPort = createServerAction()
   .input(submitPortSchema)
   .handler(async ({ input: { newsletterOptIn, ...data } }) => {
     const session = await auth.api.getSession({ headers: await headers() })
+
+    const isThemeMaintainer = session?.user
+      ? session.user.role === "admin" ||
+        Boolean(
+          await db.themeMaintainer.findUnique({
+            where: {
+              userId_themeId: {
+                userId: session.user.id,
+                themeId: data.themeId,
+              },
+            },
+            select: { id: true },
+          }),
+        )
+      : false
 
     if (!session?.user) {
       const ip = await getIP()
@@ -83,10 +103,26 @@ export const submitPort = createServerAction()
 
     // Save the port to the database
     const port = await db.port.create({
-      data: { ...data, slug, authorId },
+      data: {
+        ...data,
+        slug,
+        authorId,
+        ...(isThemeMaintainer
+          ? {
+              status: PortStatus.Published,
+              publishedAt: new Date(),
+            }
+          : {}),
+      },
     })
 
-    after(async () => await notifySubmitterOfPortSubmitted(port))
+    if (isThemeMaintainer) {
+      revalidateTag("ports", "max")
+      revalidateTag(`port-${port.slug}`, "max")
+      after(async () => await notifySubmitterOfPortApproved(port))
+    } else {
+      after(async () => await notifySubmitterOfPortSubmitted(port))
+    }
 
     return port
   })

@@ -53,7 +53,11 @@ const AdPreviewCard = ({
   const Wrapper = interactive ? ExternalLink : "div";
 
   return (
-    <Card className={cx("group/button", className)} asChild {...props}>
+    <Card
+      className={cx("group/button h-[190px] min-h-[190px]", className)}
+      asChild
+      {...props}
+    >
       <Wrapper {...linkProps}>
         <CardBadges>
           <Badge variant="outline">Ad</Badge>

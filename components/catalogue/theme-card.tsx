@@ -13,6 +13,7 @@ import { VerifiedBadge } from "~/components/web/verified-badge";
 import { Favicon } from "~/components/web/ui/favicon";
 import { themeHref } from "~/lib/catalogue";
 import type { ThemeMany } from "~/server/web/themes/payloads";
+import { cx } from "~/utils/cva";
 
 type ThemeCardProps = Omit<ComponentProps<typeof Card>, "href"> & {
   theme: ThemeMany;
@@ -28,7 +29,11 @@ const ThemeCard = ({
   ...props
 }: ThemeCardProps) => {
   return (
-    <Card asChild className={className} {...props}>
+    <Card
+      asChild
+      className={cx(className, "h-[190px] min-h-[190px]")}
+      {...props}
+    >
       <Link href={href ?? themeHref(theme.slug)}>
         <CardHeader wrap={false}>
           <Favicon src={theme.faviconUrl} title={theme.name} plain />
@@ -55,7 +60,10 @@ const ThemeCard = ({
 
 const ThemeCardSkeleton = () => {
   return (
-    <Card hover={false} className="items-stretch select-none">
+    <Card
+      hover={false}
+      className="h-[190px] min-h-[190px] items-stretch select-none"
+    >
       <CardHeader wrap={false}>
         <Favicon
           src="/favicon.png"

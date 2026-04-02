@@ -26,9 +26,13 @@ type DashboardRow = Awaited<ReturnType<typeof findTools>>["ports"][number];
 
 type DashboardTableProps = {
   toolsPromise: ReturnType<typeof findTools>;
+  showMaintainerConsoleButton: boolean;
 };
 
-export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
+export const DashboardTable = ({
+  toolsPromise,
+  showMaintainerConsoleButton,
+}: DashboardTableProps) => {
   const { ports, pageCount } = use(toolsPromise) as {
     ports: DashboardRow[];
     pageCount: number;
@@ -195,6 +199,17 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
         >
           <Link href="/submit">Submit a port</Link>
         </Button>
+
+        {showMaintainerConsoleButton ? (
+          <Button
+            size="md"
+            variant="primary"
+            prefix={<Icon name="lucide/layout-dashboard" />}
+            asChild
+          >
+            <Link href="/dashboard/maintainer">Maintainer Console</Link>
+          </Button>
+        ) : null}
       </DataTableToolbar>
     </DataTable>
   );

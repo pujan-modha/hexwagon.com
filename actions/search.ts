@@ -279,16 +279,16 @@ export const searchItems = createServerAction()
           ? "empty"
           : null;
 
-    const platformsFallbackReason: FallbackReason | null = !shouldSearchPlatforms
-      ? null
-      : platformsResult.status === "rejected"
-        ? "error"
-        : platforms.hits.length === 0
-          ? "empty"
-          : null;
+    const platformsFallbackReason: FallbackReason | null =
+      !shouldSearchPlatforms
+        ? null
+        : platformsResult.status === "rejected"
+          ? "error"
+          : platforms.hits.length === 0
+            ? "empty"
+            : null;
 
-    const usePortsFallback =
-      shouldSearchPorts && Boolean(portsFallbackReason);
+    const usePortsFallback = shouldSearchPorts && Boolean(portsFallbackReason);
     const useThemesFallback =
       shouldSearchThemes && Boolean(themesFallbackReason);
     const usePlatformsFallback =
@@ -311,7 +311,9 @@ export const searchItems = createServerAction()
     const fallbackReasons = {
       ...(portsFallbackReason ? { ports: portsFallbackReason } : {}),
       ...(themesFallbackReason ? { themes: themesFallbackReason } : {}),
-      ...(platformsFallbackReason ? { platforms: platformsFallbackReason } : {}),
+      ...(platformsFallbackReason
+        ? { platforms: platformsFallbackReason }
+        : {}),
     } satisfies Partial<Record<SearchableIndex, FallbackReason>>;
 
     const fallbackIndexes = Object.keys(fallbackReasons) as SearchableIndex[];

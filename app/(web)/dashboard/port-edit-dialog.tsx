@@ -89,8 +89,12 @@ export const PortEditDialog = ({ port }: PortEditDialogProps) => {
   const [values, setValues] = useState<EditablePortFields>(initialValues);
 
   const { execute, isPending } = useServerAction(submitPortEdit, {
-    onSuccess: () => {
-      toast.success("Edit submitted for review.");
+    onSuccess: ({ data }) => {
+      toast.success(
+        data?.appliedDirectly
+          ? "Edit applied and published immediately."
+          : "Edit submitted for review.",
+      );
       setIsOpen(false);
       router.refresh();
     },
@@ -129,7 +133,8 @@ export const PortEditDialog = ({ port }: PortEditDialogProps) => {
         <DialogHeader>
           <DialogTitle>Edit Port</DialogTitle>
           <DialogDescription>
-            Changes are queued for admin review and will go live after approval.
+            Changes are submitted for processing. Maintainers of this theme get
+            immediate publish without admin approval.
           </DialogDescription>
         </DialogHeader>
 
@@ -236,7 +241,7 @@ export const PortEditDialog = ({ port }: PortEditDialogProps) => {
               Cancel
             </Button>
             <Button type="submit" isPending={isPending}>
-              Submit for review
+              Submit Changes
             </Button>
           </div>
         </form>

@@ -1,53 +1,55 @@
-"use client"
+"use client";
 
-import { AdType } from "@prisma/client"
-import Image from "next/image"
-import posthog from "posthog-js"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
-import { useServerAction } from "zsa-react"
-import { createStripeThemeAdsCheckout } from "~/actions/stripe"
-import { RelationSelector } from "~/components/admin/relation-selector"
-import { Button } from "~/components/common/button"
-import { Card } from "~/components/common/card"
-import { H5 } from "~/components/common/heading"
-import { Note } from "~/components/common/note"
-import { Stack } from "~/components/common/stack"
-import { ExternalLink } from "~/components/web/external-link"
-import { config } from "~/config"
-import type { ThemeMany } from "~/server/web/themes/payloads"
+import { AdType } from "@prisma/client";
+import Image from "next/image";
+import posthog from "posthog-js";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useServerAction } from "zsa-react";
+import { createStripeThemeAdsCheckout } from "~/actions/stripe";
+import { RelationSelector } from "~/components/admin/relation-selector";
+import { Button } from "~/components/common/button";
+import { Card } from "~/components/common/card";
+import { H5 } from "~/components/common/heading";
+import { Note } from "~/components/common/note";
+import { Stack } from "~/components/common/stack";
+import { ExternalLink } from "~/components/web/external-link";
+import { config } from "~/config";
+import type { ThemeMany } from "~/server/web/themes/payloads";
 
 type AdsPickerThemesProps = {
-  themes: ThemeMany[]
-  selectedId?: string
-  relatedIds?: string[]
-}
+  themes: ThemeMany[];
+  selectedId?: string;
+  relatedIds?: string[];
+};
 
 export const AdsPickerThemes = ({
   themes,
   selectedId,
   relatedIds,
 }: AdsPickerThemesProps) => {
-  const [selectedIds, setSelectedIds] = useState<string[]>(selectedId ? [selectedId] : [])
-  const [selectedThemes, setSelectedThemes] = useState<ThemeMany[]>([])
-  const [totalPrice, setTotalPrice] = useState(0)
+  const [selectedIds, setSelectedIds] = useState<string[]>(
+    selectedId ? [selectedId] : [],
+  );
+  const [selectedThemes, setSelectedThemes] = useState<ThemeMany[]>([]);
+  const [totalPrice, setTotalPrice] = useState(0);
 
   useEffect(() => {
-    const thms = themes.filter(({ id }) => selectedIds.includes(id))
-    setSelectedThemes(thms)
-  }, [themes, selectedIds])
+    const thms = themes.filter(({ id }) => selectedIds.includes(id));
+    setSelectedThemes(thms);
+  }, [themes, selectedIds]);
 
   const { execute, isPending } = useServerAction(createStripeThemeAdsCheckout, {
     onSuccess: ({ data }) => {
-      posthog.capture("stripe_checkout_ad", { totalPrice })
+      posthog.capture("stripe_checkout_ad", { totalPrice });
 
-      window.open(data, "_blank")?.focus()
+      window.open(data, "_blank")?.focus();
     },
 
     onError: ({ err }) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   const handleCheckout = () => {
     execute({
@@ -56,8 +58,8 @@ export const AdsPickerThemes = ({
         slug,
         name: `${name} Theme Ad`,
       })),
-    })
-  }
+    });
+  };
 
   return (
     <Stack size="lg" direction="column" className="w-full max-w-md mx-auto">
@@ -88,7 +90,7 @@ export const AdsPickerThemes = ({
                   <span className="truncate">{name}</span>
                 </Stack>
               ),
-            }
+            };
           }}
         />
 
@@ -127,5 +129,5 @@ export const AdsPickerThemes = ({
         .
       </Note>
     </Stack>
-  )
-}
+  );
+};

@@ -116,7 +116,8 @@ export const HeroSearch = () => {
       return;
     }
 
-    const targetRef = activeField === "theme" ? themeFieldRef : platformFieldRef;
+    const targetRef =
+      activeField === "theme" ? themeFieldRef : platformFieldRef;
 
     const updateAnchor = () => {
       const targetEl = targetRef.current;

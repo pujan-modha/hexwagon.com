@@ -17,7 +17,9 @@ import { tryCatch } from "~/utils/helpers";
 
 const quoteMeiliValues = (values: string[]) =>
   values
-    .map((value) => `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`)
+    .map(
+      (value) => `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`,
+    )
     .join(", ");
 
 const getPortOrderBy = (sort: string): Prisma.PortFindManyArgs["orderBy"] => {

@@ -12,6 +12,7 @@ import { Skeleton } from "~/components/common/skeleton";
 import { Favicon } from "~/components/web/ui/favicon";
 import { platformHref } from "~/lib/catalogue";
 import type { PlatformMany } from "~/server/web/platforms/payloads";
+import { cx } from "~/utils/cva";
 type PlatformCardProps = Omit<ComponentProps<typeof Card>, "href"> & {
   platform: PlatformMany;
   showCount?: boolean;
@@ -26,7 +27,11 @@ const PlatformCard = ({
   ...props
 }: PlatformCardProps) => {
   return (
-    <Card asChild className={className} {...props}>
+    <Card
+      asChild
+      className={cx(className, "h-[190px] min-h-[190px]")}
+      {...props}
+    >
       <Link href={href ?? platformHref(platform.slug)}>
         <CardHeader wrap={false}>
           <Favicon src={platform.faviconUrl} title={platform.name} plain />
@@ -52,7 +57,10 @@ const PlatformCard = ({
 
 const PlatformCardSkeleton = () => {
   return (
-    <Card hover={false} className="items-stretch select-none">
+    <Card
+      hover={false}
+      className="h-[190px] min-h-[190px] items-stretch select-none"
+    >
       <CardHeader wrap={false}>
         <Favicon
           src="/favicon.png"
