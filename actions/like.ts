@@ -1,5 +1,6 @@
 "use server"
 
+import { Prisma } from "@prisma/client"
 import { z } from "zod"
 import { userProcedure } from "~/lib/safe-actions"
 import { db } from "~/services/db"
@@ -29,44 +30,51 @@ export const toggleLike = userProcedure
   .createServerAction()
   .input(likeEntitySchema)
   .handler(async ({ input: { entityType, entityId }, ctx: { user } }) => {
-    const existingLike = await db.like.findFirst({
-      where: getLikeWhere(user.id, entityType, entityId),
-      select: { id: true },
-    })
+    const where = getLikeWhere(user.id, entityType, entityId)
 
-    if (existingLike) {
-      await db.like.delete({ where: { id: existingLike.id } })
+    // deleteMany keeps this operation idempotent under concurrent toggle requests.
+    const { count } = await db.like.deleteMany({ where })
+
+    if (count > 0) {
       return { liked: false }
     }
 
-    if (entityType === "port") {
+    try {
+      if (entityType === "port") {
+        await db.like.create({
+          data: {
+            user: { connect: { id: user.id } },
+            port: { connect: { id: entityId } },
+          },
+        })
+
+        return { liked: true }
+      }
+
+      if (entityType === "theme") {
+        await db.like.create({
+          data: {
+            user: { connect: { id: user.id } },
+            theme: { connect: { id: entityId } },
+          },
+        })
+
+        return { liked: true }
+      }
+
       await db.like.create({
         data: {
           user: { connect: { id: user.id } },
-          port: { connect: { id: entityId } },
+          platform: { connect: { id: entityId } },
         },
       })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        return { liked: true }
+      }
 
-      return { liked: true }
+      throw error
     }
-
-    if (entityType === "theme") {
-      await db.like.create({
-        data: {
-          user: { connect: { id: user.id } },
-          theme: { connect: { id: entityId } },
-        },
-      })
-
-      return { liked: true }
-    }
-
-    await db.like.create({
-      data: {
-        user: { connect: { id: user.id } },
-        platform: { connect: { id: entityId } },
-      },
-    })
 
     return { liked: true }
   })

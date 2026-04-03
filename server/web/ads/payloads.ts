@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client"
+import { Prisma } from "@prisma/client";
 
 export const adOnePayload = Prisma.validator<Prisma.AdSelect>()({
   id: true,
@@ -8,13 +8,13 @@ export const adOnePayload = Prisma.validator<Prisma.AdSelect>()({
   buttonLabel: true,
   faviconUrl: true,
   type: true,
-})
+});
 
 export const adManyPayload = Prisma.validator<Prisma.AdSelect>()({
   type: true,
   startsAt: true,
   endsAt: true,
-})
+});
 
-export type AdOne = Prisma.AdGetPayload<{ select: typeof adOnePayload }>
-export type AdMany = Prisma.AdGetPayload<{ select: typeof adManyPayload }>
+export type AdOne = Prisma.AdGetPayload<{ select: typeof adOnePayload }>;
+export type AdMany = Prisma.AdGetPayload<{ select: typeof adManyPayload }>;

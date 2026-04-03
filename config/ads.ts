@@ -1,25 +1,25 @@
-import { siteConfig } from "~/config/site"
-import type { AdOne } from "~/server/web/ads/payloads"
+import { siteConfig } from "~/config/site";
+import type { AdOne } from "~/server/web/ads/payloads";
 
-export type AdSpotType = "Banner" | "Listing" | "Sidebar" | "Footer"
+export type AdSpotType = "Banner" | "Listing" | "Sidebar" | "Footer";
 
 export type AdSpot = {
-  label: string
-  type: AdSpotType
-  description: string
-  price: number
-  preview?: string
-}
+  label: string;
+  type: AdSpotType;
+  description: string;
+  price: number;
+  preview?: string;
+};
 
-export type AdPackageCycle = "Weekly" | "Monthly"
+export type AdPackageCycle = "Weekly" | "Monthly";
 
 export type AdPackageCyclePricing = {
-  basePrice: number
-  discountedPrice: number
-  targetUnitPrice: number
-}
+  basePrice: number;
+  discountedPrice: number;
+  targetUnitPrice: number;
+};
 
-export type AdPackagePricing = Record<AdPackageCycle, AdPackageCyclePricing>
+export type AdPackagePricing = Record<AdPackageCycle, AdPackageCyclePricing>;
 
 export const adsConfig = {
   minPageviewThreshold: 100,
@@ -27,7 +27,8 @@ export const adsConfig = {
 
   package: {
     label: "Universal Reach",
-    description: "One package that rotates across all ad placements with optional targeting boost.",
+    description:
+      "One package that rotates across all ad placements with optional targeting boost.",
     pricing: {
       Weekly: {
         basePrice: 149,
@@ -118,7 +119,8 @@ export const adsConfig = {
     },
     {
       question: "Do I get a refund if rejected?",
-      answer: "Yes. Rejected paid campaigns are automatically refunded in full.",
+      answer:
+        "Yes. Rejected paid campaigns are automatically refunded in full.",
     },
   ],
-}
+};

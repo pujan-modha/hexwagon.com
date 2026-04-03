@@ -1,74 +1,78 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Dialog as DialogPrimitive } from "radix-ui"
-import { useCallback, useState } from "react"
-import { searchPlatformsAction } from "~/actions/widget-search"
-import { Button } from "~/components/common/button"
+import Link from "next/link";
+import { Dialog as DialogPrimitive } from "radix-ui";
+import { useCallback, useState } from "react";
+import { searchPlatformsAction } from "~/actions/widget-search";
+import { Button } from "~/components/common/button";
 import {
   Command,
   CommandEmpty,
   CommandInput,
   CommandItem,
   CommandList,
-} from "~/components/common/command"
-import { Dialog, DialogContent, DialogTrigger } from "~/components/common/dialog"
-import { Icon } from "~/components/common/icon"
-import { Label } from "~/components/common/label"
-import { Favicon } from "~/components/web/ui/favicon"
-import { VerifiedBadge } from "~/components/web/verified-badge"
-import { useSubmissionStore } from "~/stores/submission-store"
+} from "~/components/common/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "~/components/common/dialog";
+import { Icon } from "~/components/common/icon";
+import { Label } from "~/components/common/label";
+import { Favicon } from "~/components/web/ui/favicon";
+import { VerifiedBadge } from "~/components/web/verified-badge";
+import { useSubmissionStore } from "~/stores/submission-store";
 
 type StepPlatformProps = {
-  onNext: () => void
-  onBack: () => void
-}
+  onNext: () => void;
+  onBack: () => void;
+};
 
 const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
-  const { platformName, setPlatform } = useSubmissionStore()
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const { platformName, setPlatform } = useSubmissionStore();
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [platforms, setPlatforms] = useState<
     Array<{
-      id: string
-      name: string
-      faviconUrl?: string | null
-      isVerified?: boolean
+      id: string;
+      name: string;
+      faviconUrl?: string | null;
+      isVerified?: boolean;
     }>
-  >([])
+  >([]);
 
   const handleSearch = useCallback(async (q: string) => {
-    setSearch(q)
-    const normalizedQuery = q.trim()
+    setSearch(q);
+    const normalizedQuery = q.trim();
 
     if (normalizedQuery.length < 2) {
-      setPlatforms([])
-      return
+      setPlatforms([]);
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       const [results, error] = await searchPlatformsAction({
         query: normalizedQuery,
-      })
+      });
 
       if (error) {
-        setPlatforms([])
-        return
+        setPlatforms([]);
+        return;
       }
 
-      setPlatforms(results ?? [])
+      setPlatforms(results ?? []);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [])
+  }, []);
 
   const handleSelect = (id: string, name: string) => {
-    setPlatform(id, name)
-    setOpen(false)
-    onNext()
-  }
+    setPlatform(id, name);
+    setOpen(false);
+    onNext();
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,7 +90,9 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
           </DialogTrigger>
 
           <DialogContent className="p-0">
-            <DialogPrimitive.Title className="sr-only">Search for a platform</DialogPrimitive.Title>
+            <DialogPrimitive.Title className="sr-only">
+              Search for a platform
+            </DialogPrimitive.Title>
             <Command>
               <CommandInput
                 placeholder="Search platforms..."
@@ -94,8 +100,10 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
                 onValueChange={handleSearch}
               />
               <CommandList>
-                <CommandEmpty>{isLoading ? "Searching..." : "No platform found."}</CommandEmpty>
-                {platforms.map(platform => (
+                <CommandEmpty>
+                  {isLoading ? "Searching..." : "No platform found."}
+                </CommandEmpty>
+                {platforms.map((platform) => (
                   <CommandItem
                     key={platform.id}
                     value={platform.name}
@@ -110,13 +118,18 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
                       />
                     ) : (
                       <span className="flex size-5 items-center justify-center rounded-sm border bg-muted/40">
-                        <Icon name="lucide/globe" className="size-3.5 text-muted-foreground" />
+                        <Icon
+                          name="lucide/globe"
+                          className="size-3.5 text-muted-foreground"
+                        />
                       </span>
                     )}
 
                     <span className="truncate">{platform.name}</span>
 
-                    {platform.isVerified ? <VerifiedBadge size="xs" className="mr-auto" /> : null}
+                    {platform.isVerified ? (
+                      <VerifiedBadge size="xs" className="mr-auto" />
+                    ) : null}
                   </CommandItem>
                 ))}
               </CommandList>
@@ -127,7 +140,10 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
 
       <p className="text-sm text-muted-foreground">
         Can&apos;t find your platform?{" "}
-        <Link href="/suggest?type=Platform" className="underline hover:text-foreground">
+        <Link
+          href="/suggest?type=Platform"
+          className="underline hover:text-foreground"
+        >
           Suggest a new platform
         </Link>
       </p>
@@ -141,7 +157,7 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export { StepPlatform }
+export { StepPlatform };

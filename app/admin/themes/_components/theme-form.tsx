@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { getRandomString, isValidUrl, slugify } from "@primoui/utils"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import type { ComponentProps } from "react"
-import { useEffect, useState } from "react"
-import type { UseFormReturn } from "react-hook-form"
-import { useFieldArray, useForm } from "react-hook-form"
-import { toast } from "sonner"
-import { useServerAction } from "zsa-react"
-import { generateFavicon, uploadImageToS3 } from "~/actions/media"
-import { Button } from "~/components/common/button"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { getRandomString, isValidUrl, slugify } from "@primoui/utils";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import type { ComponentProps } from "react";
+import { useEffect, useState } from "react";
+import type { UseFormReturn } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { useServerAction } from "zsa-react";
+import { generateFavicon, uploadImageToS3 } from "~/actions/media";
+import { Button } from "~/components/common/button";
 import {
   Form,
   FormControl,
@@ -19,38 +19,44 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "~/components/common/form"
-import { H3 } from "~/components/common/heading"
-import { Icon } from "~/components/common/icon"
-import { Input, inputVariants } from "~/components/common/input"
-import { Link } from "~/components/common/link"
-import { Note } from "~/components/common/note"
-import { Stack } from "~/components/common/stack"
-import { Switch } from "~/components/common/switch"
-import { TextArea } from "~/components/common/textarea"
-import { ExternalLink } from "~/components/web/external-link"
-import { Markdown } from "~/components/web/markdown"
-import { LICENSE_SUGGESTIONS } from "~/config/licenses"
-import { siteConfig } from "~/config/site"
-import { useComputedField } from "~/hooks/use-computed-field"
-import { upsertTheme } from "~/server/admin/themes/actions"
-import type { findThemeBySlug } from "~/server/admin/themes/queries"
-import { themeSchema } from "~/server/admin/themes/schema"
-import { cx } from "~/utils/cva"
-import { PaletteGroupEditor } from "./palette-group-editor"
-import { ThemeActions } from "./theme-actions"
-import { ThemeMaintainersManager } from "./theme-maintainers-manager"
+} from "~/components/common/form";
+import { H3 } from "~/components/common/heading";
+import { Icon } from "~/components/common/icon";
+import { Input, inputVariants } from "~/components/common/input";
+import { Link } from "~/components/common/link";
+import { Note } from "~/components/common/note";
+import { Stack } from "~/components/common/stack";
+import { Switch } from "~/components/common/switch";
+import { TextArea } from "~/components/common/textarea";
+import { ExternalLink } from "~/components/web/external-link";
+import { Markdown } from "~/components/web/markdown";
+import { LICENSE_SUGGESTIONS } from "~/config/licenses";
+import { siteConfig } from "~/config/site";
+import { useComputedField } from "~/hooks/use-computed-field";
+import { upsertTheme } from "~/server/admin/themes/actions";
+import type { findThemeBySlug } from "~/server/admin/themes/queries";
+import { themeSchema } from "~/server/admin/themes/schema";
+import { cx } from "~/utils/cva";
+import { PaletteGroupEditor } from "./palette-group-editor";
+import { ThemeActions } from "./theme-actions";
+import { ThemeMaintainersManager } from "./theme-maintainers-manager";
 
 const IMAGE_ACCEPT =
-  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg"
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
 
 type ThemeFormProps = ComponentProps<"form"> & {
-  theme?: Awaited<ReturnType<typeof findThemeBySlug>>
-}
+  theme?: Awaited<ReturnType<typeof findThemeBySlug>>;
+};
 
-export function ThemeForm({ children, className, title, theme, ...props }: ThemeFormProps) {
-  const router = useRouter()
-  const [isPreviewing, setIsPreviewing] = useState(false)
+export function ThemeForm({
+  children,
+  className,
+  title,
+  theme,
+  ...props
+}: ThemeFormProps) {
+  const router = useRouter();
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(themeSchema),
@@ -66,29 +72,29 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
       order: theme?.order ?? 0,
       license: theme?.license ?? "",
       palettes: (() => {
-        if (!theme?.colors || theme.colors.length === 0) return []
+        if (!theme?.colors || theme.colors.length === 0) return [];
 
         // Group flat colors into palettes
-        const groups: Record<string, any[]> = {}
-        const sorted = [...theme.colors].sort((a, b) => a.order - b.order)
+        const groups: Record<string, any[]> = {};
+        const sorted = [...theme.colors].sort((a, b) => a.order - b.order);
         for (const c of sorted) {
-          const pName = (c as any).paletteName || "Default"
-          if (!groups[pName]) groups[pName] = []
+          const pName = (c as any).paletteName || "Default";
+          if (!groups[pName]) groups[pName] = [];
           groups[pName].push({
             id: c.id,
             label: c.label,
             hex: c.hex,
             order: c.order,
-          })
+          });
         }
 
         return Object.entries(groups).map(([name, colors]) => ({
           name,
           colors,
-        }))
+        }));
       })(),
     },
-  })
+  });
 
   const {
     fields: paletteFields,
@@ -97,7 +103,7 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
   } = useFieldArray({
     control: form.control,
     name: "palettes",
-  })
+  });
 
   useComputedField({
     form,
@@ -105,57 +111,67 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
     computedField: "slug",
     callback: slugify,
     enabled: !theme,
-  })
+  });
 
-  const [slug, websiteUrl] = form.watch(["slug", "websiteUrl"])
+  const [slug, websiteUrl] = form.watch(["slug", "websiteUrl"]);
 
   const upsertAction = useServerAction(upsertTheme, {
     onSuccess: ({ data }) => {
-      toast.success(`Theme successfully ${theme ? "updated" : "created"}`)
+      toast.success(`Theme successfully ${theme ? "updated" : "created"}`);
 
       if (!theme || data.slug !== theme.slug) {
-        router.push(`/admin/themes/${data.slug}`)
+        router.push(`/admin/themes/${data.slug}`);
       }
     },
     onError: ({ err }) => toast.error(err.message),
-  })
+  });
 
   const faviconAction = useServerAction(generateFavicon, {
     onSuccess: ({ data }) => {
-      form.setValue("faviconUrl", data)
+      form.setValue("faviconUrl", data);
     },
     onError: ({ err }) => toast.error(err.message),
-  })
+  });
 
   const uploadImageAction = useServerAction(uploadImageToS3, {
     onSuccess: ({ data }) => {
-      toast.success("Image uploaded successfully. Please save the theme to update.")
-      form.setValue("faviconUrl", data, { shouldDirty: true })
+      toast.success(
+        "Image uploaded successfully. Please save the theme to update.",
+      );
+      form.setValue("faviconUrl", data, { shouldDirty: true });
     },
     onError: ({ err }) => toast.error(err.message),
-  })
+  });
 
   useEffect(() => {
-    const currentFaviconUrl = form.getValues("faviconUrl")?.trim()
-    if (currentFaviconUrl) return
-    if (!isValidUrl(websiteUrl)) return
-    if (faviconAction.isPending || uploadImageAction.isPending) return
+    const currentFaviconUrl = form.getValues("faviconUrl")?.trim();
+    if (currentFaviconUrl) return;
+    if (!isValidUrl(websiteUrl)) return;
+    if (faviconAction.isPending || uploadImageAction.isPending) return;
 
     faviconAction.execute({
       url: websiteUrl,
       path: `themes/${slug || getRandomString(12)}`,
-    })
-  }, [form, slug, uploadImageAction.isPending, websiteUrl, faviconAction.isPending])
+    });
+  }, [
+    form,
+    slug,
+    uploadImageAction.isPending,
+    websiteUrl,
+    faviconAction.isPending,
+  ]);
 
   const handleSubmit = form.handleSubmit(
-    data => {
-      upsertAction.execute({ id: theme?.id, ...data })
+    (data) => {
+      upsertAction.execute({ id: theme?.id, ...data });
     },
-    errors => {
-      console.error("Form Validation Failed:", errors)
-      toast.error("Please fill in all required fields. Check console for details.")
+    (errors) => {
+      console.error("Form Validation Failed:", errors);
+      toast.error(
+        "Please fill in all required fields. Check console for details.",
+      );
     },
-  )
+  );
 
   return (
     <Form {...form}>
@@ -170,7 +186,10 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
           {theme && (
             <Note className="w-full">
               View:{" "}
-              <ExternalLink href={`/themes/${theme.slug}`} className="text-primary underline">
+              <ExternalLink
+                href={`/themes/${theme.slug}`}
+                className="text-primary underline"
+              >
                 {siteConfig.url}/themes/{theme.slug}
               </ExternalLink>
             </Note>
@@ -184,7 +203,12 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
           noValidate
           {...props}
         >
-          {theme && <ThemeMaintainersManager themeId={theme.id} maintainers={theme.maintainers} />}
+          {theme && (
+            <ThemeMaintainersManager
+              themeId={theme.id}
+              maintainers={theme.maintainers}
+            />
+          )}
 
           <FormField
             control={form.control}
@@ -249,10 +273,14 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
               <FormItem>
                 <FormLabel>License</FormLabel>
                 <FormControl>
-                  <Input {...field} list="theme-license-suggestions" placeholder="MIT" />
+                  <Input
+                    {...field}
+                    list="theme-license-suggestions"
+                    placeholder="MIT"
+                  />
                 </FormControl>
                 <datalist id="theme-license-suggestions">
-                  {LICENSE_SUGGESTIONS.map(option => (
+                  {LICENSE_SUGGESTIONS.map((option) => (
                     <option key={option} value={option} />
                   ))}
                 </datalist>
@@ -274,8 +302,12 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
                       type="button"
                       size="sm"
                       variant="secondary"
-                      onClick={() => setIsPreviewing(prev => !prev)}
-                      prefix={<Icon name={isPreviewing ? "lucide/pencil" : "lucide/eye"} />}
+                      onClick={() => setIsPreviewing((prev) => !prev)}
+                      prefix={
+                        <Icon
+                          name={isPreviewing ? "lucide/pencil" : "lucide/eye"}
+                        />
+                      }
                       className="-my-1"
                     >
                       {isPreviewing ? "Edit" : "Preview"}
@@ -287,7 +319,10 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
                   {field.value && isPreviewing ? (
                     <Markdown
                       code={field.value}
-                      className={cx(inputVariants(), "max-w-none border leading-normal")}
+                      className={cx(
+                        inputVariants(),
+                        "max-w-none border leading-normal",
+                      )}
                     />
                   ) : (
                     <TextArea {...field} />
@@ -320,7 +355,10 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
                 <FormItem>
                   <FormLabel>Featured</FormLabel>
                   <FormControl>
-                    <Switch onCheckedChange={field.onChange} checked={field.value} />
+                    <Switch
+                      onCheckedChange={field.onChange}
+                      checked={field.value}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -356,16 +394,20 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
                       prefix={
                         <Icon
                           name="lucide/refresh-cw"
-                          className={cx(faviconAction.isPending && "animate-spin")}
+                          className={cx(
+                            faviconAction.isPending && "animate-spin",
+                          )}
                         />
                       }
                       className="-my-1"
-                      disabled={!isValidUrl(websiteUrl) || faviconAction.isPending}
+                      disabled={
+                        !isValidUrl(websiteUrl) || faviconAction.isPending
+                      }
                       onClick={() => {
                         faviconAction.execute({
                           url: websiteUrl,
                           path: `themes/${slug || getRandomString(12)}`,
-                        })
+                        });
                       }}
                     >
                       {field.value ? "Regenerate" : "Generate"}
@@ -391,16 +433,16 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
                       type="file"
                       hover
                       accept={IMAGE_ACCEPT}
-                      onChange={event => {
-                        const file = event.target.files?.[0]
-                        if (!file) return
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (!file) return;
 
                         uploadImageAction.execute({
                           file,
                           path: `themes/${slug || getRandomString(12)}/favicon-upload`,
-                        })
+                        });
 
-                        event.currentTarget.value = ""
+                        event.currentTarget.value = "";
                       }}
                     />
 
@@ -471,5 +513,5 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
         </form>
       </div>
     </Form>
-  )
+  );
 }

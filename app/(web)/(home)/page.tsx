@@ -1,26 +1,32 @@
-import type { SearchParams } from "nuqs/server"
-import { Suspense } from "react"
-import { CountBadge, CountBadgeSkeleton } from "~/app/(web)/(home)/count-badge"
-import { CatalogueGrid } from "~/components/catalogue/catalogue-grid"
-import { PlatformCard, PlatformCardSkeleton } from "~/components/catalogue/platform-card"
-import { PortCard, PortCardSkeleton } from "~/components/catalogue/port-card"
-import { ThemeCard, ThemeCardSkeleton } from "~/components/catalogue/theme-card"
-import { Button } from "~/components/common/button"
-import { Icon } from "~/components/common/icon"
-import { Link } from "~/components/common/link"
-import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
-import { BuiltWith } from "~/components/web/built-with"
-import { HeroSearch } from "~/components/web/hero-search"
-import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
-import { WebGLShader } from "~/components/web/ui/web-gl-shader"
-import { config } from "~/config"
-import { findFeaturedPlatforms } from "~/server/web/platforms/queries"
-import { findPorts } from "~/server/web/ports/queries"
-import { findFeaturedThemes } from "~/server/web/themes/queries"
+import type { SearchParams } from "nuqs/server";
+import { Suspense } from "react";
+import { CountBadge, CountBadgeSkeleton } from "~/app/(web)/(home)/count-badge";
+import { CatalogueGrid } from "~/components/catalogue/catalogue-grid";
+import {
+  PlatformCard,
+  PlatformCardSkeleton,
+} from "~/components/catalogue/platform-card";
+import { PortCard, PortCardSkeleton } from "~/components/catalogue/port-card";
+import {
+  ThemeCard,
+  ThemeCardSkeleton,
+} from "~/components/catalogue/theme-card";
+import { Button } from "~/components/common/button";
+import { Icon } from "~/components/common/icon";
+import { Link } from "~/components/common/link";
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card";
+import { BuiltWith } from "~/components/web/built-with";
+import { HeroSearch } from "~/components/web/hero-search";
+import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro";
+import { WebGLShader } from "~/components/web/ui/web-gl-shader";
+import { config } from "~/config";
+import { findFeaturedPlatforms } from "~/server/web/platforms/queries";
+import { findPorts } from "~/server/web/ports/queries";
+import { findFeaturedThemes } from "~/server/web/themes/queries";
 
 type PageProps = {
-  searchParams: Promise<SearchParams>
-}
+  searchParams: Promise<SearchParams>;
+};
 
 export default function Home(props: PageProps) {
   return (
@@ -101,13 +107,17 @@ export default function Home(props: PageProps) {
             <FeaturedSectionHeader title="Trending Ports" />
             <CatalogueGrid className="gap-5 xl:grid-cols-3">
               {Array.from({ length: 4 }).flatMap((_, index) => {
-                const cards = [<PortCardSkeleton key={`featured-port-skeleton-${index}`} />]
+                const cards = [
+                  <PortCardSkeleton key={`featured-port-skeleton-${index}`} />,
+                ];
 
                 if (index === 1) {
-                  cards.push(<AdCardSkeleton key="home-port-listing-ad-skeleton" />)
+                  cards.push(
+                    <AdCardSkeleton key="home-port-listing-ad-skeleton" />,
+                  );
                 }
 
-                return cards
+                return cards;
               })}
             </CatalogueGrid>
           </section>
@@ -116,13 +126,13 @@ export default function Home(props: PageProps) {
         <TrendingPorts />
       </Suspense>
     </>
-  )
+  );
 }
 
 const FeaturedThemes = async () => {
-  const themes = await findFeaturedThemes({ take: 4 })
+  const themes = await findFeaturedThemes({ take: 4 });
 
-  if (!themes.length) return null
+  if (!themes.length) return null;
 
   return (
     <section className="flex flex-col gap-8">
@@ -133,18 +143,18 @@ const FeaturedThemes = async () => {
         ctaLabel="View all themes"
       />
       <CatalogueGrid className="gap-5 xl:grid-cols-3">
-        {themes.map(theme => (
+        {themes.map((theme) => (
           <ThemeCard key={theme.id} theme={theme} showCount />
         ))}
       </CatalogueGrid>
     </section>
-  )
-}
+  );
+};
 
 const FeaturedPlatforms = async () => {
-  const platforms = await findFeaturedPlatforms({ take: 4 })
+  const platforms = await findFeaturedPlatforms({ take: 4 });
 
-  if (!platforms.length) return null
+  if (!platforms.length) return null;
 
   return (
     <section className="flex flex-col gap-8">
@@ -155,46 +165,46 @@ const FeaturedPlatforms = async () => {
         ctaLabel="View all platforms"
       />
       <CatalogueGrid className="gap-5 xl:grid-cols-3">
-        {platforms.map(platform => (
+        {platforms.map((platform) => (
           <PlatformCard key={platform.id} platform={platform} showCount />
         ))}
       </CatalogueGrid>
     </section>
-  )
-}
+  );
+};
 
 const TrendingPorts = async () => {
   const ports = await findPorts({
     orderBy: [{ pageviews: "desc" }, { score: "desc" }],
     take: 4,
-  })
+  });
 
-  if (!ports.length) return null
+  if (!ports.length) return null;
 
   return (
     <section className="flex flex-col gap-8">
       <FeaturedSectionHeader title="Trending Ports" />
       <CatalogueGrid className="gap-5 xl:grid-cols-3">
         {ports.flatMap((port, index) => {
-          const cards = [<PortCard key={port.id} port={port} />]
+          const cards = [<PortCard key={port.id} port={port} />];
 
           if (index === 0) {
-            cards.push(<AdCard key="home-port-listing-ad" slot="Listing" />)
+            cards.push(<AdCard key="home-port-listing-ad" slot="Listing" />);
           }
 
-          return cards
+          return cards;
         })}
       </CatalogueGrid>
     </section>
-  )
-}
+  );
+};
 
 type SpotlightSectionHeaderProps = {
-  title: string
-  description: string
-  href: string
-  ctaLabel: string
-}
+  title: string;
+  description: string;
+  href: string;
+  ctaLabel: string;
+};
 
 const SpotlightSectionHeader = ({
   title,
@@ -226,12 +236,12 @@ const SpotlightSectionHeader = ({
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
 type FeaturedSectionHeaderProps = {
-  title: string
-}
+  title: string;
+};
 
 const FeaturedSectionHeader = ({ title }: FeaturedSectionHeaderProps) => {
   return (
@@ -247,5 +257,5 @@ const FeaturedSectionHeader = ({ title }: FeaturedSectionHeaderProps) => {
         />
       </div>
     </div>
-  )
-}
+  );
+};

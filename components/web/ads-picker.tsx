@@ -1,45 +1,48 @@
-"use client"
+"use client";
 
-import posthog from "posthog-js"
-import { type ComponentProps, useMemo, useRef, useState } from "react"
-import { toast } from "sonner"
-import { useServerAction } from "zsa-react"
-import { createStripeAdsCheckout } from "~/actions/stripe"
-import { searchPlatformsAction, searchThemesAction } from "~/actions/widget-search"
-import { Badge } from "~/components/common/badge"
-import { Button } from "~/components/common/button"
-import { Icon } from "~/components/common/icon"
-import { Input } from "~/components/common/input"
-import { Note } from "~/components/common/note"
-import { Stack } from "~/components/common/stack"
-import { Price } from "~/components/web/price"
-import { Favicon } from "~/components/web/ui/favicon"
-import type { AdPackagePricingSettings } from "~/server/web/ads/queries"
-import { cx } from "~/utils/cva"
+import posthog from "posthog-js";
+import { type ComponentProps, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { useServerAction } from "zsa-react";
+import { createStripeAdsCheckout } from "~/actions/stripe";
+import {
+  searchPlatformsAction,
+  searchThemesAction,
+} from "~/actions/widget-search";
+import { Badge } from "~/components/common/badge";
+import { Button } from "~/components/common/button";
+import { Icon } from "~/components/common/icon";
+import { Input } from "~/components/common/input";
+import { Note } from "~/components/common/note";
+import { Stack } from "~/components/common/stack";
+import { Price } from "~/components/web/price";
+import { Favicon } from "~/components/web/ui/favicon";
+import type { AdPackagePricingSettings } from "~/server/web/ads/queries";
+import { cx } from "~/utils/cva";
 
 type TargetOption = {
-  id: string
-  label: string
-  logoUrl?: string | null
-  isVerified?: boolean
-}
+  id: string;
+  label: string;
+  logoUrl?: string | null;
+  isVerified?: boolean;
+};
 
 type AdsPickerProps = ComponentProps<"div"> & {
-  packagePricing: AdPackagePricingSettings
-}
+  packagePricing: AdPackagePricingSettings;
+};
 
-type BillingCycle = "Weekly" | "Monthly"
+type BillingCycle = "Weekly" | "Monthly";
 
 const billingCycles = {
   Weekly: "Weekly",
   Monthly: "Monthly",
-} as const
+} as const;
 
 const billingCycleCards: Array<{
-  cycle: BillingCycle
-  title: string
-  subtitle: string
-  durationLabel: string
+  cycle: BillingCycle;
+  title: string;
+  subtitle: string;
+  durationLabel: string;
 }> = [
   {
     cycle: billingCycles.Weekly,
@@ -53,32 +56,38 @@ const billingCycleCards: Array<{
     subtitle: "Best value for sustained visibility and higher reach.",
     durationLabel: "Runs for 30 days",
   },
-]
+];
 
-export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProps) => {
-  const [billingCycle, setBillingCycle] = useState<BillingCycle | null>(null)
-  const [selectedThemes, setSelectedThemes] = useState<TargetOption[]>([])
-  const [selectedPlatforms, setSelectedPlatforms] = useState<TargetOption[]>([])
-  const [themeQuery, setThemeQuery] = useState("")
-  const [platformQuery, setPlatformQuery] = useState("")
-  const [themeResults, setThemeResults] = useState<TargetOption[]>([])
-  const [platformResults, setPlatformResults] = useState<TargetOption[]>([])
-  const [isThemesLoading, setIsThemesLoading] = useState(false)
-  const [isPlatformsLoading, setIsPlatformsLoading] = useState(false)
+export const AdsPicker = ({
+  className,
+  packagePricing,
+  ...props
+}: AdsPickerProps) => {
+  const [billingCycle, setBillingCycle] = useState<BillingCycle | null>(null);
+  const [selectedThemes, setSelectedThemes] = useState<TargetOption[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<TargetOption[]>(
+    [],
+  );
+  const [themeQuery, setThemeQuery] = useState("");
+  const [platformQuery, setPlatformQuery] = useState("");
+  const [themeResults, setThemeResults] = useState<TargetOption[]>([]);
+  const [platformResults, setPlatformResults] = useState<TargetOption[]>([]);
+  const [isThemesLoading, setIsThemesLoading] = useState(false);
+  const [isPlatformsLoading, setIsPlatformsLoading] = useState(false);
 
-  const themeSearchRequestRef = useRef(0)
-  const platformSearchRequestRef = useRef(0)
+  const themeSearchRequestRef = useRef(0);
+  const platformSearchRequestRef = useRef(0);
 
   const selectedCyclePricing =
     billingCycle === billingCycles.Monthly
       ? packagePricing.monthly
       : billingCycle === billingCycles.Weekly
         ? packagePricing.weekly
-        : null
+        : null;
 
-  const themeIds = selectedThemes.map(theme => theme.id)
-  const platformIds = selectedPlatforms.map(platform => platform.id)
-  const targetCount = themeIds.length + platformIds.length
+  const themeIds = selectedThemes.map((theme) => theme.id);
+  const platformIds = selectedPlatforms.map((platform) => platform.id);
+  const targetCount = themeIds.length + platformIds.length;
 
   const computedPrice = useMemo(() => {
     if (!selectedCyclePricing) {
@@ -87,92 +96,93 @@ export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProp
         discountedPrice: 0,
         targetFee: 0,
         totalPrice: 0,
-      }
+      };
     }
 
-    const basePrice = selectedCyclePricing.basePriceCents / 100
-    const discountedPrice = selectedCyclePricing.discountedPriceCents / 100
-    const targetFee = (selectedCyclePricing.targetUnitPriceCents / 100) * targetCount
+    const basePrice = selectedCyclePricing.basePriceCents / 100;
+    const discountedPrice = selectedCyclePricing.discountedPriceCents / 100;
+    const targetFee =
+      (selectedCyclePricing.targetUnitPriceCents / 100) * targetCount;
 
     return {
       basePrice,
       discountedPrice,
       targetFee,
       totalPrice: discountedPrice + targetFee,
-    }
-  }, [selectedCyclePricing, targetCount])
+    };
+  }, [selectedCyclePricing, targetCount]);
 
   const handleThemeSearch = async (value: string) => {
-    setThemeQuery(value)
-    const query = value.trim()
+    setThemeQuery(value);
+    const query = value.trim();
 
     if (query.length < 2) {
-      setThemeResults([])
-      setIsThemesLoading(false)
-      return
+      setThemeResults([]);
+      setIsThemesLoading(false);
+      return;
     }
 
-    const requestId = ++themeSearchRequestRef.current
-    setIsThemesLoading(true)
+    const requestId = ++themeSearchRequestRef.current;
+    setIsThemesLoading(true);
 
-    const [results, error] = await searchThemesAction({ query })
+    const [results, error] = await searchThemesAction({ query });
 
     if (requestId !== themeSearchRequestRef.current) {
-      return
+      return;
     }
 
     if (error) {
-      setThemeResults([])
-      setIsThemesLoading(false)
-      return
+      setThemeResults([]);
+      setIsThemesLoading(false);
+      return;
     }
 
     setThemeResults(
-      (results ?? []).map(theme => ({
+      (results ?? []).map((theme) => ({
         id: theme.id,
         label: theme.name,
         logoUrl: theme.faviconUrl,
         isVerified: theme.isVerified,
       })),
-    )
-    setIsThemesLoading(false)
-  }
+    );
+    setIsThemesLoading(false);
+  };
 
   const handlePlatformSearch = async (value: string) => {
-    setPlatformQuery(value)
-    const query = value.trim()
+    setPlatformQuery(value);
+    const query = value.trim();
 
     if (query.length < 2) {
-      setPlatformResults([])
-      setIsPlatformsLoading(false)
-      return
+      setPlatformResults([]);
+      setIsPlatformsLoading(false);
+      return;
     }
 
-    const requestId = ++platformSearchRequestRef.current
-    setIsPlatformsLoading(true)
+    const requestId = ++platformSearchRequestRef.current;
+    setIsPlatformsLoading(true);
 
-    const [results, error] = await searchPlatformsAction({ query })
+    const [results, error] = await searchPlatformsAction({ query });
 
     if (requestId !== platformSearchRequestRef.current) {
-      return
+      return;
     }
 
     if (error) {
-      setPlatformResults([])
-      setIsPlatformsLoading(false)
-      return
+      setPlatformResults([]);
+      setIsPlatformsLoading(false);
+      return;
     }
 
     setPlatformResults(
-      (results ?? []).map(platform => ({
+      (results ?? []).map((platform) => ({
         id: platform.id,
         label: platform.name,
         logoUrl: platform.faviconUrl,
         isVerified: platform.isVerified,
       })),
-    )
-    setIsPlatformsLoading(false)
-  }
+    );
+    setIsPlatformsLoading(false);
+  };
 
   const { execute, isPending } = useServerAction(createStripeAdsCheckout, {
     onSuccess: ({ data }) => {
@@ -180,53 +190,55 @@ export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProp
         billingCycle,
         targetCount,
         totalPrice: computedPrice.totalPrice,
-      })
+      });
 
-      window.location.href = data
+      window.location.href = data;
     },
 
     onError: ({ err }) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
   const toggleTarget = (
     item: TargetOption,
     selected: TargetOption[],
     setSelected: (next: TargetOption[]) => void,
   ) => {
-    const isSelected = selected.some(entry => entry.id === item.id)
+    const isSelected = selected.some((entry) => entry.id === item.id);
 
     if (isSelected) {
-      setSelected(selected.filter(entry => entry.id !== item.id))
-      return
+      setSelected(selected.filter((entry) => entry.id !== item.id));
+      return;
     }
 
-    setSelected([...selected, item])
-  }
+    setSelected([...selected, item]);
+  };
 
   const handleContinue = () => {
     if (!billingCycle) {
-      toast.error("Please select a package first.")
-      return
+      toast.error("Please select a package first.");
+      return;
     }
 
     execute({
       billingCycle,
       themeIds,
       platformIds,
-    })
-  }
+    });
+  };
 
   return (
     <div className={cx("flex flex-col w-full gap-8", className)} {...props}>
       <section className="w-full">
         <div className="mx-auto flex max-w-4xl flex-col gap-6 md:flex-row md:justify-center">
-          {billingCycleCards.map(card => {
+          {billingCycleCards.map((card) => {
             const pricing =
-              card.cycle === billingCycles.Monthly ? packagePricing.monthly : packagePricing.weekly
-            const isSelected = billingCycle === card.cycle
-            const isMonthly = card.cycle === billingCycles.Monthly
+              card.cycle === billingCycles.Monthly
+                ? packagePricing.monthly
+                : packagePricing.weekly;
+            const isSelected = billingCycle === card.cycle;
+            const isMonthly = card.cycle === billingCycles.Monthly;
 
             return (
               <article
@@ -244,14 +256,20 @@ export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProp
                   </span>
                 )}
 
-                <h4 className="text-xl font-bold tracking-tight text-foreground">{card.title}</h4>
-                <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{card.subtitle}</p>
+                <h4 className="text-xl font-bold tracking-tight text-foreground">
+                  {card.title}
+                </h4>
+                <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                  {card.subtitle}
+                </p>
 
                 <div className="my-8">
                   <Price
                     price={pricing.discountedPriceCents / 100}
                     fullPrice={pricing.basePriceCents / 100}
-                    interval={card.cycle === billingCycles.Monthly ? "month" : "week"}
+                    interval={
+                      card.cycle === billingCycles.Monthly ? "month" : "week"
+                    }
                     priceClassName="text-4xl font-extrabold tracking-tight"
                   />
                 </div>
@@ -295,7 +313,7 @@ export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProp
                   {isSelected ? "Selected" : "Get started"}
                 </Button>
               </article>
-            )
+            );
           })}
         </div>
       </section>
@@ -309,11 +327,13 @@ export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProp
               </h3>
               <span className="inline-flex items-center rounded-md border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground w-fit font-normal">
                 +${(selectedCyclePricing.targetUnitPriceCents / 100).toFixed(2)}
-                /target/{billingCycle === billingCycles.Monthly ? "month" : "week"}
+                /target/
+                {billingCycle === billingCycles.Monthly ? "month" : "week"}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Search and add your targets to get a 2x visibility boost in those categories.
+              Search and add your targets to get a 2x visibility boost in those
+              categories.
             </p>
           </div>
 
@@ -325,7 +345,9 @@ export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProp
               options={themeResults}
               selectedItems={selectedThemes}
               isLoading={isThemesLoading}
-              onToggle={item => toggleTarget(item, selectedThemes, setSelectedThemes)}
+              onToggle={(item) =>
+                toggleTarget(item, selectedThemes, setSelectedThemes)
+              }
               emptyMessage="No themes found."
             />
 
@@ -336,7 +358,9 @@ export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProp
               options={platformResults}
               selectedItems={selectedPlatforms}
               isLoading={isPlatformsLoading}
-              onToggle={item => toggleTarget(item, selectedPlatforms, setSelectedPlatforms)}
+              onToggle={(item) =>
+                toggleTarget(item, selectedPlatforms, setSelectedPlatforms)
+              }
               emptyMessage="No platforms found."
             />
           </div>
@@ -353,12 +377,16 @@ export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProp
         <div className="flex flex-col gap-1">
           {billingCycle && selectedCyclePricing ? (
             <>
-              <p className="text-sm font-medium text-foreground">Total summary</p>
+              <p className="text-sm font-medium text-foreground">
+                Total summary
+              </p>
               <div className="flex items-baseline gap-2 mt-1">
                 <Price
                   price={computedPrice.totalPrice}
                   fullPrice={computedPrice.basePrice + computedPrice.targetFee}
-                  interval={billingCycle === billingCycles.Monthly ? "month" : "week"}
+                  interval={
+                    billingCycle === billingCycles.Monthly ? "month" : "week"
+                  }
                   priceClassName="text-3xl font-extrabold tracking-tight"
                 />
               </div>
@@ -386,19 +414,19 @@ export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProp
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
 type TargetSearchSelectProps = {
-  title: string
-  query: string
-  onQueryChange: (value: string) => void
-  options: TargetOption[]
-  selectedItems: TargetOption[]
-  onToggle: (item: TargetOption) => void
-  isLoading: boolean
-  emptyMessage: string
-}
+  title: string;
+  query: string;
+  onQueryChange: (value: string) => void;
+  options: TargetOption[];
+  selectedItems: TargetOption[];
+  onToggle: (item: TargetOption) => void;
+  isLoading: boolean;
+  emptyMessage: string;
+};
 
 const TargetSearchSelect = ({
   title,
@@ -410,9 +438,11 @@ const TargetSearchSelect = ({
   isLoading,
   emptyMessage,
 }: TargetSearchSelectProps) => {
-  const normalizedQuery = query.trim()
-  const selectedIds = selectedItems.map(item => item.id)
-  const unselectedOptions = options.filter(opt => !selectedIds.includes(opt.id))
+  const normalizedQuery = query.trim();
+  const selectedIds = selectedItems.map((item) => item.id);
+  const unselectedOptions = options.filter(
+    (opt) => !selectedIds.includes(opt.id),
+  );
 
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
@@ -423,14 +453,14 @@ const TargetSearchSelect = ({
 
         <Input
           value={query}
-          onChange={event => onQueryChange(event.target.value)}
+          onChange={(event) => onQueryChange(event.target.value)}
           placeholder={`Search ${title.toLowerCase()}...`}
           className="h-9"
         />
       </div>
 
       <div className="max-h-64 overflow-y-auto flex flex-col">
-        {selectedItems.map(option => (
+        {selectedItems.map((option) => (
           <button
             type="button"
             key={`selected-${option.id}`}
@@ -453,14 +483,23 @@ const TargetSearchSelect = ({
               <span className="truncate text-sm font-medium text-foreground flex items-center gap-1.5">
                 {option.label}
                 {option.isVerified && (
-                  <Icon name="lucide/badge-check" className="size-4 text-blue-500 shrink-0" />
+                  <Icon
+                    name="lucide/badge-check"
+                    className="size-4 text-blue-500 shrink-0"
+                  />
                 )}
               </span>
             </span>
 
             <span className="grid size-5 place-items-center rounded-full bg-primary/10 text-primary group-hover:bg-destructive/10 group-hover:text-destructive transition-colors">
-              <Icon name="lucide/check" className="size-3.5 group-hover:hidden" />
-              <Icon name="lucide/x" className="size-3.5 hidden group-hover:block" />
+              <Icon
+                name="lucide/check"
+                className="size-3.5 group-hover:hidden"
+              />
+              <Icon
+                name="lucide/x"
+                className="size-3.5 hidden group-hover:block"
+              />
             </span>
           </button>
         ))}
@@ -472,19 +511,23 @@ const TargetSearchSelect = ({
         )}
 
         {normalizedQuery.length >= 2 && isLoading && (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">Searching...</p>
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+            Searching...
+          </p>
         )}
 
         {normalizedQuery.length >= 2 &&
           !isLoading &&
           unselectedOptions.length === 0 &&
           selectedItems.length === 0 && (
-            <p className="px-4 py-8 text-center text-sm text-muted-foreground">{emptyMessage}</p>
+            <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+              {emptyMessage}
+            </p>
           )}
 
         {normalizedQuery.length >= 2 &&
           !isLoading &&
-          unselectedOptions.map(option => (
+          unselectedOptions.map((option) => (
             <button
               type="button"
               key={`option-${option.id}`}
@@ -507,7 +550,10 @@ const TargetSearchSelect = ({
                 <span className="truncate text-sm font-medium text-foreground flex items-center gap-1.5">
                   {option.label}
                   {option.isVerified && (
-                    <Icon name="lucide/badge-check" className="size-4 text-blue-500 shrink-0" />
+                    <Icon
+                      name="lucide/badge-check"
+                      className="size-4 text-blue-500 shrink-0"
+                    />
                   )}
                 </span>
               </span>
@@ -515,5 +561,5 @@ const TargetSearchSelect = ({
           ))}
       </div>
     </div>
-  )
-}
+  );
+};

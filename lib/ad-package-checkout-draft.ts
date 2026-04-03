@@ -1,9 +1,9 @@
-import { randomUUID } from "node:crypto"
-import { AdBillingCycle } from "@prisma/client"
-import { z } from "zod"
-import { redis } from "~/services/redis"
+import { randomUUID } from "node:crypto";
+import { AdBillingCycle } from "@prisma/client";
+import { z } from "zod";
+import { redis } from "~/services/redis";
 
-const CHECKOUT_DRAFT_TTL_SECONDS = 60 * 60 * 24
+const CHECKOUT_DRAFT_TTL_SECONDS = 60 * 60 * 24;
 
 const adPackageCheckoutDraftSchema = z.object({
   billingCycle: z.nativeEnum(AdBillingCycle),
@@ -23,33 +23,37 @@ const adPackageCheckoutDraftSchema = z.object({
     buttonLabel: z.string().optional(),
     faviconUrl: z.string().url().nullable().optional(),
   }),
-})
+});
 
-export type AdPackageCheckoutDraft = z.infer<typeof adPackageCheckoutDraftSchema>
+export type AdPackageCheckoutDraft = z.infer<
+  typeof adPackageCheckoutDraftSchema
+>;
 
-const getDraftKey = (draftId: string) => `ad:package:checkout:${draftId}`
+const getDraftKey = (draftId: string) => `ad:package:checkout:${draftId}`;
 
-export const createAdPackageCheckoutDraft = async (payload: AdPackageCheckoutDraft) => {
-  const draftId = randomUUID()
+export const createAdPackageCheckoutDraft = async (
+  payload: AdPackageCheckoutDraft,
+) => {
+  const draftId = randomUUID();
 
   await redis.set(getDraftKey(draftId), JSON.stringify(payload), {
     ex: CHECKOUT_DRAFT_TTL_SECONDS,
-  })
+  });
 
-  return draftId
-}
+  return draftId;
+};
 
 export const getAdPackageCheckoutDraft = async (draftId: string) => {
-  const value = await redis.get<string>(getDraftKey(draftId))
+  const value = await redis.get<string>(getDraftKey(draftId));
 
   if (!value) {
-    return null
+    return null;
   }
 
   try {
-    const parsed = adPackageCheckoutDraftSchema.parse(JSON.parse(value))
-    return parsed
+    const parsed = adPackageCheckoutDraftSchema.parse(JSON.parse(value));
+    return parsed;
   } catch {
-    return null
+    return null;
   }
-}
+};

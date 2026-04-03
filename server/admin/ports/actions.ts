@@ -125,7 +125,7 @@ export const setOfficialPort = userProcedure
   .handler(async ({ input: { portId }, ctx: { user } }) => {
     const port = await db.port.findUniqueOrThrow({
       where: { id: portId },
-      select: { themeId: true, platformId: true, slug: true },
+      select: { themeId: true, platformId: true, slug: true, isOfficial: true },
     })
 
     if (user.role !== "admin") {
@@ -144,18 +144,25 @@ export const setOfficialPort = userProcedure
       }
     }
 
-    await db.port.updateMany({
-      where: {
-        themeId: port.themeId,
-        platformId: port.platformId,
-        isOfficial: true,
-      },
-      data: { isOfficial: false },
-    })
+    if (port.isOfficial) {
+      return port
+    }
 
-    const updatedPort = await db.port.update({
-      where: { id: portId },
-      data: { isOfficial: true },
+    const updatedPort = await db.$transaction(async tx => {
+      await tx.port.updateMany({
+        where: {
+          themeId: port.themeId,
+          platformId: port.platformId,
+          isOfficial: true,
+          id: { not: portId },
+        },
+        data: { isOfficial: false },
+      })
+
+      return tx.port.update({
+        where: { id: portId },
+        data: { isOfficial: true },
+      })
     })
 
     revalidateTag("ports", "max")

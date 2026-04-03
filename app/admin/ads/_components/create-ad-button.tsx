@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "~/components/common/button"
-import { Icon } from "~/components/common/icon"
-import { AdFormDialog } from "./ad-form-dialog"
+import { useState } from "react";
+import { Button } from "~/components/common/button";
+import { Icon } from "~/components/common/icon";
+import { AdFormDialog } from "./ad-form-dialog";
 
 export const CreateAdButton = () => {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   return (
     <>
@@ -21,5 +21,5 @@ export const CreateAdButton = () => {
 
       <AdFormDialog open={open} onOpenChange={setOpen} />
     </>
-  )
-}
+  );
+};

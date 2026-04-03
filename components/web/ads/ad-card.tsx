@@ -1,40 +1,40 @@
-import type { AdSlot, Prisma } from "@prisma/client"
-import type { ComponentProps } from "react"
-import { Badge } from "~/components/common/badge"
-import { Button } from "~/components/common/button"
+import type { AdSlot, Prisma } from "@prisma/client";
+import type { ComponentProps } from "react";
+import { Badge } from "~/components/common/badge";
+import { Button } from "~/components/common/button";
 import {
   Card,
   CardBadges,
   CardDescription,
   CardHeader,
   type CardProps,
-} from "~/components/common/card"
-import { H4 } from "~/components/common/heading"
-import { Skeleton } from "~/components/common/skeleton"
-import { Favicon } from "~/components/web/ui/favicon"
-import { config } from "~/config"
-import type { AdOne } from "~/server/web/ads/payloads"
-import { findAd, findAllocatedSlotAd } from "~/server/web/ads/queries"
-import { cx } from "~/utils/cva"
-import { AdPreviewCard } from "./ad-preview"
+} from "~/components/common/card";
+import { H4 } from "~/components/common/heading";
+import { Skeleton } from "~/components/common/skeleton";
+import { Favicon } from "~/components/web/ui/favicon";
+import { config } from "~/config";
+import type { AdOne } from "~/server/web/ads/payloads";
+import { findAd, findAllocatedSlotAd } from "~/server/web/ads/queries";
+import { cx } from "~/utils/cva";
+import { AdPreviewCard } from "./ad-preview";
 
 type AdCardProps = CardProps & {
   // Database query conditions to find a specific ad
-  where?: Prisma.AdWhereInput
+  where?: Prisma.AdWhereInput;
   // Allocation slot for random weighted ad selection
-  slot?: AdSlot
+  slot?: AdSlot;
   // Optional allocation scope to share one slot allocation set across multiple ad components
-  allocationScope?: string
+  allocationScope?: string;
   // Optional context for targeting boost
   context?: {
-    themeId?: string
-    platformId?: string
-  }
+    themeId?: string;
+    platformId?: string;
+  };
   // Override ad data without database query
-  overrideAd?: AdOne | null
+  overrideAd?: AdOne | null;
   // Default values to merge with the fallback ad
-  defaultOverride?: Partial<AdOne>
-}
+  defaultOverride?: Partial<AdOne>;
+};
 
 const AdCard = async ({
   className,
@@ -47,7 +47,7 @@ const AdCard = async ({
   ...props
 }: AdCardProps) => {
   // Default ad values to display if no ad is found
-  const defaultAd = { ...config.ads.defaultAd, ...defaultOverride }
+  const defaultAd = { ...config.ads.defaultAd, ...defaultOverride };
 
   // Resolve the ad data from the override or database (don't query if override is defined)
   const resolvedAd =
@@ -59,19 +59,25 @@ const AdCard = async ({
             scope: allocationScope,
             context,
           })
-        : await findAd({ where })
+        : await findAd({ where });
 
   // Final ad data to display
-  const ad = resolvedAd ?? defaultAd
+  const ad = resolvedAd ?? defaultAd;
 
-  return <AdPreviewCard className={className} ad={ad} interactive {...props} />
-}
+  return <AdPreviewCard className={className} ad={ad} interactive {...props} />;
+};
 
-const AdCardSkeleton = ({ className, ...props }: ComponentProps<typeof Card>) => {
+const AdCardSkeleton = ({
+  className,
+  ...props
+}: ComponentProps<typeof Card>) => {
   return (
     <Card
       hover={false}
-      className={cx("h-[190px] min-h-[190px] items-stretch select-none", className)}
+      className={cx(
+        "h-[190px] min-h-[190px] items-stretch select-none",
+        className,
+      )}
       {...props}
     >
       <CardBadges>
@@ -91,11 +97,14 @@ const AdCardSkeleton = ({ className, ...props }: ComponentProps<typeof Card>) =>
         <Skeleton className="h-5 w-2/3">&nbsp;</Skeleton>
       </CardDescription>
 
-      <Button className="pointer-events-none opacity-10 text-transparent md:w-full" asChild>
+      <Button
+        className="pointer-events-none opacity-10 text-transparent md:w-full"
+        asChild
+      >
         <span>&nbsp;</span>
       </Button>
     </Card>
-  )
-}
+  );
+};
 
-export { AdCard, AdCardSkeleton }
+export { AdCard, AdCardSkeleton };

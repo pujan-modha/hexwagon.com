@@ -192,7 +192,7 @@ model Ad {
   customCss      String?  @db.Text
   customJs       String?  @db.Text
   sessionId      String?
-  stripeCheckoutSessionId String?
+  stripeCheckoutSessionId String?  @unique
   stripePaymentIntentId   String?
   stripeChargeId          String?
   subscriptionId String?  @unique
@@ -374,9 +374,9 @@ model Port {
   @@index([authorId])
   @@index([status])
   @@index([isFeatured, score])
+  @@index([themeId, platformId, isOfficial])
 
-  // Only one official port per theme+platform pair
-  @@unique([themeId, platformId, isOfficial], map: "unique_official_port")
+  // Only one official port per theme+platform pair is enforced by a partial unique index in SQL migration.
 }
 
 model Tag {

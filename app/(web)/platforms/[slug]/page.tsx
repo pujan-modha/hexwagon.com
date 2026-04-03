@@ -1,82 +1,87 @@
-import { PortStatus, type Prisma } from "@prisma/client"
-import type { Metadata } from "next"
-import { notFound } from "next/navigation"
-import type { SearchParams } from "nuqs/server"
-import { Suspense, cache } from "react"
-import { PageViewEvent } from "~/components/analytics/page-view-event"
-import { EntityHeader } from "~/components/catalogue/entity-header"
-import { EntityHeaderActions } from "~/components/catalogue/entity-header-actions"
-import { EntityLikeButton } from "~/components/catalogue/entity-like-button"
-import { EntityReportButton } from "~/components/catalogue/entity-report-button"
-import { EntityTabs } from "~/components/catalogue/entity-tabs"
-import { MarkdownContent } from "~/components/catalogue/markdown-content"
-import { PlatformThemeDocsTab } from "~/components/catalogue/platform-theme-docs-tab"
-import { PlatformThemesTab } from "~/components/catalogue/platform-themes-tab"
-import { Icon } from "~/components/common/icon"
-import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
-import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
-import { EntitySidebarCard } from "~/components/web/ui/entity-sidebar-card"
-import { Section } from "~/components/web/ui/section"
-import { metadataConfig } from "~/config/metadata"
-import { findPlatform } from "~/server/web/platforms/queries"
-import { findPlatformSlugs } from "~/server/web/platforms/queries"
-import { findThemes, searchThemes } from "~/server/web/themes/queries"
+import { PortStatus, type Prisma } from "@prisma/client";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import type { SearchParams } from "nuqs/server";
+import { Suspense, cache } from "react";
+import { PageViewEvent } from "~/components/analytics/page-view-event";
+import { EntityHeader } from "~/components/catalogue/entity-header";
+import { EntityHeaderActions } from "~/components/catalogue/entity-header-actions";
+import { EntityLikeButton } from "~/components/catalogue/entity-like-button";
+import { EntityReportButton } from "~/components/catalogue/entity-report-button";
+import { EntityTabs } from "~/components/catalogue/entity-tabs";
+import { MarkdownContent } from "~/components/catalogue/markdown-content";
+import { PlatformThemeDocsTab } from "~/components/catalogue/platform-theme-docs-tab";
+import { PlatformThemesTab } from "~/components/catalogue/platform-themes-tab";
+import { Icon } from "~/components/common/icon";
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card";
+import { Breadcrumbs } from "~/components/web/ui/breadcrumbs";
+import { EntitySidebarCard } from "~/components/web/ui/entity-sidebar-card";
+import { Section } from "~/components/web/ui/section";
+import { metadataConfig } from "~/config/metadata";
+import { findPlatform } from "~/server/web/platforms/queries";
+import { findPlatformSlugs } from "~/server/web/platforms/queries";
+import { findThemes, searchThemes } from "~/server/web/themes/queries";
 
 type PageProps = {
-  params: Promise<{ slug: string }>
-  searchParams: Promise<SearchParams>
-}
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<SearchParams>;
+};
 
 const getThemeOrderBy = (sort: string): Prisma.ThemeFindManyArgs["orderBy"] => {
   if (sort && sort !== "default" && sort.includes(".")) {
-    const [sortBy, sortOrder] = sort.split(".") as [string, Prisma.SortOrder]
+    const [sortBy, sortOrder] = sort.split(".") as [string, Prisma.SortOrder];
 
     if (
       (sortOrder === "asc" || sortOrder === "desc") &&
       ["name", "pageviews", "createdAt", "updatedAt", "order"].includes(sortBy)
     ) {
-      return { [sortBy]: sortOrder } as Prisma.ThemeFindManyArgs["orderBy"]
+      return { [sortBy]: sortOrder } as Prisma.ThemeFindManyArgs["orderBy"];
     }
   }
 
-  return [{ order: "asc" }, { name: "asc" }]
-}
+  return [{ order: "asc" }, { name: "asc" }];
+};
 
 const getPlatform = cache(async ({ params }: PageProps) => {
-  const { slug } = await params
-  const platform = await findPlatform({ where: { slug } })
+  const { slug } = await params;
+  const platform = await findPlatform({ where: { slug } });
 
   if (!platform) {
-    notFound()
+    notFound();
   }
 
-  return platform
-})
+  return platform;
+});
 
 export const generateStaticParams = async () => {
-  const platforms = await findPlatformSlugs({})
-  return platforms.map(platform => ({ slug: platform.slug }))
-}
+  const platforms = await findPlatformSlugs({});
+  return platforms.map((platform) => ({ slug: platform.slug }));
+};
 
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
-  const platform = await getPlatform(props)
-  const url = `/platforms/${platform.slug}`
+  const platform = await getPlatform(props);
+  const url = `/platforms/${platform.slug}`;
 
   return {
     title: platform.name,
     description: platform.description ?? `Browse ${platform.name} theme ports.`,
     alternates: { ...metadataConfig.alternates, canonical: url },
     openGraph: { ...metadataConfig.openGraph, url },
-  }
-}
+  };
+};
 
 export default async function PlatformPage(props: PageProps) {
-  const [platform, searchParams] = await Promise.all([getPlatform(props), props.searchParams])
+  const [platform, searchParams] = await Promise.all([
+    getPlatform(props),
+    props.searchParams,
+  ]);
 
-  const q = Array.isArray(searchParams.q) ? (searchParams.q[0] ?? "") : (searchParams.q ?? "")
+  const q = Array.isArray(searchParams.q)
+    ? (searchParams.q[0] ?? "")
+    : (searchParams.q ?? "");
   const sort = Array.isArray(searchParams.sort)
     ? (searchParams.sort[0] ?? "default")
-    : (searchParams.sort ?? "default")
+    : (searchParams.sort ?? "default");
 
   const themesWhere = {
     ports: {
@@ -85,7 +90,7 @@ export default async function PlatformPage(props: PageProps) {
         status: { in: [PortStatus.Published] },
       },
     },
-  } satisfies Prisma.ThemeWhereInput
+  } satisfies Prisma.ThemeWhereInput;
 
   const themes = q
     ? (
@@ -105,7 +110,7 @@ export default async function PlatformPage(props: PageProps) {
     : await findThemes({
         where: themesWhere,
         orderBy: getThemeOrderBy(sort),
-      })
+      });
 
   const tabs = [
     {
@@ -113,7 +118,12 @@ export default async function PlatformPage(props: PageProps) {
       label: `Themes (${platform._count.ports})`,
       content: (
         <Suspense fallback={<div>Loading...</div>}>
-          <PlatformThemesTab themes={themes} platformSlug={platform.slug} query={q} sort={sort} />
+          <PlatformThemesTab
+            themes={themes}
+            platformSlug={platform.slug}
+            query={q}
+            sort={sort}
+          />
         </Suspense>
       ),
     },
@@ -132,7 +142,7 @@ export default async function PlatformPage(props: PageProps) {
       label: "Theme Creation Docs",
       content: <PlatformThemeDocsTab platform={platform} />,
     },
-  ]
+  ];
 
   return (
     <>
@@ -156,7 +166,11 @@ export default async function PlatformPage(props: PageProps) {
             logoSrc={platform.faviconUrl}
             actions={
               <EntityHeaderActions>
-                <EntityLikeButton entityType="platform" entityId={platform.id} grouped />
+                <EntityLikeButton
+                  entityType="platform"
+                  entityId={platform.id}
+                  grouped
+                />
                 <EntityReportButton
                   entityType="platform"
                   entityId={platform.id}
@@ -178,7 +192,9 @@ export default async function PlatformPage(props: PageProps) {
                 platform.websiteUrl
                   ? {
                       label: "Website",
-                      value: platform.websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, ""),
+                      value: platform.websiteUrl
+                        .replace(/^https?:\/\//, "")
+                        .replace(/\/$/, ""),
                       link: platform.websiteUrl,
                       eventName: "click_website",
                       eventProps: {
@@ -238,5 +254,5 @@ export default async function PlatformPage(props: PageProps) {
         </Section.Sidebar>
       </Section>
     </>
-  )
+  );
 }

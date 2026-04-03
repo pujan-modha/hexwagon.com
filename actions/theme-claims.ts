@@ -37,38 +37,40 @@ export const submitThemeMaintainerClaim = createServerAction()
       throw new Error("Theme not found")
     }
 
-    const hasMaintainer = await db.themeMaintainer.count({
-      where: { themeId: theme.id },
-    })
+    return db.$transaction(async tx => {
+      const hasMaintainer = await tx.themeMaintainer.count({
+        where: { themeId: theme.id },
+      })
 
-    if (hasMaintainer > 0) {
-      throw new Error("This theme already has maintainer(s)")
-    }
+      if (hasMaintainer > 0) {
+        throw new Error("This theme already has maintainer(s)")
+      }
 
-    const existingClaim = await db.themeMaintainerClaim.findFirst({
-      where: {
-        themeId: theme.id,
-        status: ThemeMaintainerClaimStatus.Pending,
-        OR: [
-          { claimantEmail: input.claimantEmail },
-          ...(session?.user?.id ? [{ requesterId: session.user.id }] : []),
-        ],
-      },
-      select: { id: true },
-    })
+      const existingClaim = await tx.themeMaintainerClaim.findFirst({
+        where: {
+          themeId: theme.id,
+          status: ThemeMaintainerClaimStatus.Pending,
+          OR: [
+            { claimantEmail: input.claimantEmail },
+            ...(session?.user?.id ? [{ requesterId: session.user.id }] : []),
+          ],
+        },
+        select: { id: true },
+      })
 
-    if (existingClaim) {
-      throw new Error("You already have a pending claim for this theme")
-    }
+      if (existingClaim) {
+        throw new Error("You already have a pending claim for this theme")
+      }
 
-    return db.themeMaintainerClaim.create({
-      data: {
-        themeId: theme.id,
-        claimantName: input.claimantName,
-        claimantEmail: input.claimantEmail,
-        claimantUrl: input.claimantUrl || null,
-        details: input.details,
-        requesterId: session?.user?.id || null,
-      },
+      return tx.themeMaintainerClaim.create({
+        data: {
+          themeId: theme.id,
+          claimantName: input.claimantName,
+          claimantEmail: input.claimantEmail,
+          claimantUrl: input.claimantUrl || null,
+          details: input.details,
+          requesterId: session?.user?.id || null,
+        },
+      })
     })
   })

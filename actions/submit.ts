@@ -1,7 +1,7 @@
 "use server"
 
 import { slugify } from "@primoui/utils"
-import { PortStatus } from "@prisma/client"
+import { PortStatus, Prisma } from "@prisma/client"
 import { revalidateTag } from "next/cache"
 import { after } from "next/server"
 import { subscribeToNewsletter } from "~/actions/subscribe"
@@ -10,24 +10,6 @@ import { isRateLimited } from "~/lib/rate-limiter"
 import { userProcedure } from "~/lib/safe-actions"
 import { submitPortSchema } from "~/server/web/shared/schema"
 import { db } from "~/services/db"
-
-/**
- * Generates a unique slug by adding a numeric suffix if needed
- */
-const generateUniqueSlug = async (baseName: string): Promise<string> => {
-  const baseSlug = slugify(baseName)
-  let slug = baseSlug
-  let suffix = 2
-
-  while (true) {
-    if (!(await db.port.findUnique({ where: { slug } }))) {
-      return slug
-    }
-
-    slug = `${baseSlug}-${suffix}`
-    suffix++
-  }
-}
 
 /**
  * Submit a port to the database
@@ -80,27 +62,47 @@ export const submitPort = userProcedure
       throw new Error("You already have a pending submission for this theme+platform.")
     }
 
-    // Generate a unique slug
-    const slug = await generateUniqueSlug(data.name)
-
     const authorId = user.id
+    const baseSlug = slugify(data.name)
 
-    // Save the port to the database
-    const port = await db.port.create({
-      data: {
-        ...data,
-        submitterName,
-        submitterEmail,
-        slug,
-        authorId,
-        ...(isThemeMaintainer
-          ? {
-              status: PortStatus.Published,
-              publishedAt: new Date(),
-            }
-          : {}),
-      },
-    })
+    const port = await (async () => {
+      const maxSlugAttempts = 25
+
+      for (let attempt = 0; attempt < maxSlugAttempts; attempt++) {
+        const slug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`
+
+        try {
+          return await db.port.create({
+            data: {
+              ...data,
+              submitterName,
+              submitterEmail,
+              slug,
+              authorId,
+              ...(isThemeMaintainer
+                ? {
+                    status: PortStatus.Published,
+                    publishedAt: new Date(),
+                  }
+                : {}),
+            },
+          })
+        } catch (error) {
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2002" &&
+            Array.isArray(error.meta?.target) &&
+            error.meta.target.includes("slug")
+          ) {
+            continue
+          }
+
+          throw error
+        }
+      }
+
+      throw new Error("Could not reserve a unique slug. Please try submitting again.")
+    })()
 
     if (isThemeMaintainer) {
       revalidateTag("ports", "max")
