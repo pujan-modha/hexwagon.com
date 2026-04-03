@@ -2,13 +2,13 @@
 
 import { formatDate } from "@primoui/utils"
 import type { ColumnDef } from "@tanstack/react-table"
-import { ThemeActions } from "./theme-actions"
 import { RowCheckbox } from "~/components/admin/row-checkbox"
 import { Badge } from "~/components/common/badge"
 import { Note } from "~/components/common/note"
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header"
 import { DataTableLink } from "~/components/data-table/data-table-link"
 import type { findThemes } from "~/server/admin/themes/queries"
+import { ThemeActions } from "./theme-actions"
 
 type ThemeRow = Awaited<ReturnType<typeof findThemes>>["themes"][number]
 

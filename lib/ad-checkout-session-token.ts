@@ -1,22 +1,20 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { env } from "~/env";
+import { createHmac, timingSafeEqual } from "node:crypto"
+import { env } from "~/env"
 
-const TOKEN_TTL_SECONDS = 60 * 30;
+const TOKEN_TTL_SECONDS = 60 * 30
 
 type SessionTokenPayload = {
-  sid: string;
-  exp: number;
-};
+  sid: string
+  exp: number
+}
 
 const sign = (value: string) => {
-  return createHmac("sha256", env.BETTER_AUTH_SECRET)
-    .update(value)
-    .digest("base64url");
-};
+  return createHmac("sha256", env.BETTER_AUTH_SECRET).update(value).digest("base64url")
+}
 
 const parsePayload = (value: string): SessionTokenPayload | null => {
   try {
-    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
+    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"))
 
     if (
       typeof parsed !== "object" ||
@@ -24,14 +22,14 @@ const parsePayload = (value: string): SessionTokenPayload | null => {
       typeof parsed.sid !== "string" ||
       typeof parsed.exp !== "number"
     ) {
-      return null;
+      return null
     }
 
-    return parsed;
+    return parsed
   } catch {
-    return null;
+    return null
   }
-};
+}
 
 export const createAdCheckoutSessionToken = (sessionId: string) => {
   const payload = Buffer.from(
@@ -40,42 +38,42 @@ export const createAdCheckoutSessionToken = (sessionId: string) => {
       exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
     }),
     "utf8",
-  ).toString("base64url");
+  ).toString("base64url")
 
-  return `${payload}.${sign(payload)}`;
-};
+  return `${payload}.${sign(payload)}`
+}
 
 export const verifyAdCheckoutSessionToken = ({
   token,
   sessionId,
 }: {
-  token: string;
-  sessionId: string;
+  token: string
+  sessionId: string
 }) => {
-  const [payloadPart, signaturePart] = token.split(".");
+  const [payloadPart, signaturePart] = token.split(".")
 
   if (!payloadPart || !signaturePart) {
-    return false;
+    return false
   }
 
-  const expectedSignature = sign(payloadPart);
-  const actualBuffer = Buffer.from(signaturePart, "utf8");
-  const expectedBuffer = Buffer.from(expectedSignature, "utf8");
+  const expectedSignature = sign(payloadPart)
+  const actualBuffer = Buffer.from(signaturePart, "utf8")
+  const expectedBuffer = Buffer.from(expectedSignature, "utf8")
 
   if (actualBuffer.length !== expectedBuffer.length) {
-    return false;
+    return false
   }
 
   if (!timingSafeEqual(actualBuffer, expectedBuffer)) {
-    return false;
+    return false
   }
 
-  const payload = parsePayload(payloadPart);
+  const payload = parsePayload(payloadPart)
 
   if (!payload || payload.sid !== sessionId) {
-    return false;
+    return false
   }
 
-  const now = Math.floor(Date.now() / 1000);
-  return payload.exp >= now;
-};
+  const now = Math.floor(Date.now() / 1000)
+  return payload.exp >= now
+}

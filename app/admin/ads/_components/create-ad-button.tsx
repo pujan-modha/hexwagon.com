@@ -1,17 +1,12 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Button } from "~/components/common/button";
-import { Icon } from "~/components/common/icon";
-import type { AdPricingMap } from "~/server/web/ads/queries";
-import { AdFormDialog } from "./ad-form-dialog";
+import { useState } from "react"
+import { Button } from "~/components/common/button"
+import { Icon } from "~/components/common/icon"
+import { AdFormDialog } from "./ad-form-dialog"
 
-type CreateAdButtonProps = {
-  pricing: AdPricingMap;
-};
-
-export const CreateAdButton = ({ pricing }: CreateAdButtonProps) => {
-  const [open, setOpen] = useState(false);
+export const CreateAdButton = () => {
+  const [open, setOpen] = useState(false)
 
   return (
     <>
@@ -24,7 +19,7 @@ export const CreateAdButton = ({ pricing }: CreateAdButtonProps) => {
         Create Ad
       </Button>
 
-      <AdFormDialog open={open} onOpenChange={setOpen} pricing={pricing} />
+      <AdFormDialog open={open} onOpenChange={setOpen} />
     </>
-  );
-};
+  )
+}

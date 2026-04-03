@@ -14,7 +14,8 @@ const EmailPortApproved = ({ port, ...props }: EmailProps) => {
       <Text>Hey {port.submitterName?.trim() ?? "there"}!</Text>
 
       <Text>
-        Great news! Your port, <strong>{port.name}</strong>, has been published on {config.site.name}!
+        Great news! Your port, <strong>{port.name}</strong>, has been published on{" "}
+        {config.site.name}!
       </Text>
 
       <EmailButton href={`${config.site.url}/dashboard`}>

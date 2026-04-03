@@ -1,8 +1,8 @@
 import { isTruthy } from "@primoui/utils"
-import { type Prisma, PortStatus } from "@prisma/client"
+import { PortStatus, type Prisma } from "@prisma/client"
 import { endOfDay, startOfDay } from "date-fns"
-import { db } from "~/services/db"
 import { portManyExtendedPayload } from "~/server/web/ports/payloads"
+import { db } from "~/services/db"
 import type { PortsTableSchema } from "./schema"
 
 export const findPorts = async (search: PortsTableSchema, where?: Prisma.PortWhereInput) => {

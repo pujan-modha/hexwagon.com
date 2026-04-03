@@ -1,14 +1,11 @@
-"use server";
+"use server"
 
-import { EditStatus, PortStatus, type Prisma } from "@prisma/client";
-import { revalidateTag } from "next/cache";
-import { z } from "zod";
-import {
-  notifyEditorOfPortEditApproved,
-  notifyEditorOfPortEditRejected,
-} from "~/lib/notifications";
-import { adminProcedure } from "~/lib/safe-actions";
-import { db } from "~/services/db";
+import { EditStatus, PortStatus, type Prisma } from "@prisma/client"
+import { revalidateTag } from "next/cache"
+import { z } from "zod"
+import { notifyEditorOfPortEditApproved, notifyEditorOfPortEditRejected } from "~/lib/notifications"
+import { adminProcedure } from "~/lib/safe-actions"
+import { db } from "~/services/db"
 
 const editableDiffSchema = z
   .object({
@@ -18,20 +15,20 @@ const editableDiffSchema = z
     repositoryUrl: z.string().trim().url().nullable().optional(),
     license: z.string().trim().max(120).nullable().optional(),
   })
-  .partial();
+  .partial()
 
 const normalizeNullableString = (value?: string | null) => {
   if (value === undefined) {
-    return undefined;
+    return undefined
   }
 
   if (value === null) {
-    return null;
+    return null
   }
 
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
 
 export const approvePortEdit = adminProcedure
   .createServerAction()
@@ -40,45 +37,45 @@ export const approvePortEdit = adminProcedure
     const portEdit = await db.portEdit.findUniqueOrThrow({
       where: { id },
       include: { port: true, editor: true },
-    });
+    })
 
     if (portEdit.status !== EditStatus.Pending) {
-      throw new Error("This edit has already been reviewed.");
+      throw new Error("This edit has already been reviewed.")
     }
 
-    const parsedDiff = editableDiffSchema.parse(portEdit.diff);
-    const data: Prisma.PortUpdateInput = {};
+    const parsedDiff = editableDiffSchema.parse(portEdit.diff)
+    const data: Prisma.PortUpdateInput = {}
 
     if (parsedDiff.name !== undefined) {
-      data.name = parsedDiff.name;
+      data.name = parsedDiff.name
     }
 
     if (parsedDiff.description !== undefined) {
-      data.description = normalizeNullableString(parsedDiff.description);
+      data.description = normalizeNullableString(parsedDiff.description)
     }
 
     if (parsedDiff.content !== undefined) {
-      data.content = normalizeNullableString(parsedDiff.content);
+      data.content = normalizeNullableString(parsedDiff.content)
     }
 
     if (parsedDiff.repositoryUrl !== undefined) {
-      data.repositoryUrl = normalizeNullableString(parsedDiff.repositoryUrl);
+      data.repositoryUrl = normalizeNullableString(parsedDiff.repositoryUrl)
     }
 
     if (parsedDiff.license !== undefined) {
-      data.license = normalizeNullableString(parsedDiff.license);
+      data.license = normalizeNullableString(parsedDiff.license)
     }
 
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async tx => {
       await tx.port.update({
         where: { id: portEdit.portId },
         data,
-      });
+      })
 
       await tx.portEdit.update({
         where: { id },
         data: { status: EditStatus.Approved },
-      });
+      })
 
       if (portEdit.port.status === PortStatus.PendingEdit) {
         await tx.port.update({
@@ -87,18 +84,18 @@ export const approvePortEdit = adminProcedure
             status: PortStatus.Published,
             publishedAt: portEdit.port.publishedAt ?? new Date(),
           },
-        });
+        })
       }
-    });
+    })
 
-    revalidateTag("ports", "max");
-    revalidateTag("port-edits", "max");
-    revalidateTag(`port-${portEdit.port.slug}`, "max");
+    revalidateTag("ports", "max")
+    revalidateTag("port-edits", "max")
+    revalidateTag(`port-${portEdit.port.slug}`, "max")
 
-    await notifyEditorOfPortEditApproved(portEdit);
+    await notifyEditorOfPortEditApproved(portEdit)
 
-    return portEdit;
-  });
+    return portEdit
+  })
 
 export const rejectPortEdit = adminProcedure
   .createServerAction()
@@ -107,41 +104,39 @@ export const rejectPortEdit = adminProcedure
     const portEdit = await db.portEdit.findUniqueOrThrow({
       where: { id },
       include: { editor: true, port: true },
-    });
+    })
 
     if (portEdit.status !== EditStatus.Pending) {
-      throw new Error("This edit has already been reviewed.");
+      throw new Error("This edit has already been reviewed.")
     }
 
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async tx => {
       await tx.portEdit.update({
         where: { id },
         data: {
           status: EditStatus.Rejected,
           adminNote,
         },
-      });
+      })
 
       if (portEdit.port.status === PortStatus.PendingEdit) {
         await tx.port.update({
           where: { id: portEdit.portId },
           data: {
-            status: portEdit.port.publishedAt
-              ? PortStatus.Published
-              : PortStatus.Draft,
+            status: portEdit.port.publishedAt ? PortStatus.Published : PortStatus.Draft,
           },
-        });
+        })
       }
-    });
+    })
 
-    revalidateTag("ports", "max");
-    revalidateTag("port-edits", "max");
-    revalidateTag(`port-${portEdit.port.slug}`, "max");
+    revalidateTag("ports", "max")
+    revalidateTag("port-edits", "max")
+    revalidateTag(`port-${portEdit.port.slug}`, "max")
 
-    await notifyEditorOfPortEditRejected(portEdit);
+    await notifyEditorOfPortEditRejected(portEdit)
 
-    return portEdit;
-  });
+    return portEdit
+  })
 
 export const deletePortEdits = adminProcedure
   .createServerAction()
@@ -149,9 +144,9 @@ export const deletePortEdits = adminProcedure
   .handler(async ({ input: { ids } }) => {
     await db.portEdit.deleteMany({
       where: { id: { in: ids } },
-    });
+    })
 
-    revalidateTag("port-edits", "max");
+    revalidateTag("port-edits", "max")
 
-    return true;
-  });
+    return true
+  })

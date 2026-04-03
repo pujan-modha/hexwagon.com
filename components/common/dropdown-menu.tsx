@@ -1,31 +1,28 @@
-"use client";
+"use client"
 
-import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
-import { type ComponentProps, useId } from "react";
-import { Kbd } from "~/components/common/kbd";
-import { cx, popoverAnimationClasses } from "~/utils/cva";
-import { Icon } from "./icon";
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
+import { type ComponentProps, useId } from "react"
+import { Kbd } from "~/components/common/kbd"
+import { cx, popoverAnimationClasses } from "~/utils/cva"
+import { Icon } from "./icon"
 
-const DropdownMenu = DropdownMenuPrimitive.Root;
+const DropdownMenu = DropdownMenuPrimitive.Root
 
 const DropdownMenuTrigger = ({
   id,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Trigger>) => {
-  const generatedId = useId().replace(/:/g, "");
+  const generatedId = useId().replace(/:/g, "")
 
   return (
-    <DropdownMenuPrimitive.Trigger
-      id={id ?? `dropdown-menu-trigger-${generatedId}`}
-      {...props}
-    />
-  );
-};
+    <DropdownMenuPrimitive.Trigger id={id ?? `dropdown-menu-trigger-${generatedId}`} {...props} />
+  )
+}
 
-const DropdownMenuGroup = DropdownMenuPrimitive.Group;
-const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
-const DropdownMenuSub = DropdownMenuPrimitive.Sub;
-const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
+const DropdownMenuGroup = DropdownMenuPrimitive.Group
+const DropdownMenuPortal = DropdownMenuPrimitive.Portal
+const DropdownMenuSub = DropdownMenuPrimitive.Sub
+const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
 
 const DropdownMenuContent = ({
   className,
@@ -43,14 +40,14 @@ const DropdownMenuContent = ({
       {...props}
     />
   </DropdownMenuPrimitive.Portal>
-);
+)
 
 const DropdownMenuItem = ({
   className,
   inset,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Item> & {
-  inset?: boolean;
+  inset?: boolean
 }) => (
   <DropdownMenuPrimitive.Item
     className={cx(
@@ -60,7 +57,7 @@ const DropdownMenuItem = ({
     )}
     {...props}
   />
-);
+)
 
 const DropdownMenuCheckboxItem = ({
   className,
@@ -83,7 +80,7 @@ const DropdownMenuCheckboxItem = ({
     </span>
     {children}
   </DropdownMenuPrimitive.CheckboxItem>
-);
+)
 
 const DropdownMenuRadioItem = ({
   className,
@@ -104,7 +101,7 @@ const DropdownMenuRadioItem = ({
     </span>
     {children}
   </DropdownMenuPrimitive.RadioItem>
-);
+)
 
 const DropdownMenuSubTrigger = ({
   className,
@@ -112,7 +109,7 @@ const DropdownMenuSubTrigger = ({
   children,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.SubTrigger> & {
-  inset?: boolean;
+  inset?: boolean
 }) => (
   <DropdownMenuPrimitive.SubTrigger
     className={cx(
@@ -125,7 +122,7 @@ const DropdownMenuSubTrigger = ({
     {children}
     <Icon name="lucide/chevron-right" className="ml-auto" />
   </DropdownMenuPrimitive.SubTrigger>
-);
+)
 
 const DropdownMenuSubContent = ({
   className,
@@ -139,24 +136,20 @@ const DropdownMenuSubContent = ({
     )}
     {...props}
   />
-);
+)
 
 const DropdownMenuLabel = ({
   className,
   inset,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Label> & {
-  inset?: boolean;
+  inset?: boolean
 }) => (
   <DropdownMenuPrimitive.Label
-    className={cx(
-      "px-2 py-1.5 text-sm font-medium",
-      inset && "pl-8",
-      className,
-    )}
+    className={cx("px-2 py-1.5 text-sm font-medium", inset && "pl-8", className)}
     {...props}
   />
-);
+)
 
 const DropdownMenuSeparator = ({
   className,
@@ -166,14 +159,11 @@ const DropdownMenuSeparator = ({
     className={cx("-mx-1 my-1 h-px bg-border", className)}
     {...props}
   />
-);
+)
 
-const DropdownMenuShortcut = ({
-  className,
-  ...props
-}: ComponentProps<"kbd">) => (
+const DropdownMenuShortcut = ({ className, ...props }: ComponentProps<"kbd">) => (
   <Kbd className={cx("ml-auto", className)} {...props} />
-);
+)
 
 export {
   DropdownMenu,
@@ -191,4 +181,4 @@ export {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
-};
+}

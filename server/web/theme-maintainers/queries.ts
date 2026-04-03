@@ -1,10 +1,10 @@
-import { PortStatus } from "@prisma/client";
-import { db } from "~/services/db";
+import { PortStatus } from "@prisma/client"
+import { db } from "~/services/db"
 
 export const hasMaintainedThemes = async (userId: string) => {
-  const count = await db.themeMaintainer.count({ where: { userId } });
-  return count > 0;
-};
+  const count = await db.themeMaintainer.count({ where: { userId } })
+  return count > 0
+}
 
 export const findMaintainedThemes = async (userId: string) => {
   const maintainedThemes = await db.themeMaintainer.findMany({
@@ -46,10 +46,10 @@ export const findMaintainedThemes = async (userId: string) => {
         },
       },
     },
-  });
+  })
 
-  return maintainedThemes.map((maintainer) => maintainer.theme);
-};
+  return maintainedThemes.map(maintainer => maintainer.theme)
+}
 
 export const findMaintainedThemesForEditor = async (userId: string) => {
   const maintainedThemes = await db.themeMaintainer.findMany({
@@ -120,16 +120,12 @@ export const findMaintainedThemesForEditor = async (userId: string) => {
                 },
               },
             },
-            orderBy: [
-              { platform: { name: "asc" } },
-              { isOfficial: "desc" },
-              { updatedAt: "desc" },
-            ],
+            orderBy: [{ platform: { name: "asc" } }, { isOfficial: "desc" }, { updatedAt: "desc" }],
           },
         },
       },
     },
-  });
+  })
 
-  return maintainedThemes.map((maintainer) => maintainer.theme);
-};
+  return maintainedThemes.map(maintainer => maintainer.theme)
+}

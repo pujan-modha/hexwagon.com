@@ -9,10 +9,7 @@ import { H3 } from "~/components/common/heading"
 import { Icon } from "~/components/common/icon"
 import { Input } from "~/components/common/input"
 import { Stack } from "~/components/common/stack"
-import {
-  deleteColorPaletteEntry,
-  upsertColorPaletteEntry,
-} from "~/server/admin/themes/actions"
+import { deleteColorPaletteEntry, upsertColorPaletteEntry } from "~/server/admin/themes/actions"
 import { cx } from "~/utils/cva"
 
 type LocalColor = {
@@ -41,15 +38,9 @@ const toLocal = (c: ColorPalette): LocalColor => ({
   order: c.order,
 })
 
-export function ColorPaletteEditor({
-  themeId,
-  themeSlug,
-  initialColors,
-}: ColorPaletteEditorProps) {
+export function ColorPaletteEditor({ themeId, themeSlug, initialColors }: ColorPaletteEditorProps) {
   const [colors, setColors] = useState<LocalColor[]>(
-    [...initialColors]
-      .sort((a, b) => a.order - b.order)
-      .map(toLocal),
+    [...initialColors].sort((a, b) => a.order - b.order).map(toLocal),
   )
 
   const { execute: upsert } = useServerAction(upsertColorPaletteEntry, {
@@ -92,23 +83,17 @@ export function ColorPaletteEditor({
   )
 
   const handleHexPickerChange = (localId: string, hex: string) => {
-    setColors(prev =>
-      prev.map(c => (c.localId === localId ? { ...c, hex } : c)),
-    )
+    setColors(prev => prev.map(c => (c.localId === localId ? { ...c, hex } : c)))
   }
 
   const handleHexInputChange = (localId: string, raw: string) => {
     // Normalize: always store with leading #
     const val = raw.startsWith("#") ? raw : `#${raw}`
-    setColors(prev =>
-      prev.map(c => (c.localId === localId ? { ...c, hex: val } : c)),
-    )
+    setColors(prev => prev.map(c => (c.localId === localId ? { ...c, hex: val } : c)))
   }
 
   const handleLabelChange = (localId: string, label: string) => {
-    setColors(prev =>
-      prev.map(c => (c.localId === localId ? { ...c, label } : c)),
-    )
+    setColors(prev => prev.map(c => (c.localId === localId ? { ...c, label } : c)))
   }
 
   const handleDelete = (c: LocalColor) => {

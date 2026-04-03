@@ -1,16 +1,14 @@
-import { isTruthy } from "@primoui/utils";
-import { type Prisma, EditStatus } from "@prisma/client";
-import { db } from "~/services/db";
-import type { PortEditsTableSchema } from "./schema";
+import { isTruthy } from "@primoui/utils"
+import { EditStatus, type Prisma } from "@prisma/client"
+import { db } from "~/services/db"
+import type { PortEditsTableSchema } from "./schema"
 
 export const findPortEdits = async (search: PortEditsTableSchema) => {
-  const { name, page, perPage, sort, status, operator } = search;
+  const { name, page, perPage, sort, status, operator } = search
 
-  const offset = (page - 1) * perPage;
+  const offset = (page - 1) * perPage
 
-  const orderBy = sort.map(
-    (item) => ({ [item.id]: item.desc ? "desc" : "asc" }) as const,
-  );
+  const orderBy = sort.map(item => ({ [item.id]: item.desc ? "desc" : "asc" }) as const)
 
   const expressions: (Prisma.PortEditWhereInput | undefined)[] = [
     name
@@ -29,11 +27,11 @@ export const findPortEdits = async (search: PortEditsTableSchema) => {
         }
       : undefined,
     status.length > 0 ? { status: { in: status } } : undefined,
-  ];
+  ]
 
   const where: Prisma.PortEditWhereInput = {
     [operator.toUpperCase()]: expressions.filter(isTruthy),
-  };
+  }
 
   const [portEdits, portEditsTotal] = await db.$transaction([
     db.portEdit.findMany({
@@ -60,11 +58,11 @@ export const findPortEdits = async (search: PortEditsTableSchema) => {
     db.portEdit.count({
       where,
     }),
-  ]);
+  ])
 
-  const pageCount = Math.ceil(portEditsTotal / perPage);
-  return { portEdits, portEditsTotal, pageCount };
-};
+  const pageCount = Math.ceil(portEditsTotal / perPage)
+  return { portEdits, portEditsTotal, pageCount }
+}
 
 export const findPortEditById = async (id: string) => {
   return db.portEdit.findUnique({
@@ -73,5 +71,5 @@ export const findPortEditById = async (id: string) => {
       port: true,
       editor: true,
     },
-  });
-};
+  })
+}

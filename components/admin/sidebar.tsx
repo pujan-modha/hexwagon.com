@@ -1,46 +1,43 @@
-"use client";
+"use client"
 
-import { useMediaQuery } from "@mantine/hooks";
-import { cx } from "cva";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { Nav } from "~/components/admin/nav";
-import { Button } from "~/components/common/button";
-import { Icon } from "~/components/common/icon";
-import { Kbd } from "~/components/common/kbd";
-import { Tooltip } from "~/components/common/tooltip";
-import { siteConfig } from "~/config/site";
-import { useSearch } from "~/contexts/search-context";
-import { signOut } from "~/lib/auth-client";
+import { useMediaQuery } from "@mantine/hooks"
+import { cx } from "cva"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { Nav } from "~/components/admin/nav"
+import { Button } from "~/components/common/button"
+import { Icon } from "~/components/common/icon"
+import { Kbd } from "~/components/common/kbd"
+import { Tooltip } from "~/components/common/tooltip"
+import { siteConfig } from "~/config/site"
+import { useSearch } from "~/contexts/search-context"
+import { signOut } from "~/lib/auth-client"
 
 export const Sidebar = () => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  const router = useRouter();
-  const search = useSearch();
+  const isMobile = useMediaQuery("(max-width: 768px)")
+  const router = useRouter()
+  const search = useSearch()
 
   const handleOpenSite = (e: React.MouseEvent<HTMLElement>) => {
-    e.preventDefault();
-    window.open(siteConfig.url, "_self");
-  };
+    e.preventDefault()
+    window.open(siteConfig.url, "_self")
+  }
 
   const handleSignOut = async () => {
     signOut({
       fetchOptions: {
         onSuccess: () => {
-          toast.success("You've been signed out successfully");
-          router.push("/");
+          toast.success("You've been signed out successfully")
+          router.push("/")
         },
       },
-    });
-  };
+    })
+  }
 
   return (
     <Nav
       isCollapsed={!!isMobile}
-      className={cx(
-        "sticky top-0 h-dvh z-40 border-r",
-        isMobile ? "w-12" : "w-48",
-      )}
+      className={cx("sticky top-0 h-dvh z-40 border-r", isMobile ? "w-12" : "w-48")}
       links={[
         {
           title: "Dashboard",
@@ -138,5 +135,5 @@ export const Sidebar = () => {
         },
       ]}
     />
-  );
-};
+  )
+}

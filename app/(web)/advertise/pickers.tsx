@@ -1,30 +1,12 @@
-import { AdsPicker } from "~/components/web/ads-picker";
-import { adsConfig } from "~/config/ads";
-import {
-  findAdsForBooking,
-  getAdPricing,
-  getAdSettings,
-} from "~/server/web/ads/queries";
-export const AdvertisePickers = async () => {
-  const [ads, pricing, settings] = await Promise.all([
-    findAdsForBooking(),
-    getAdPricing(),
-    getAdSettings(),
-  ]);
+import { AdsPicker } from "~/components/web/ads-picker"
+import { getAdPackagePricing } from "~/server/web/ads/queries"
 
-  const adSpots = adsConfig.adSpots.map((spot) => ({
-    ...spot,
-    price: pricing[spot.type],
-  }));
+export const AdvertisePickers = async () => {
+  const packagePricing = await getAdPackagePricing()
 
   return (
     <div className="flex flex-col items-center gap-4 md:gap-6">
-      <AdsPicker
-        ads={ads}
-        adSpots={adSpots}
-        maxDiscountPercentage={settings.maxDiscountPercentage}
-        className="mx-auto"
-      />
+      <AdsPicker packagePricing={packagePricing} className="mx-auto" />
     </div>
-  );
-};
+  )
+}

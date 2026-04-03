@@ -1,11 +1,11 @@
-import { AnalyticsCard } from "~/app/admin/_components/analytics-card";
-import { ScheduledCard } from "~/app/admin/_components/scheduled-card";
-import { StatsCard } from "~/app/admin/_components/stats-card";
-import { SubscribersCard } from "~/app/admin/_components/subscribers-card";
-import { ThemeClaimsCard } from "~/app/admin/_components/theme-claims-card";
-import { UsersCard } from "~/app/admin/_components/users-card";
-import { withAdminPage } from "~/components/admin/auth-hoc";
-import { H3 } from "~/components/common/heading";
+import { AnalyticsCard } from "~/app/admin/_components/analytics-card"
+import { ScheduledCard } from "~/app/admin/_components/scheduled-card"
+import { StatsCard } from "~/app/admin/_components/stats-card"
+import { SubscribersCard } from "~/app/admin/_components/subscribers-card"
+import { ThemeClaimsCard } from "~/app/admin/_components/theme-claims-card"
+import { UsersCard } from "~/app/admin/_components/users-card"
+import { withAdminPage } from "~/components/admin/auth-hoc"
+import { H3 } from "~/components/common/heading"
 
 const DashboardPage = () => {
   return (
@@ -29,7 +29,7 @@ const DashboardPage = () => {
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default withAdminPage(DashboardPage);
+export default withAdminPage(DashboardPage)

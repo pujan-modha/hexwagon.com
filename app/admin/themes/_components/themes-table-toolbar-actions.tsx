@@ -12,6 +12,9 @@ export function ThemesTableToolbarActions({ table }: ThemesTableToolbarActionsPr
   const selectedThemes = table.getFilteredSelectedRowModel().rows.map(row => row.original)
 
   return selectedThemes.length > 0 ? (
-    <ThemesDeleteDialog tools={selectedThemes} onSuccess={() => table.toggleAllRowsSelected(false)} />
+    <ThemesDeleteDialog
+      tools={selectedThemes}
+      onSuccess={() => table.toggleAllRowsSelected(false)}
+    />
   ) : null
 }

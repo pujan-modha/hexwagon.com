@@ -8,21 +8,14 @@ type CatalogueListHeaderProps = {
   action?: ReactNode
 }
 
-const CatalogueListHeader = ({
-  title,
-  description,
-  count,
-  action,
-}: CatalogueListHeaderProps) => {
+const CatalogueListHeader = ({ title, description, count, action }: CatalogueListHeaderProps) => {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <Intro>
         <IntroTitle>
           {title}
           {count !== undefined && (
-            <span className="ml-2 text-lg font-normal text-muted-foreground">
-              ({count})
-            </span>
+            <span className="ml-2 text-lg font-normal text-muted-foreground">({count})</span>
           )}
         </IntroTitle>
         {description && <IntroDescription>{description}</IntroDescription>}

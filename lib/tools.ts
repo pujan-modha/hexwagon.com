@@ -1,7 +1,7 @@
-import { type Port } from "@prisma/client"
+import type { Port } from "@prisma/client"
 import { differenceInDays } from "date-fns"
 import { config } from "~/config"
-import { isPortPublished, getPortSuffix } from "~/lib/ports"
+import { getPortSuffix, isPortPublished } from "~/lib/ports"
 
 /**
  * @deprecated Use isPortPublished from ~/lib/ports instead.

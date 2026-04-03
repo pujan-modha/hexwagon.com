@@ -1,5 +1,5 @@
-import { ThemeMaintainerClaimStatus } from "@prisma/client";
-import { db } from "~/services/db";
+import { ThemeMaintainerClaimStatus } from "@prisma/client"
+import { db } from "~/services/db"
 
 export const findThemeMaintainerClaims = async () => {
   return db.themeMaintainerClaim.findMany({
@@ -9,8 +9,8 @@ export const findThemeMaintainerClaims = async () => {
       requester: { select: { id: true, name: true, email: true, image: true } },
       reviewer: { select: { id: true, name: true, email: true } },
     },
-  });
-};
+  })
+}
 
 export const findPendingThemeMaintainerClaims = async (take = 5) => {
   return db.themeMaintainerClaim.findMany({
@@ -21,11 +21,11 @@ export const findPendingThemeMaintainerClaims = async (take = 5) => {
       theme: { select: { id: true, slug: true, name: true } },
       requester: { select: { id: true, name: true, email: true } },
     },
-  });
-};
+  })
+}
 
 export const countPendingThemeMaintainerClaims = async () => {
   return db.themeMaintainerClaim.count({
     where: { status: ThemeMaintainerClaimStatus.Pending },
-  });
-};
+  })
+}

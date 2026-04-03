@@ -1,40 +1,25 @@
-import type { ComponentProps } from "react";
-import plur from "plur";
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-} from "~/components/common/card";
-import { H4 } from "~/components/common/heading";
-import { Icon } from "~/components/common/icon";
-import { Link } from "~/components/common/link";
-import { Skeleton } from "~/components/common/skeleton";
-import { VerifiedBadge } from "~/components/web/verified-badge";
-import { Favicon } from "~/components/web/ui/favicon";
-import { themeHref } from "~/lib/catalogue";
-import type { ThemeMany } from "~/server/web/themes/payloads";
-import { cx } from "~/utils/cva";
+import plur from "plur"
+import type { ComponentProps } from "react"
+import { Card, CardDescription, CardFooter, CardHeader } from "~/components/common/card"
+import { H4 } from "~/components/common/heading"
+import { Icon } from "~/components/common/icon"
+import { Link } from "~/components/common/link"
+import { Skeleton } from "~/components/common/skeleton"
+import { Favicon } from "~/components/web/ui/favicon"
+import { VerifiedBadge } from "~/components/web/verified-badge"
+import { themeHref } from "~/lib/catalogue"
+import type { ThemeMany } from "~/server/web/themes/payloads"
+import { cx } from "~/utils/cva"
 
 type ThemeCardProps = Omit<ComponentProps<typeof Card>, "href"> & {
-  theme: ThemeMany;
-  showCount?: boolean;
-  href?: string;
-};
+  theme: ThemeMany
+  showCount?: boolean
+  href?: string
+}
 
-const ThemeCard = ({
-  theme,
-  showCount,
-  href,
-  className,
-  ...props
-}: ThemeCardProps) => {
+const ThemeCard = ({ theme, showCount, href, className, ...props }: ThemeCardProps) => {
   return (
-    <Card
-      asChild
-      className={cx(className, "h-[190px] min-h-[190px]")}
-      {...props}
-    >
+    <Card asChild className={cx(className, "h-[190px] min-h-[190px]")} {...props}>
       <Link href={href ?? themeHref(theme.slug)}>
         <CardHeader wrap={false}>
           <Favicon src={theme.faviconUrl} title={theme.name} plain />
@@ -67,21 +52,14 @@ const ThemeCard = ({
         )}
       </Link>
     </Card>
-  );
-};
+  )
+}
 
 const ThemeCardSkeleton = () => {
   return (
-    <Card
-      hover={false}
-      className="h-[190px] min-h-[190px] items-stretch select-none"
-    >
+    <Card hover={false} className="h-[190px] min-h-[190px] items-stretch select-none">
       <CardHeader wrap={false}>
-        <Favicon
-          src="/favicon.png"
-          plain
-          className="animate-pulse opacity-50"
-        />
+        <Favicon src="/favicon.png" plain className="animate-pulse opacity-50" />
 
         <H4 className="w-2/3">
           <Skeleton>&nbsp;</Skeleton>
@@ -98,7 +76,7 @@ const ThemeCardSkeleton = () => {
         <Skeleton className="h-4 w-1/3">&nbsp;</Skeleton>
       </CardFooter>
     </Card>
-  );
-};
+  )
+}
 
-export { ThemeCard, ThemeCardSkeleton };
+export { ThemeCard, ThemeCardSkeleton }

@@ -1,32 +1,29 @@
-import type { AdType } from "@prisma/client";
-import { differenceInDays, endOfDay, startOfDay } from "date-fns";
-import { type ComponentProps, useCallback, useMemo } from "react";
-import type { DateRange } from "react-day-picker";
-import { Button } from "~/components/common/button";
-import { Calendar } from "~/components/common/calendar";
-import { H4 } from "~/components/common/heading";
-import { Icon } from "~/components/common/icon";
-import { Stack } from "~/components/common/stack";
-import { Tooltip } from "~/components/common/tooltip";
-import { ExternalLink } from "~/components/web/external-link";
-import { Price } from "~/components/web/price";
-import type { AdSpot } from "~/config/ads";
-import type { AdsSelection, useAds } from "~/hooks/use-ads";
-import type { AdMany } from "~/server/web/ads/payloads";
-import { getFirstAvailableMonth } from "~/utils/ads";
-import { cx } from "~/utils/cva";
+import type { AdType } from "@prisma/client"
+import { differenceInDays, endOfDay, startOfDay } from "date-fns"
+import { type ComponentProps, useCallback, useMemo } from "react"
+import type { DateRange } from "react-day-picker"
+import { Button } from "~/components/common/button"
+import { Calendar } from "~/components/common/calendar"
+import { H4 } from "~/components/common/heading"
+import { Icon } from "~/components/common/icon"
+import { Stack } from "~/components/common/stack"
+import { Tooltip } from "~/components/common/tooltip"
+import { ExternalLink } from "~/components/web/external-link"
+import { Price } from "~/components/web/price"
+import type { AdSpot } from "~/config/ads"
+import type { AdsSelection, useAds } from "~/hooks/use-ads"
+import type { AdMany } from "~/server/web/ads/payloads"
+import { getFirstAvailableMonth } from "~/utils/ads"
+import { cx } from "~/utils/cva"
 
 type AdsCalendarProps = ComponentProps<"div"> & {
-  adSpot: AdSpot;
-  ads: AdMany[];
-  price: ReturnType<typeof useAds>["price"];
-  selections: AdsSelection[];
-  updateSelection: (
-    type: AdType,
-    selection: Partial<Omit<AdsSelection, "type">>,
-  ) => void;
-  ignoreBooked?: boolean;
-};
+  adSpot: AdSpot
+  ads: AdMany[]
+  price: ReturnType<typeof useAds>["price"]
+  selections: AdsSelection[]
+  updateSelection: (type: AdType, selection: Partial<Omit<AdsSelection, "type">>) => void
+  ignoreBooked?: boolean
+}
 
 export const AdsCalendar = ({
   className,
@@ -38,56 +35,48 @@ export const AdsCalendar = ({
   ignoreBooked = false,
   ...props
 }: AdsCalendarProps) => {
-  const selection = selections.find((s) => s.type === adSpot.type);
+  const selection = selections.find(s => s.type === adSpot.type)
 
   const booked = useMemo(() => {
-    if (ignoreBooked) return [];
+    if (ignoreBooked) return []
 
     return ads
       .filter(({ type }) => type === adSpot.type || type === "All")
       .map(({ startsAt, endsAt }) => ({
         from: startOfDay(startsAt),
         to: startOfDay(endsAt),
-      }));
-  }, [ads, adSpot.type, ignoreBooked]);
+      }))
+  }, [ads, adSpot.type, ignoreBooked])
 
-  const firstAvailableMonth = useMemo(
-    () => getFirstAvailableMonth(booked),
-    [booked],
-  );
+  const firstAvailableMonth = useMemo(() => getFirstAvailableMonth(booked), [booked])
 
   const calculateDuration = useCallback(
     (range: DateRange) => {
-      if (!range.from || !range.to) return undefined;
+      if (!range.from || !range.to) return undefined
 
-      const from = startOfDay(range.from);
-      const to = endOfDay(range.to);
+      const from = startOfDay(range.from)
+      const to = endOfDay(range.to)
 
-      const duration = differenceInDays(to, from) + 1;
-      if (ignoreBooked) return duration;
+      const duration = differenceInDays(to, from) + 1
+      if (ignoreBooked) return duration
 
-      const overlapDays = booked.reduce(
-        (acc, { from: bookedFrom, to: bookedTo }) => {
-          const normalizedBookedFrom = startOfDay(bookedFrom);
-          const normalizedBookedTo = endOfDay(bookedTo);
+      const overlapDays = booked.reduce((acc, { from: bookedFrom, to: bookedTo }) => {
+        const normalizedBookedFrom = startOfDay(bookedFrom)
+        const normalizedBookedTo = endOfDay(bookedTo)
 
-          if (normalizedBookedTo < from || normalizedBookedFrom > to)
-            return acc;
+        if (normalizedBookedTo < from || normalizedBookedFrom > to) return acc
 
-          const overlapStart =
-            from > normalizedBookedFrom ? from : normalizedBookedFrom;
-          const overlapEnd = to < normalizedBookedTo ? to : normalizedBookedTo;
-          const overlap = differenceInDays(overlapEnd, overlapStart) + 1;
+        const overlapStart = from > normalizedBookedFrom ? from : normalizedBookedFrom
+        const overlapEnd = to < normalizedBookedTo ? to : normalizedBookedTo
+        const overlap = differenceInDays(overlapEnd, overlapStart) + 1
 
-          return acc + overlap;
-        },
-        0,
-      );
+        return acc + overlap
+      }, 0)
 
-      return Math.max(duration - overlapDays, 0);
+      return Math.max(duration - overlapDays, 0)
     },
     [booked, ignoreBooked],
-  );
+  )
 
   const handleSelect = useCallback(
     (dateRange?: DateRange) => {
@@ -95,21 +84,21 @@ export const AdsCalendar = ({
         updateSelection(adSpot.type, {
           dateRange,
           duration: undefined,
-        });
+        })
 
-        return;
+        return
       }
 
-      const duration = calculateDuration(dateRange);
+      const duration = calculateDuration(dateRange)
 
-      updateSelection(adSpot.type, { dateRange, duration });
+      updateSelection(adSpot.type, { dateRange, duration })
     },
     [adSpot.type],
-  );
+  )
 
   const discountedPrice = price?.discountPercentage
     ? adSpot.price * (1 - price.discountPercentage / 100)
-    : adSpot.price;
+    : adSpot.price
 
   return (
     <div className={cx("flex flex-col flex-1 divide-y", className)} {...props}>
@@ -117,32 +106,19 @@ export const AdsCalendar = ({
         <Stack>
           <H4 as="h3">{adSpot.label}</H4>
 
-          {price && (
-            <Price
-              price={discountedPrice}
-              interval="day"
-              className="ml-auto text-sm"
-            />
-          )}
+          {price && <Price price={discountedPrice} interval="day" className="ml-auto text-sm" />}
         </Stack>
 
         <Stack size="sm">
           {adSpot.preview && (
             <Tooltip tooltip="Preview this ad">
-              <Button
-                variant="secondary"
-                size="sm"
-                prefix={<Icon name="lucide/eye" />}
-                asChild
-              >
+              <Button variant="secondary" size="sm" prefix={<Icon name="lucide/eye" />} asChild>
                 <ExternalLink href={adSpot.preview} />
               </Button>
             </Tooltip>
           )}
 
-          <p className="flex-1 text-muted-foreground text-sm text-pretty">
-            {adSpot.description}
-          </p>
+          <p className="flex-1 text-muted-foreground text-sm text-pretty">{adSpot.description}</p>
         </Stack>
       </Stack>
 
@@ -152,11 +128,11 @@ export const AdsCalendar = ({
         onSelect={handleSelect}
         startMonth={new Date(2024, 3)}
         defaultMonth={firstAvailableMonth}
-        disabled={[(date) => date < new Date(), ...booked]}
+        disabled={[date => date < new Date(), ...booked]}
         modifiers={{ booked }}
         modifiersClassNames={{ booked: "*:line-through" }}
         className="w-full p-4 min-w-82"
       />
     </div>
-  );
-};
+  )
+}

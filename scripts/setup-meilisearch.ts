@@ -1,8 +1,8 @@
-import { config } from "~/config";
-import { indexAlternatives, indexCategories, indexTools } from "~/lib/indexing";
-import { meili } from "~/services/meilisearch";
+import { config } from "~/config"
+import { indexAlternatives, indexCategories, indexTools } from "~/lib/indexing"
+import { meili } from "~/services/meilisearch"
 
-const siteSlug = config.site.slug;
+const siteSlug = config.site.slug
 
 const indexes = [
   {
@@ -33,13 +33,7 @@ const indexes = [
         "categories",
         "topics",
       ],
-      filterableAttributes: [
-        "status",
-        "isFeatured",
-        "categories",
-        "alternatives",
-        "topics",
-      ],
+      filterableAttributes: ["status", "isFeatured", "categories", "alternatives", "topics"],
       sortableAttributes: ["score", "pageviews", "isFeatured"],
       rankingRules: [
         "words",
@@ -89,27 +83,20 @@ const indexes = [
       displayedAttributes: ["id", "name", "slug", "description", "fullPath"],
       filterableAttributes: ["name", "fullPath"],
       sortableAttributes: [],
-      rankingRules: [
-        "words",
-        "typo",
-        "proximity",
-        "attribute",
-        "sort",
-        "exactness",
-      ],
+      rankingRules: ["words", "typo", "proximity", "attribute", "sort", "exactness"],
     },
   },
-];
+]
 
 async function cleanupIndexes() {
   for (const idx of indexes) {
-    const indexUid = `${siteSlug}-${idx.name}`;
+    const indexUid = `${siteSlug}-${idx.name}`
     try {
-      await meili.index(indexUid).delete();
-      console.log(`Deleted existing index: ${indexUid}`);
+      await meili.index(indexUid).delete()
+      console.log(`Deleted existing index: ${indexUid}`)
     } catch (e: any) {
       if (e.code !== "index_not_found" && !e.message?.includes("not found")) {
-        console.warn(`Could not delete index ${indexUid}:`, e.message);
+        console.warn(`Could not delete index ${indexUid}:`, e.message)
       }
     }
   }
@@ -117,31 +104,27 @@ async function cleanupIndexes() {
 
 async function setupIndexes() {
   for (const idx of indexes) {
-    const indexUid = `${siteSlug}-${idx.name}`;
+    const indexUid = `${siteSlug}-${idx.name}`
     // Create index
-    await meili.createIndex(indexUid, { primaryKey: idx.primaryKey });
-    await meili.index(indexUid).updateSettings(idx.settings);
-    console.log(`Configured index: ${indexUid}`);
+    await meili.createIndex(indexUid, { primaryKey: idx.primaryKey })
+    await meili.index(indexUid).updateSettings(idx.settings)
+    console.log(`Configured index: ${indexUid}`)
   }
 }
 
 async function reindexAll() {
-  await Promise.all([
-    indexTools({}),
-    indexAlternatives({}),
-    indexCategories({}),
-  ]);
-  console.log("Reindexing complete.");
+  await Promise.all([indexTools({}), indexAlternatives({}), indexCategories({})])
+  console.log("Reindexing complete.")
 }
 
 async function main() {
-  await cleanupIndexes();
-  await setupIndexes();
-  await reindexAll();
-  console.log("MeiliSearch setup and population complete.");
+  await cleanupIndexes()
+  await setupIndexes()
+  await reindexAll()
+  console.log("MeiliSearch setup and population complete.")
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main().catch(err => {
+  console.error(err)
+  process.exit(1)
+})

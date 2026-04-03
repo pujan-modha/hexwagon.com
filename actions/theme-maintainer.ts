@@ -1,13 +1,13 @@
-"use server";
+"use server"
 
-import { revalidatePath, revalidateTag } from "next/cache";
-import { getUrlHostname } from "@primoui/utils";
-import { z } from "zod";
-import { userProcedure } from "~/lib/safe-actions";
-import { normalizeImageUrlToS3, uploadFavicon } from "~/lib/media";
-import { themePaletteSchema } from "~/server/admin/themes/schema";
-import { db } from "~/services/db";
-import { tryCatch } from "~/utils/helpers";
+import { getUrlHostname } from "@primoui/utils"
+import { revalidatePath, revalidateTag } from "next/cache"
+import { z } from "zod"
+import { normalizeImageUrlToS3, uploadFavicon } from "~/lib/media"
+import { userProcedure } from "~/lib/safe-actions"
+import { themePaletteSchema } from "~/server/admin/themes/schema"
+import { db } from "~/services/db"
+import { tryCatch } from "~/utils/helpers"
 
 const updateMaintainedThemeSchema = z.object({
   themeId: z.string().min(1),
@@ -19,16 +19,16 @@ const updateMaintainedThemeSchema = z.object({
   guidelines: z.string().trim().max(50_000).optional().or(z.literal("")),
   license: z.string().trim().max(120).optional().or(z.literal("")),
   palettes: z.array(themePaletteSchema).optional(),
-});
+})
 
 const toNullableString = (value?: string) => {
   if (value === undefined) {
-    return undefined;
+    return undefined
   }
 
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
 
 export const updateMaintainedTheme = userProcedure
   .createServerAction()
@@ -44,7 +44,7 @@ export const updateMaintainedTheme = userProcedure
       guidelines,
       license,
       palettes,
-    } = input;
+    } = input
 
     if (user.role !== "admin") {
       const isMaintainer = await db.themeMaintainer.findUnique({
@@ -55,10 +55,10 @@ export const updateMaintainedTheme = userProcedure
           },
         },
         select: { id: true },
-      });
+      })
 
       if (!isMaintainer) {
-        throw new Error("Only maintainers of this theme can edit it.");
+        throw new Error("Only maintainers of this theme can edit it.")
       }
     }
 
@@ -68,25 +68,22 @@ export const updateMaintainedTheme = userProcedure
           where: { id: themeId },
           select: { slug: true },
         })
-      )?.slug ?? name.trim().toLowerCase().replace(/\s+/g, "-");
+      )?.slug ?? name.trim().toLowerCase().replace(/\s+/g, "-")
 
-    const providedFaviconUrl = faviconUrl?.trim();
-    const website = websiteUrl?.trim();
+    const providedFaviconUrl = faviconUrl?.trim()
+    const website = websiteUrl?.trim()
 
-    let resolvedFaviconUrl: string | null = null;
+    let resolvedFaviconUrl: string | null = null
 
     if (providedFaviconUrl) {
       resolvedFaviconUrl = await normalizeImageUrlToS3({
         imageUrl: providedFaviconUrl,
         s3Path: `themes/${slugCandidate}/favicon`,
-      });
+      })
     } else if (website) {
       resolvedFaviconUrl =
-        (
-          await tryCatch(
-            uploadFavicon(getUrlHostname(website), `themes/${slugCandidate}`),
-          )
-        ).data ?? null;
+        (await tryCatch(uploadFavicon(getUrlHostname(website), `themes/${slugCandidate}`))).data ??
+        null
     }
 
     const theme = await db.theme.update({
@@ -101,10 +98,10 @@ export const updateMaintainedTheme = userProcedure
         license: toNullableString(license),
       },
       select: { slug: true },
-    });
+    })
 
     if (palettes !== undefined) {
-      const flatColors = palettes.flatMap((palette) =>
+      const flatColors = palettes.flatMap(palette =>
         palette.colors.map((color, index) => ({
           themeId,
           paletteName: palette.name,
@@ -112,19 +109,19 @@ export const updateMaintainedTheme = userProcedure
           hex: color.hex,
           order: color.order ?? index,
         })),
-      );
+      )
 
       await db.$transaction([
         db.colorPalette.deleteMany({ where: { themeId } }),
         db.colorPalette.createMany({ data: flatColors }),
-      ]);
+      ])
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/maintainer");
-    revalidatePath(`/themes/${theme.slug}`);
-    revalidateTag("themes", "max");
-    revalidateTag(`theme-${theme.slug}`, "max");
+    revalidatePath("/dashboard")
+    revalidatePath("/dashboard/maintainer")
+    revalidatePath(`/themes/${theme.slug}`)
+    revalidateTag("themes", "max")
+    revalidateTag(`theme-${theme.slug}`, "max")
 
-    return { success: true };
-  });
+    return { success: true }
+  })

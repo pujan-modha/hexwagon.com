@@ -1,52 +1,46 @@
-"use client";
+"use client"
 
-import { useRouter } from "next/navigation";
-import { parseAsString, useQueryState } from "nuqs";
-import {
-  type ComponentProps,
-  type FormEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { Icon } from "~/components/common/icon";
-import { Input } from "~/components/common/input";
-import { cx } from "~/utils/cva";
+import { useRouter } from "next/navigation"
+import { parseAsString, useQueryState } from "nuqs"
+import { type ComponentProps, type FormEvent, useEffect, useRef, useState } from "react"
+import { Icon } from "~/components/common/icon"
+import { Input } from "~/components/common/input"
+import { cx } from "~/utils/cva"
 
 export const SearchForm = ({ className, ...props }: ComponentProps<"form">) => {
-  const router = useRouter();
-  const [searchQuery] = useQueryState("q", parseAsString.withDefault(""));
-  const [query, setQuery] = useState(searchQuery);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter()
+  const [searchQuery] = useQueryState("q", parseAsString.withDefault(""))
+  const [query, setQuery] = useState(searchQuery)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const handleExpand = () => {
-    setIsExpanded(true);
-    inputRef.current?.select();
-  };
+    setIsExpanded(true)
+    inputRef.current?.select()
+  }
 
   const handleCollapse = () => {
-    setIsExpanded(false);
-    inputRef.current?.blur();
-  };
+    setIsExpanded(false)
+    inputRef.current?.blur()
+  }
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    const normalizedQuery = query.trim();
-    const params = new URLSearchParams();
+    const normalizedQuery = query.trim()
+    const params = new URLSearchParams()
 
     if (normalizedQuery.length > 0) {
-      params.set("q", normalizedQuery);
+      params.set("q", normalizedQuery)
     }
 
-    const queryString = params.toString();
-    router.push(queryString ? `/?${queryString}` : "/");
-  };
+    const queryString = params.toString()
+    router.push(queryString ? `/?${queryString}` : "/")
+  }
 
   useEffect(() => {
-    setQuery(searchQuery || "");
-  }, [searchQuery]);
+    setQuery(searchQuery || "")
+  }, [searchQuery])
 
   return (
     <form
@@ -60,7 +54,7 @@ export const SearchForm = ({ className, ...props }: ComponentProps<"form">) => {
           ref={inputRef}
           size="sm"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
           placeholder="Search..."
           onFocus={handleExpand}
           onBlur={handleCollapse}
@@ -73,9 +67,7 @@ export const SearchForm = ({ className, ...props }: ComponentProps<"form">) => {
           type="button"
           className={cx(
             "p-0.5 -m-0.5 text-muted-foreground hover:text-foreground duration-200 ease-in-out will-change-transform absolute inset-y-0 right-0",
-            isExpanded
-              ? "opacity-0 translate-x-1 pointer-events-none"
-              : "opacity-100",
+            isExpanded ? "opacity-0 translate-x-1 pointer-events-none" : "opacity-100",
           )}
           onClick={handleExpand}
           tabIndex={-1}
@@ -85,5 +77,5 @@ export const SearchForm = ({ className, ...props }: ComponentProps<"form">) => {
         </button>
       </div>
     </form>
-  );
-};
+  )
+}

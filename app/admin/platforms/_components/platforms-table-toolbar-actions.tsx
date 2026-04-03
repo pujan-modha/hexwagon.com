@@ -12,6 +12,9 @@ export function PlatformsTableToolbarActions({ table }: PlatformsTableToolbarAct
   const selectedPlatforms = table.getFilteredSelectedRowModel().rows.map(row => row.original)
 
   return selectedPlatforms.length > 0 ? (
-    <PlatformsDeleteDialog tools={selectedPlatforms} onSuccess={() => table.toggleAllRowsSelected(false)} />
+    <PlatformsDeleteDialog
+      tools={selectedPlatforms}
+      onSuccess={() => table.toggleAllRowsSelected(false)}
+    />
   ) : null
 }

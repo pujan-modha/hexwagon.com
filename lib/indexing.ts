@@ -1,9 +1,9 @@
-import { type Prisma, PortStatus } from "@prisma/client";
-import { platformManyPayload } from "~/server/web/platforms/payloads";
-import { tagManyPayload } from "~/server/web/tags/payloads";
-import { themeManyPayload } from "~/server/web/themes/payloads";
-import { db } from "~/services/db";
-import { getMeiliIndex } from "~/services/meilisearch";
+import { PortStatus, type Prisma } from "@prisma/client"
+import { platformManyPayload } from "~/server/web/platforms/payloads"
+import { tagManyPayload } from "~/server/web/tags/payloads"
+import { themeManyPayload } from "~/server/web/themes/payloads"
+import { db } from "~/services/db"
+import { getMeiliIndex } from "~/services/meilisearch"
 
 /**
  * Index ports in MeiliSearch
@@ -12,7 +12,7 @@ import { getMeiliIndex } from "~/services/meilisearch";
 export const indexPorts = async ({
   where,
 }: {
-  where?: Prisma.PortWhereInput;
+  where?: Prisma.PortWhereInput
 }) => {
   const ports = await db.port.findMany({
     where: {
@@ -24,12 +24,12 @@ export const indexPorts = async ({
       platform: { select: platformManyPayload },
       tags: { select: tagManyPayload },
     },
-  });
+  })
 
-  if (!ports.length) return;
+  if (!ports.length) return
 
   return await getMeiliIndex("ports").addDocuments(
-    ports.map((port) => ({
+    ports.map(port => ({
       id: port.id,
       name: port.name,
       slug: port.slug,
@@ -45,10 +45,10 @@ export const indexPorts = async ({
       themeSlug: port.theme.slug,
       platform: port.platform.name,
       platformSlug: port.platform.slug,
-      tags: port.tags.map((t) => t.slug),
+      tags: port.tags.map(t => t.slug),
     })),
-  );
-};
+  )
+}
 
 /**
  * Index themes in MeiliSearch
@@ -57,7 +57,7 @@ export const indexPorts = async ({
 export const indexThemes = async ({
   where,
 }: {
-  where?: Prisma.ThemeWhereInput;
+  where?: Prisma.ThemeWhereInput
 }) => {
   const themes = await db.theme.findMany({
     where,
@@ -75,12 +75,12 @@ export const indexThemes = async ({
         },
       },
     },
-  });
+  })
 
-  if (!themes.length) return;
+  if (!themes.length) return
 
   return await getMeiliIndex("themes").addDocuments(
-    themes.map((theme) => ({
+    themes.map(theme => ({
       id: theme.id,
       name: theme.name,
       slug: theme.slug,
@@ -90,8 +90,8 @@ export const indexThemes = async ({
       pageviews: theme.pageviews,
       isVerified: theme._count.maintainers > 0,
     })),
-  );
-};
+  )
+}
 
 /**
  * Index platforms in MeiliSearch
@@ -101,14 +101,14 @@ export const indexThemes = async ({
 export const indexPlatforms = async ({
   where,
 }: {
-  where?: Prisma.PlatformWhereInput;
+  where?: Prisma.PlatformWhereInput
 }) => {
-  const platforms = await db.platform.findMany({ where });
+  const platforms = await db.platform.findMany({ where })
 
-  if (!platforms.length) return;
+  if (!platforms.length) return
 
   return await getMeiliIndex("platforms").addDocuments(
-    platforms.map((platform) => ({
+    platforms.map(platform => ({
       id: platform.id,
       name: platform.name,
       slug: platform.slug,
@@ -118,9 +118,9 @@ export const indexPlatforms = async ({
       pageviews: platform.pageviews,
       isVerified: platform.isFeatured,
     })),
-  );
-};
+  )
+}
 
-export const indexTools = indexPorts;
-export const indexAlternatives = indexThemes;
-export const indexCategories = indexPlatforms;
+export const indexTools = indexPorts
+export const indexAlternatives = indexThemes
+export const indexCategories = indexPlatforms

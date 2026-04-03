@@ -1,15 +1,14 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ReportType } from "@prisma/client";
-import { sentenceCase } from "change-case";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { useServerAction } from "zsa-react";
-import { reportPlatform, reportPort, reportTheme } from "~/actions/report";
-import { Button } from "~/components/common/button";
-import { Icon } from "~/components/common/icon";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { ReportType } from "@prisma/client"
+import { sentenceCase } from "change-case"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { useServerAction } from "zsa-react"
+import { reportPlatform, reportPort, reportTheme } from "~/actions/report"
+import { Button } from "~/components/common/button"
 import {
   Dialog,
   DialogContent,
@@ -18,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/common/dialog";
+} from "~/components/common/dialog"
 import {
   Form,
   FormControl,
@@ -26,21 +25,22 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "~/components/common/form";
-import { RadioGroup, RadioGroupItem } from "~/components/common/radio-group";
-import { TextArea } from "~/components/common/textarea";
-import { LoginDialog } from "~/components/web/auth/login-dialog";
-import { useSession } from "~/lib/auth-client";
-import { type ReportSchema, reportSchema } from "~/server/web/shared/schema";
+} from "~/components/common/form"
+import { Icon } from "~/components/common/icon"
+import { RadioGroup, RadioGroupItem } from "~/components/common/radio-group"
+import { TextArea } from "~/components/common/textarea"
+import { LoginDialog } from "~/components/web/auth/login-dialog"
+import { useSession } from "~/lib/auth-client"
+import { type ReportSchema, reportSchema } from "~/server/web/shared/schema"
 
-type EntityType = "theme" | "platform" | "port";
+type EntityType = "theme" | "platform" | "port"
 
 type EntityReportButtonProps = {
-  entityType: EntityType;
-  entityId: string;
-  entityName: string;
-  grouped?: boolean;
-};
+  entityType: EntityType
+  entityId: string
+  entityName: string
+  grouped?: boolean
+}
 
 export const EntityReportButton = ({
   entityType,
@@ -48,8 +48,8 @@ export const EntityReportButton = ({
   entityName,
   grouped = false,
 }: EntityReportButtonProps) => {
-  const { data: session } = useSession();
-  const [isOpen, setIsOpen] = useState(false);
+  const { data: session } = useSession()
+  const [isOpen, setIsOpen] = useState(false)
 
   const form = useForm<ReportSchema>({
     resolver: zodResolver(reportSchema),
@@ -57,39 +57,38 @@ export const EntityReportButton = ({
       type: ReportType.Outdated,
       message: "",
     },
-  });
+  })
 
   const onSuccess = () => {
-    toast.success("Thanks. Your report has been submitted.");
-    form.reset();
-    setIsOpen(false);
-  };
+    toast.success("Thanks. Your report has been submitted.")
+    form.reset()
+    setIsOpen(false)
+  }
 
-  const onError = ({ err }: { err: Error }) => toast.error(err.message);
+  const onError = ({ err }: { err: Error }) => toast.error(err.message)
 
-  const portAction = useServerAction(reportPort, { onSuccess, onError });
-  const themeAction = useServerAction(reportTheme, { onSuccess, onError });
+  const portAction = useServerAction(reportPort, { onSuccess, onError })
+  const themeAction = useServerAction(reportTheme, { onSuccess, onError })
   const platformAction = useServerAction(reportPlatform, {
     onSuccess,
     onError,
-  });
+  })
 
-  const isPending =
-    portAction.isPending || themeAction.isPending || platformAction.isPending;
+  const isPending = portAction.isPending || themeAction.isPending || platformAction.isPending
 
-  const handleSubmit = form.handleSubmit((data) => {
+  const handleSubmit = form.handleSubmit(data => {
     if (entityType === "port") {
-      portAction.execute({ portId: entityId, ...data });
-      return;
+      portAction.execute({ portId: entityId, ...data })
+      return
     }
 
     if (entityType === "theme") {
-      themeAction.execute({ themeId: entityId, ...data });
-      return;
+      themeAction.execute({ themeId: entityId, ...data })
+      return
     }
 
-    platformAction.execute({ platformId: entityId, ...data });
-  });
+    platformAction.execute({ platformId: entityId, ...data })
+  })
 
   if (!session?.user) {
     return (
@@ -116,7 +115,7 @@ export const EntityReportButton = ({
           description="Sign in to report incorrect, outdated, or missing information."
         />
       </>
-    );
+    )
   }
 
   return (
@@ -159,12 +158,9 @@ export const EntityReportButton = ({
                       defaultValue={field.value}
                       className="grid gap-3"
                     >
-                      {Object.values(ReportType).map((type) => (
+                      {Object.values(ReportType).map(type => (
                         <div key={type} className="flex items-center space-x-2">
-                          <RadioGroupItem
-                            value={type}
-                            id={`r-${entityType}-${type}`}
-                          />
+                          <RadioGroupItem value={type} id={`r-${entityType}-${type}`} />
                           <FormLabel htmlFor={`r-${entityType}-${type}`}>
                             {sentenceCase(type)}
                           </FormLabel>
@@ -197,11 +193,7 @@ export const EntityReportButton = ({
             />
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setIsOpen(false)}
-              >
+              <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>
                 Cancel
               </Button>
 
@@ -213,5 +205,5 @@ export const EntityReportButton = ({
         </Form>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

@@ -22,9 +22,7 @@ const EmailSuggestionSubmitted = ({ suggestion, ...props }: EmailProps) => {
         Thanks for suggesting <strong>{suggestion.name}</strong>! We&apos;ll review it shortly.
       </Text>
 
-      <Text>
-        We&apos;ll send you an email once your suggestion is reviewed.
-      </Text>
+      <Text>We&apos;ll send you an email once your suggestion is reviewed.</Text>
     </EmailWrapper>
   )
 }

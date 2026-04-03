@@ -1,21 +1,18 @@
-"use client";
+"use client"
 
-import { Dialog as DialogPrimitive } from "radix-ui";
-import type { ComponentProps } from "react";
-import { H4 } from "~/components/common/heading";
-import { Prose } from "~/components/common/prose";
-import { cx } from "~/utils/cva";
-import { Icon } from "./icon";
+import { Dialog as DialogPrimitive } from "radix-ui"
+import type { ComponentProps } from "react"
+import { H4 } from "~/components/common/heading"
+import { Prose } from "~/components/common/prose"
+import { cx } from "~/utils/cva"
+import { Icon } from "./icon"
 
-const Dialog = DialogPrimitive.Root;
-const DialogTrigger = DialogPrimitive.Trigger;
-const DialogPortal = DialogPrimitive.Portal;
-const DialogClose = DialogPrimitive.Close;
+const Dialog = DialogPrimitive.Root
+const DialogTrigger = DialogPrimitive.Trigger
+const DialogPortal = DialogPrimitive.Portal
+const DialogClose = DialogPrimitive.Close
 
-const DialogOverlay = ({
-  className,
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Overlay>) => (
+const DialogOverlay = ({ className, ...props }: ComponentProps<typeof DialogPrimitive.Overlay>) => (
   <DialogPrimitive.Overlay
     className={cx(
       "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm",
@@ -25,7 +22,7 @@ const DialogOverlay = ({
     )}
     {...props}
   />
-);
+)
 
 const DialogContent = ({
   className,
@@ -55,17 +52,12 @@ const DialogContent = ({
         </DialogPrimitive.Content>
       </div>
     </DialogPortal>
-  );
-};
+  )
+}
 
 const DialogHeader = ({ className, ...props }: ComponentProps<"div">) => {
-  return (
-    <div
-      className={cx("flex flex-col gap-2 text-start", className)}
-      {...props}
-    />
-  );
-};
+  return <div className={cx("flex flex-col gap-2 text-start", className)} {...props} />
+}
 
 const DialogFooter = ({ className, ...props }: ComponentProps<"div">) => {
   return (
@@ -76,19 +68,16 @@ const DialogFooter = ({ className, ...props }: ComponentProps<"div">) => {
       )}
       {...props}
     />
-  );
-};
+  )
+}
 
-const DialogTitle = ({
-  children,
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Title>) => {
+const DialogTitle = ({ children, ...props }: ComponentProps<typeof DialogPrimitive.Title>) => {
   return (
     <DialogPrimitive.Title asChild {...props}>
       <H4>{children}</H4>
     </DialogPrimitive.Title>
-  );
-};
+  )
+}
 
 const DialogDescription = ({
   children,
@@ -96,15 +85,11 @@ const DialogDescription = ({
   ...props
 }: ComponentProps<typeof DialogPrimitive.Description>) => {
   return (
-    <DialogPrimitive.Description
-      asChild
-      className={cx("text-sm/normal", className)}
-      {...props}
-    >
+    <DialogPrimitive.Description asChild className={cx("text-sm/normal", className)} {...props}>
       <Prose>{children}</Prose>
     </DialogPrimitive.Description>
-  );
-};
+  )
+}
 
 export {
   Dialog,
@@ -117,4 +102,4 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-};
+}

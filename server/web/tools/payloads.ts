@@ -13,4 +13,8 @@ export const toolAlternativesPayload = Prisma.validator<Prisma.ThemeSelect>()({
   slug: true,
 })
 
-export type { PortMany as ToolMany, PortManyExtended as ToolManyExtended, PortOne as ToolOne } from "~/server/web/ports/payloads"
+export type {
+  PortMany as ToolMany,
+  PortManyExtended as ToolManyExtended,
+  PortOne as ToolOne,
+} from "~/server/web/ports/payloads"

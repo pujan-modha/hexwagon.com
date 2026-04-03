@@ -1,21 +1,34 @@
-import type { ComponentProps } from "react";
-import { AdType } from "@prisma/client";
-import { Card } from "~/components/common/card";
-import { Container } from "~/components/web/ui/container";
-import { config } from "~/config";
-import { findAd } from "~/server/web/ads/queries";
-import { AdPreviewBanner } from "./ad-preview";
+import type { ComponentProps } from "react"
+import type { Card } from "~/components/common/card"
+import { Container } from "~/components/web/ui/container"
+import { config } from "~/config"
+import { findAllocatedSlotAd } from "~/server/web/ads/queries"
+import { AdPreviewBanner } from "./ad-preview"
+
+type AdBannerProps = ComponentProps<typeof Card> & {
+  allocationScope?: string
+  context?: {
+    themeId?: string
+    platformId?: string
+  }
+}
 
 export const AdBanner = async ({
   className,
+  allocationScope,
+  context,
   ...props
-}: ComponentProps<typeof Card>) => {
+}: AdBannerProps) => {
   const ad =
-    (await findAd({ where: { type: AdType.Banner } })) ?? config.ads.defaultAd;
+    (await findAllocatedSlotAd({
+      slot: "Banner",
+      scope: allocationScope,
+      context,
+    })) ?? config.ads.defaultAd
 
   return (
     <Container className="z-49 mt-1">
       <AdPreviewBanner ad={ad} interactive className={className} {...props} />
     </Container>
-  );
-};
+  )
+}

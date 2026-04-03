@@ -1,6 +1,7 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
+import { Button } from "~/components/common/button"
 import {
   Dialog,
   DialogContent,
@@ -8,19 +9,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/common/dialog";
-import { Button } from "~/components/common/button";
-import { Label } from "~/components/common/label";
-import { TextArea } from "~/components/common/textarea";
+} from "~/components/common/dialog"
+import { Label } from "~/components/common/label"
+import { TextArea } from "~/components/common/textarea"
 
 type RejectDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description: string;
-  onReject: (reason: string) => void | Promise<void>;
-  pending?: boolean;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description: string
+  onReject: (reason: string) => void | Promise<void>
+  pending?: boolean
+}
 
 export const RejectDialog = ({
   open,
@@ -30,11 +30,11 @@ export const RejectDialog = ({
   onReject,
   pending,
 }: RejectDialogProps) => {
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState("")
 
   useEffect(() => {
-    if (!open) setReason("");
-  }, [open]);
+    if (!open) setReason("")
+  }, [open])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -49,18 +49,14 @@ export const RejectDialog = ({
           <TextArea
             id="rejection-reason"
             value={reason}
-            onChange={(event) => setReason(event.target.value)}
+            onChange={event => setReason(event.target.value)}
             placeholder="Explain why the booking is being rejected..."
             className="min-h-28"
           />
         </div>
 
         <DialogFooter>
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={pending}
-          >
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={pending}>
             Cancel
           </Button>
 
@@ -69,8 +65,8 @@ export const RejectDialog = ({
             disabled={!reason.trim() || pending}
             isPending={pending}
             onClick={async () => {
-              await onReject(reason.trim());
-              onOpenChange(false);
+              await onReject(reason.trim())
+              onOpenChange(false)
             }}
           >
             Reject ad
@@ -78,5 +74,5 @@ export const RejectDialog = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

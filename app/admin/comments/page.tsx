@@ -1,11 +1,11 @@
-import { withAdminPage } from "~/components/admin/auth-hoc";
-import { H3 } from "~/components/common/heading";
-import { Note } from "~/components/common/note";
-import { findComments } from "~/server/admin/comments/queries";
-import { CommentsTable } from "./_components/comments-table";
+import { withAdminPage } from "~/components/admin/auth-hoc"
+import { H3 } from "~/components/common/heading"
+import { Note } from "~/components/common/note"
+import { findComments } from "~/server/admin/comments/queries"
+import { CommentsTable } from "./_components/comments-table"
 
 const CommentsPage = async () => {
-  const { comments, commentsTotal } = await findComments({});
+  const { comments, commentsTotal } = await findComments({})
 
   return (
     <div className="grid gap-6">
@@ -18,7 +18,7 @@ const CommentsPage = async () => {
 
       <CommentsTable comments={comments} />
     </div>
-  );
-};
+  )
+}
 
-export default withAdminPage(CommentsPage);
+export default withAdminPage(CommentsPage)

@@ -1,66 +1,64 @@
-import { formatDate, getReadTime, isTruthy } from "@primoui/utils";
-import { type Post, allPosts } from "content-collections";
-import type { Metadata } from "next";
-import Image from "next/image";
-import { notFound } from "next/navigation";
-import { cache } from "react";
-import { H6 } from "~/components/common/heading";
-import { Note } from "~/components/common/note";
-import { Stack } from "~/components/common/stack";
-import { ExternalLink } from "~/components/web/external-link";
-import { InlineMenu } from "~/components/web/inline-menu";
-import { MDX } from "~/components/web/mdx";
-import { ShareButtons } from "~/components/web/share-buttons";
-import { Author } from "~/components/web/ui/author";
-import { Breadcrumbs } from "~/components/web/ui/breadcrumbs";
-import { FaviconImage } from "~/components/web/ui/favicon";
-import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro";
-import { Section } from "~/components/web/ui/section";
-import { metadataConfig } from "~/config/metadata";
-import { findPort } from "~/server/web/ports/queries";
+import { formatDate, getReadTime, isTruthy } from "@primoui/utils"
+import { type Post, allPosts } from "content-collections"
+import type { Metadata } from "next"
+import Image from "next/image"
+import { notFound } from "next/navigation"
+import { cache } from "react"
+import { H6 } from "~/components/common/heading"
+import { Note } from "~/components/common/note"
+import { Stack } from "~/components/common/stack"
+import { ExternalLink } from "~/components/web/external-link"
+import { InlineMenu } from "~/components/web/inline-menu"
+import { MDX } from "~/components/web/mdx"
+import { ShareButtons } from "~/components/web/share-buttons"
+import { Author } from "~/components/web/ui/author"
+import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
+import { FaviconImage } from "~/components/web/ui/favicon"
+import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
+import { Section } from "~/components/web/ui/section"
+import { metadataConfig } from "~/config/metadata"
+import { findPort } from "~/server/web/ports/queries"
 
 type PageProps = {
-  params: Promise<{ slug: string }>;
-};
+  params: Promise<{ slug: string }>
+}
 
 const findPostBySlug = cache(async ({ params }: PageProps) => {
-  const { slug } = await params;
-  const post = allPosts.find(({ _meta }) => _meta.path === slug);
+  const { slug } = await params
+  const post = allPosts.find(({ _meta }) => _meta.path === slug)
 
   if (!post) {
-    notFound();
+    notFound()
   }
 
-  return post;
-});
+  return post
+})
 
 export const generateStaticParams = () => {
-  return allPosts.map(({ _meta }) => ({ slug: _meta.path }));
-};
+  return allPosts.map(({ _meta }) => ({ slug: _meta.path }))
+}
 
 const getMetadata = (post: Post): Metadata => {
   return {
     title: post.title,
     description: post.description,
-  };
-};
+  }
+}
 
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
-  const post = await findPostBySlug(props);
-  const url = `/blog/${post._meta.path}`;
+  const post = await findPostBySlug(props)
+  const url = `/blog/${post._meta.path}`
 
   return {
     ...getMetadata(post),
     alternates: { ...metadataConfig.alternates, canonical: url },
     openGraph: { ...metadataConfig.openGraph, url },
-  };
-};
+  }
+}
 
 export default async function BlogPostPage(props: PageProps) {
-  const post = await findPostBySlug(props);
-  const tools = await Promise.all(
-    post.tools?.map((slug) => findPort({ where: { slug } })) ?? [],
-  );
+  const post = await findPostBySlug(props)
+  const tools = await Promise.all(post.tools?.map(slug => findPort({ where: { slug } })) ?? [])
 
   return (
     <>
@@ -140,13 +138,7 @@ export default async function BlogPostPage(props: PageProps) {
                 .map(({ slug, name, faviconUrl }) => ({
                   id: slug,
                   title: name!,
-                  prefix: (
-                    <FaviconImage
-                      src={faviconUrl}
-                      title={name!}
-                      className="size-4"
-                    />
-                  ),
+                  prefix: <FaviconImage src={faviconUrl} title={name!} className="size-4" />,
                 }))}
               className="flex-1 mx-5 max-md:hidden"
             />
@@ -154,5 +146,5 @@ export default async function BlogPostPage(props: PageProps) {
         </Section>
       </div>
     </>
-  );
+  )
 }

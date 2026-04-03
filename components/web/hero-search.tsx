@@ -1,150 +1,131 @@
-"use client";
+"use client"
 
-import { useDebouncedState } from "@mantine/hooks";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import posthog from "posthog-js";
-import { type FormEvent, useEffect, useRef, useState } from "react";
-import { useServerAction } from "zsa-react";
-import { searchItems } from "~/actions/search";
-import { Button } from "~/components/common/button";
-import { Icon } from "~/components/common/icon";
-import { VerifiedBadge } from "~/components/web/verified-badge";
-import { platformHref, themeHref, themePlatformHref } from "~/lib/catalogue";
-import type { IconName } from "~/types/icons";
-import { cx } from "~/utils/cva";
+import { useDebouncedState } from "@mantine/hooks"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
+import posthog from "posthog-js"
+import { type FormEvent, useEffect, useRef, useState } from "react"
+import { useServerAction } from "zsa-react"
+import { searchItems } from "~/actions/search"
+import { Button } from "~/components/common/button"
+import { Icon } from "~/components/common/icon"
+import { VerifiedBadge } from "~/components/web/verified-badge"
+import { platformHref, themeHref, themePlatformHref } from "~/lib/catalogue"
+import type { IconName } from "~/types/icons"
+import { cx } from "~/utils/cva"
 
-const THEME_PLACEHOLDERS = [
-  "Tokyo Night",
-  "Catppuccin",
-  "Gruvbox",
-  "Nord",
-  "One Dark",
-  "Solarized",
-];
+const THEME_PLACEHOLDERS = ["Tokyo Night", "Catppuccin", "Gruvbox", "Nord", "One Dark", "Solarized"]
 
-const PLATFORM_PLACEHOLDERS = [
-  "VS Code",
-  "Neovim",
-  "JetBrains",
-  "Terminal",
-  "Sublime Text",
-  "Vim",
-];
+const PLATFORM_PLACEHOLDERS = ["VS Code", "Neovim", "JetBrains", "Terminal", "Sublime Text", "Vim"]
 
 type ThemeHit = {
-  slug: string;
-  name: string;
-  faviconUrl?: string;
-  isVerified?: boolean;
-};
+  slug: string
+  name: string
+  faviconUrl?: string
+  isVerified?: boolean
+}
 
 type PlatformHit = {
-  slug: string;
-  name: string;
-  faviconUrl?: string;
-  isVerified?: boolean;
-};
+  slug: string
+  name: string
+  faviconUrl?: string
+  isVerified?: boolean
+}
 
-type ActiveField = "theme" | "platform" | null;
+type ActiveField = "theme" | "platform" | null
 
-const normalize = (value: string) => value.trim();
+const normalize = (value: string) => value.trim()
 
 const queryHref = (pathname: string, query: string) => {
-  const params = new URLSearchParams({ q: query });
-  return `${pathname}?${params.toString()}`;
-};
+  const params = new URLSearchParams({ q: query })
+  return `${pathname}?${params.toString()}`
+}
 
 export const HeroSearch = () => {
-  const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
-  const themeFieldRef = useRef<HTMLDivElement>(null);
-  const platformFieldRef = useRef<HTMLDivElement>(null);
+  const router = useRouter()
+  const formRef = useRef<HTMLFormElement>(null)
+  const themeFieldRef = useRef<HTMLDivElement>(null)
+  const platformFieldRef = useRef<HTMLDivElement>(null)
 
-  const [theme, setTheme] = useState("");
-  const [platform, setPlatform] = useState("");
-  const [themePlaceholder, setThemePlaceholder] = useState(
-    THEME_PLACEHOLDERS[0] ?? "",
-  );
-  const [platformPlaceholder, setPlatformPlaceholder] = useState(
-    PLATFORM_PLACEHOLDERS[0] ?? "",
-  );
-  const [themeResults, setThemeResults] = useState<ThemeHit[]>([]);
-  const [platformResults, setPlatformResults] = useState<PlatformHit[]>([]);
-  const [activeField, setActiveField] = useState<ActiveField>(null);
+  const [theme, setTheme] = useState("")
+  const [platform, setPlatform] = useState("")
+  const [themePlaceholder, setThemePlaceholder] = useState(THEME_PLACEHOLDERS[0] ?? "")
+  const [platformPlaceholder, setPlatformPlaceholder] = useState(PLATFORM_PLACEHOLDERS[0] ?? "")
+  const [themeResults, setThemeResults] = useState<ThemeHit[]>([])
+  const [platformResults, setPlatformResults] = useState<PlatformHit[]>([])
+  const [activeField, setActiveField] = useState<ActiveField>(null)
   const [dropdownAnchor, setDropdownAnchor] = useState<{
-    left: number;
-    top: number;
-    width: number;
-  } | null>(null);
+    left: number
+    top: number
+    width: number
+  } | null>(null)
 
-  const [debouncedTheme, setDebouncedTheme] = useDebouncedState("", 350);
-  const [debouncedPlatform, setDebouncedPlatform] = useDebouncedState("", 350);
+  const [debouncedTheme, setDebouncedTheme] = useDebouncedState("", 350)
+  const [debouncedPlatform, setDebouncedPlatform] = useDebouncedState("", 350)
 
   useEffect(() => {
-    let themeIndex = 0;
-    let platformIndex = 0;
+    let themeIndex = 0
+    let platformIndex = 0
 
     const interval = setInterval(() => {
-      themeIndex = (themeIndex + 1) % THEME_PLACEHOLDERS.length;
-      platformIndex = (platformIndex + 1) % PLATFORM_PLACEHOLDERS.length;
+      themeIndex = (themeIndex + 1) % THEME_PLACEHOLDERS.length
+      platformIndex = (platformIndex + 1) % PLATFORM_PLACEHOLDERS.length
 
-      setThemePlaceholder(THEME_PLACEHOLDERS[themeIndex] ?? "");
-      setPlatformPlaceholder(PLATFORM_PLACEHOLDERS[platformIndex] ?? "");
-    }, 4500);
+      setThemePlaceholder(THEME_PLACEHOLDERS[themeIndex] ?? "")
+      setPlatformPlaceholder(PLATFORM_PLACEHOLDERS[platformIndex] ?? "")
+    }, 4500)
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const onMouseDown = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) return;
+      const target = event.target
+      if (!(target instanceof Node)) return
 
       if (!formRef.current?.contains(target)) {
-        setActiveField(null);
+        setActiveField(null)
       }
-    };
+    }
 
-    document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
-  }, []);
+    document.addEventListener("mousedown", onMouseDown)
+    return () => document.removeEventListener("mousedown", onMouseDown)
+  }, [])
 
   useEffect(() => {
     if (!activeField || !formRef.current) {
-      setDropdownAnchor(null);
-      return;
+      setDropdownAnchor(null)
+      return
     }
 
-    const targetRef =
-      activeField === "theme" ? themeFieldRef : platformFieldRef;
+    const targetRef = activeField === "theme" ? themeFieldRef : platformFieldRef
 
     const updateAnchor = () => {
-      const targetEl = targetRef.current;
-      const formEl = formRef.current;
+      const targetEl = targetRef.current
+      const formEl = formRef.current
 
-      if (!targetEl || !formEl) return;
+      if (!targetEl || !formEl) return
 
-      const fieldRect = targetEl.getBoundingClientRect();
-      const formRect = formEl.getBoundingClientRect();
+      const fieldRect = targetEl.getBoundingClientRect()
+      const formRect = formEl.getBoundingClientRect()
 
       setDropdownAnchor({
         left: fieldRect.left - formRect.left,
         top: fieldRect.bottom - formRect.top + 8,
         width: fieldRect.width,
-      });
-    };
+      })
+    }
 
-    updateAnchor();
+    updateAnchor()
 
-    window.addEventListener("resize", updateAnchor);
-    window.addEventListener("scroll", updateAnchor, true);
+    window.addEventListener("resize", updateAnchor)
+    window.addEventListener("scroll", updateAnchor, true)
 
     return () => {
-      window.removeEventListener("resize", updateAnchor);
-      window.removeEventListener("scroll", updateAnchor, true);
-    };
-  }, [activeField, theme, platform]);
+      window.removeEventListener("resize", updateAnchor)
+      window.removeEventListener("scroll", updateAnchor, true)
+    }
+  }, [activeField, theme, platform])
 
   const themeSearch = useServerAction(searchItems, {
     onSuccess: ({ data }) => {
@@ -156,16 +137,14 @@ export const HeroSearch = () => {
           fallbackIndexes: data.telemetry.fallbackIndexes,
           fallbackReasons: data.telemetry.fallbackReasons,
           meiliFailures: data.telemetry.meiliFailures,
-        });
+        })
       }
 
-      const hits = data?.themes?.hits;
-      setThemeResults(
-        Array.isArray(hits) ? (hits as ThemeHit[]).slice(0, 5) : [],
-      );
+      const hits = data?.themes?.hits
+      setThemeResults(Array.isArray(hits) ? (hits as ThemeHit[]).slice(0, 5) : [])
     },
     onError: () => setThemeResults([]),
-  });
+  })
 
   const platformSearch = useServerAction(searchItems, {
     onSuccess: ({ data }) => {
@@ -177,84 +156,81 @@ export const HeroSearch = () => {
           fallbackIndexes: data.telemetry.fallbackIndexes,
           fallbackReasons: data.telemetry.fallbackReasons,
           meiliFailures: data.telemetry.meiliFailures,
-        });
+        })
       }
 
-      const hits = data?.platforms?.hits;
-      setPlatformResults(
-        Array.isArray(hits) ? (hits as PlatformHit[]).slice(0, 5) : [],
-      );
+      const hits = data?.platforms?.hits
+      setPlatformResults(Array.isArray(hits) ? (hits as PlatformHit[]).slice(0, 5) : [])
     },
     onError: () => setPlatformResults([]),
-  });
+  })
 
   useEffect(() => {
-    const query = normalize(debouncedTheme);
+    const query = normalize(debouncedTheme)
 
     if (query.length < 2) {
-      setThemeResults([]);
-      return;
+      setThemeResults([])
+      return
     }
 
-    themeSearch.execute({ query, indexes: ["themes"] });
-  }, [debouncedTheme, themeSearch.execute]);
+    themeSearch.execute({ query, indexes: ["themes"] })
+  }, [debouncedTheme, themeSearch.execute])
 
   useEffect(() => {
-    const query = normalize(debouncedPlatform);
+    const query = normalize(debouncedPlatform)
 
     if (query.length < 2) {
-      setPlatformResults([]);
-      return;
+      setPlatformResults([])
+      return
     }
 
-    platformSearch.execute({ query, indexes: ["platforms"] });
-  }, [debouncedPlatform, platformSearch.execute]);
+    platformSearch.execute({ query, indexes: ["platforms"] })
+  }, [debouncedPlatform, platformSearch.execute])
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    event.preventDefault()
 
-    const themeQuery = normalize(theme);
-    const platformQuery = normalize(platform);
+    const themeQuery = normalize(theme)
+    const platformQuery = normalize(platform)
 
-    if (!themeQuery && !platformQuery) return;
+    if (!themeQuery && !platformQuery) return
 
-    const topTheme = themeResults[0];
-    const topPlatform = platformResults[0];
+    const topTheme = themeResults[0]
+    const topPlatform = platformResults[0]
 
     if (themeQuery && platformQuery && topTheme?.slug && topPlatform?.slug) {
-      router.push(themePlatformHref(topTheme.slug, topPlatform.slug));
-      return;
+      router.push(themePlatformHref(topTheme.slug, topPlatform.slug))
+      return
     }
 
     if (themeQuery && topTheme?.slug) {
-      router.push(themeHref(topTheme.slug));
-      return;
+      router.push(themeHref(topTheme.slug))
+      return
     }
 
     if (platformQuery && topPlatform?.slug) {
-      router.push(platformHref(topPlatform.slug));
-      return;
+      router.push(platformHref(topPlatform.slug))
+      return
     }
 
     if (themeQuery && platformQuery) {
-      router.push(queryHref("/themes", `${themeQuery} ${platformQuery}`));
-      return;
+      router.push(queryHref("/themes", `${themeQuery} ${platformQuery}`))
+      return
     }
 
     if (themeQuery) {
-      router.push(queryHref("/themes", themeQuery));
-      return;
+      router.push(queryHref("/themes", themeQuery))
+      return
     }
 
-    router.push(queryHref("/platforms", platformQuery));
-  };
+    router.push(queryHref("/platforms", platformQuery))
+  }
 
-  const showThemeSuggestions = normalize(theme).length >= 2;
-  const showPlatformSuggestions = normalize(platform).length >= 2;
-  const showThemeDropdown = activeField === "theme" && showThemeSuggestions;
-  const showPlatformDropdown =
-    activeField === "platform" && showPlatformSuggestions;
-  const isPending = themeSearch.isPending || platformSearch.isPending;
+  const showThemeSuggestions = normalize(theme).length >= 2
+  const showPlatformSuggestions = normalize(platform).length >= 2
+  const showThemeDropdown = activeField === "theme" && showThemeSuggestions
+  const showPlatformDropdown = activeField === "platform" && showPlatformSuggestions
+  const isPending = themeSearch.isPending || platformSearch.isPending
 
   return (
     <form
@@ -279,10 +255,10 @@ export const HeroSearch = () => {
               value={theme}
               placeholder={themePlaceholder}
               onFieldFocus={() => setActiveField("theme")}
-              onValueChange={(value) => {
-                setTheme(value);
-                setDebouncedTheme(value);
-                setActiveField("theme");
+              onValueChange={value => {
+                setTheme(value)
+                setDebouncedTheme(value)
+                setActiveField("theme")
               }}
             />
           </div>
@@ -296,10 +272,10 @@ export const HeroSearch = () => {
               value={platform}
               placeholder={platformPlaceholder}
               onFieldFocus={() => setActiveField("platform")}
-              onValueChange={(value) => {
-                setPlatform(value);
-                setDebouncedPlatform(value);
-                setActiveField("platform");
+              onValueChange={value => {
+                setPlatform(value)
+                setDebouncedPlatform(value)
+                setActiveField("platform")
               }}
             />
           </div>
@@ -310,12 +286,7 @@ export const HeroSearch = () => {
               variant="fancy"
               size="lg"
               isPending={isPending}
-              prefix={
-                <Icon
-                  name="lucide/search"
-                  className="hidden size-[1.1em] md:block"
-                />
-              }
+              prefix={<Icon name="lucide/search" className="hidden size-[1.1em] md:block" />}
               className="h-full min-h-11 w-full rounded-lg text-center sm:w-auto"
             >
               Search
@@ -339,7 +310,7 @@ export const HeroSearch = () => {
               isPending={themeSearch.isPending}
               emptyText="No theme matches yet"
               items={themeResults}
-              onSelect={(item) => router.push(themeHref(item.slug))}
+              onSelect={item => router.push(themeHref(item.slug))}
             />
           ) : (
             <SuggestionDropdown
@@ -347,23 +318,23 @@ export const HeroSearch = () => {
               isPending={platformSearch.isPending}
               emptyText="No platform matches yet"
               items={platformResults}
-              onSelect={(item) => router.push(platformHref(item.slug))}
+              onSelect={item => router.push(platformHref(item.slug))}
             />
           )}
         </div>
       )}
     </form>
-  );
-};
+  )
+}
 
 type SearchFieldProps = {
-  label: string;
-  value: string;
-  placeholder: string;
-  className?: string;
-  onFieldFocus: () => void;
-  onValueChange: (value: string) => void;
-};
+  label: string
+  value: string
+  placeholder: string
+  className?: string
+  onFieldFocus: () => void
+  onValueChange: (value: string) => void
+}
 
 const SearchField = ({
   label,
@@ -386,29 +357,29 @@ const SearchField = ({
 
       <input
         value={value}
-        onChange={(event) => onValueChange(event.target.value)}
+        onChange={event => onValueChange(event.target.value)}
         onFocus={onFieldFocus}
         placeholder={placeholder}
         className="w-full bg-transparent text-base font-medium text-foreground outline-none placeholder:text-muted-foreground/60"
       />
     </label>
-  );
-};
+  )
+}
 
 type SuggestionItem = {
-  slug: string;
-  name: string;
-  faviconUrl?: string;
-  isVerified?: boolean;
-};
+  slug: string
+  name: string
+  faviconUrl?: string
+  isVerified?: boolean
+}
 
 type SuggestionDropdownProps<T extends SuggestionItem> = {
-  iconName: IconName;
-  items: T[];
-  isPending: boolean;
-  emptyText: string;
-  onSelect: (item: T) => void;
-};
+  iconName: IconName
+  items: T[]
+  isPending: boolean
+  emptyText: string
+  onSelect: (item: T) => void
+}
 
 const SuggestionDropdown = <T extends SuggestionItem>({
   iconName,
@@ -433,7 +404,7 @@ const SuggestionDropdown = <T extends SuggestionItem>({
 
       {!!items.length && (
         <div className="max-h-52 space-y-1 overflow-y-auto">
-          {items.map((item) => (
+          {items.map(item => (
             <button
               key={item.slug}
               type="button"
@@ -463,5 +434,5 @@ const SuggestionDropdown = <T extends SuggestionItem>({
         </div>
       )}
     </div>
-  );
-};
+  )
+}

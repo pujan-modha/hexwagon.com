@@ -22,9 +22,7 @@ const EmailSuggestionApproved = ({ suggestion, ...props }: EmailProps) => {
         Great news! Your suggestion, <strong>{suggestion.name}</strong>, has been approved!
       </Text>
 
-      <Text>
-        It will now appear on {config.site.name}.
-      </Text>
+      <Text>It will now appear on {config.site.name}.</Text>
     </EmailWrapper>
   )
 }

@@ -1,24 +1,24 @@
-import type { Metadata } from "next";
-import type { SearchParams } from "nuqs/server";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
-import { Breadcrumbs } from "~/components/web/ui/breadcrumbs";
-import { Section } from "~/components/web/ui/section";
-import { metadataConfig } from "~/config/metadata";
-import { findTheme } from "~/server/web/themes/queries";
-import { findPlatform } from "~/server/web/platforms/queries";
+import type { Metadata } from "next"
+import { notFound } from "next/navigation"
+import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
+import { CatalogueListHeader } from "~/components/catalogue/catalogue-list-header"
+import { PortList, PortListSkeleton } from "~/components/catalogue/port-list"
+import { CatalogueSearchControls } from "~/components/web/catalogue-search-controls"
+import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
+import { Section } from "~/components/web/ui/section"
+import { metadataConfig } from "~/config/metadata"
+import { findPlatform } from "~/server/web/platforms/queries"
 import {
   findPortsByThemeAndPlatform,
   findThemePlatformRouteParams,
-} from "~/server/web/ports/queries";
-import { CatalogueListHeader } from "~/components/catalogue/catalogue-list-header";
-import { PortList, PortListSkeleton } from "~/components/catalogue/port-list";
-import { CatalogueSearchControls } from "~/components/web/catalogue-search-controls";
+} from "~/server/web/ports/queries"
+import { findTheme } from "~/server/web/themes/queries"
 
 type PageProps = {
-  params: Promise<{ slug: string; platform: string }>;
-  searchParams: Promise<SearchParams>;
-};
+  params: Promise<{ slug: string; platform: string }>
+  searchParams: Promise<SearchParams>
+}
 
 const portSortOptions = [
   { value: "default", label: "Best match" },
@@ -26,54 +26,54 @@ const portSortOptions = [
   { value: "pageviews.desc", label: "Most viewed" },
   { value: "updatedAt.desc", label: "Recently updated" },
   { value: "name.asc", label: "Name A-Z" },
-];
+]
 
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
-  const { slug, platform } = await props.params;
+  const { slug, platform } = await props.params
   const [theme, platformEntity] = await Promise.all([
     findTheme({ where: { slug } }),
     findPlatform({ where: { slug: platform } }),
-  ]);
+  ])
 
-  const url = `/themes/${slug}/${platform}`;
+  const url = `/themes/${slug}/${platform}`
 
   return {
     title: `${theme?.name ?? slug} ports for ${platformEntity?.name ?? platform}`,
     description: `Browse ${theme?.name ?? slug} theme ports for ${platformEntity?.name ?? platform}.`,
     alternates: { ...metadataConfig.alternates, canonical: url },
     openGraph: { ...metadataConfig.openGraph, url },
-  };
-};
+  }
+}
 
 export const generateStaticParams = async () => {
-  const params = await findThemePlatformRouteParams();
+  const params = await findThemePlatformRouteParams()
   return params.map(({ themeSlug, platformSlug }) => ({
     slug: themeSlug,
     platform: platformSlug,
-  }));
-};
+  }))
+}
 
 export default async function ThemePlatformPage(props: PageProps) {
-  const { slug, platform } = await props.params;
-  const search = await props.searchParams;
-  const q = Array.isArray(search.q) ? (search.q[0] ?? "") : (search.q ?? "");
+  const { slug, platform } = await props.params
+  const search = await props.searchParams
+  const q = Array.isArray(search.q) ? (search.q[0] ?? "") : (search.q ?? "")
   const sort = Array.isArray(search.sort)
     ? (search.sort[0] ?? "default")
-    : (search.sort ?? "default");
+    : (search.sort ?? "default")
 
   const [theme, platformEntity] = await Promise.all([
     findTheme({ where: { slug } }),
     findPlatform({ where: { slug: platform } }),
-  ]);
+  ])
 
   if (!theme || !platformEntity) {
-    notFound();
+    notFound()
   }
 
   const ports = await findPortsByThemeAndPlatform(slug, platform, {
     q,
     sort,
-  });
+  })
 
   return (
     <>
@@ -118,5 +118,5 @@ export default async function ThemePlatformPage(props: PageProps) {
         </Section.Content>
       </Section>
     </>
-  );
+  )
 }

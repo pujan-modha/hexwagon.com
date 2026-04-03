@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { getRandomString, isValidUrl, slugify } from "@primoui/utils";
-import { type Port, PortStatus } from "@prisma/client";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import type { ComponentProps } from "react";
-import { use, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { useServerAction } from "zsa-react";
-import { generateFavicon, uploadImageToS3 } from "~/actions/media";
-import { Button } from "~/components/common/button";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { getRandomString, isValidUrl, slugify } from "@primoui/utils"
+import { type Port, PortStatus } from "@prisma/client"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
+import type { ComponentProps } from "react"
+import { use, useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { useServerAction } from "zsa-react"
+import { generateFavicon, uploadImageToS3 } from "~/actions/media"
+import { Button } from "~/components/common/button"
 import {
   Form,
   FormControl,
@@ -19,58 +19,55 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "~/components/common/form";
-import { H3 } from "~/components/common/heading";
-import { Icon } from "~/components/common/icon";
-import { Input, inputVariants } from "~/components/common/input";
-import { Link } from "~/components/common/link";
-import { Note } from "~/components/common/note";
-import { Stack } from "~/components/common/stack";
-import { Switch } from "~/components/common/switch";
-import { TextArea } from "~/components/common/textarea";
-import { ExternalLink } from "~/components/web/external-link";
-import { Markdown } from "~/components/web/markdown";
-import { LICENSE_SUGGESTIONS } from "~/config/licenses";
-import { siteConfig } from "~/config/site";
-import { useComputedField } from "~/hooks/use-computed-field";
-import { upsertPort } from "~/server/admin/ports/actions";
-import type { findPortBySlug } from "~/server/admin/ports/queries";
-import { portSchema } from "~/server/admin/ports/schema";
-import type { findPlatformList } from "~/server/admin/platforms/queries";
-import type { findThemeList } from "~/server/admin/themes/queries";
-import { PortActions } from "./port-actions";
-import { PortPublishActions } from "./port-publish-actions";
-import { cx } from "~/utils/cva";
+} from "~/components/common/form"
+import { H3 } from "~/components/common/heading"
+import { Icon } from "~/components/common/icon"
+import { Input, inputVariants } from "~/components/common/input"
+import { Link } from "~/components/common/link"
+import { Note } from "~/components/common/note"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/common/select";
+} from "~/components/common/select"
+import { Stack } from "~/components/common/stack"
+import { Switch } from "~/components/common/switch"
+import { TextArea } from "~/components/common/textarea"
+import { ExternalLink } from "~/components/web/external-link"
+import { Markdown } from "~/components/web/markdown"
+import { LICENSE_SUGGESTIONS } from "~/config/licenses"
+import { siteConfig } from "~/config/site"
+import { useComputedField } from "~/hooks/use-computed-field"
+import type { findPlatformList } from "~/server/admin/platforms/queries"
+import { upsertPort } from "~/server/admin/ports/actions"
+import type { findPortBySlug } from "~/server/admin/ports/queries"
+import { portSchema } from "~/server/admin/ports/schema"
+import type { findThemeList } from "~/server/admin/themes/queries"
+import { cx } from "~/utils/cva"
+import { PortActions } from "./port-actions"
+import { PortPublishActions } from "./port-publish-actions"
 
 const IMAGE_ACCEPT =
-  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg"
 
 type PortFormProps = ComponentProps<"form"> & {
-  port?: Awaited<ReturnType<typeof findPortBySlug>>;
-  platformsPromise: ReturnType<typeof findPlatformList>;
-  themesPromise: ReturnType<typeof findThemeList>;
-};
+  port?: Awaited<ReturnType<typeof findPortBySlug>>
+  platformsPromise: ReturnType<typeof findPlatformList>
+  themesPromise: ReturnType<typeof findThemeList>
+}
 
 const PortStatusChange = ({ port }: { port: Port }) => {
   return (
     <>
-      <ExternalLink
-        href={`/${port.slug}`}
-        className="font-semibold underline inline-block"
-      >
+      <ExternalLink href={`/${port.slug}`} className="font-semibold underline inline-block">
         {port.name ?? port.slug}
       </ExternalLink>{" "}
       is now {port.status.toLowerCase()}.
     </>
-  );
-};
+  )
+}
 
 export function PortForm({
   children,
@@ -81,15 +78,13 @@ export function PortForm({
   themesPromise,
   ...props
 }: PortFormProps) {
-  const router = useRouter();
-  const platforms = use(platformsPromise);
-  const themes = use(themesPromise);
+  const router = useRouter()
+  const platforms = use(platformsPromise)
+  const themes = use(themesPromise)
 
-  const [isPreviewing, setIsPreviewing] = useState(false);
-  const [isStatusPending, setIsStatusPending] = useState(false);
-  const [originalStatus, setOriginalStatus] = useState(
-    port?.status ?? PortStatus.Draft,
-  );
+  const [isPreviewing, setIsPreviewing] = useState(false)
+  const [isStatusPending, setIsStatusPending] = useState(false)
+  const [originalStatus, setOriginalStatus] = useState(port?.status ?? PortStatus.Draft)
 
   const form = useForm({
     resolver: zodResolver(portSchema),
@@ -113,7 +108,7 @@ export function PortForm({
       platformId: port?.platformId ?? "",
       license: port?.license ?? "",
     },
-  });
+  })
 
   useComputedField({
     form,
@@ -121,91 +116,81 @@ export function PortForm({
     computedField: "slug",
     callback: slugify,
     enabled: !port,
-  });
+  })
 
   const [name, slug, repositoryUrl, content] = form.watch([
     "name",
     "slug",
     "repositoryUrl",
     "content",
-  ]);
+  ])
 
   const upsertAction = useServerAction(upsertPort, {
     onSuccess: ({ data }) => {
       if (data.status !== originalStatus) {
-        toast.success(<PortStatusChange port={data} />);
-        setOriginalStatus(data.status);
+        toast.success(<PortStatusChange port={data} />)
+        setOriginalStatus(data.status)
       } else {
-        toast.success(`Port successfully ${port ? "updated" : "created"}`);
+        toast.success(`Port successfully ${port ? "updated" : "created"}`)
       }
 
       if (!port || data.slug !== port?.slug) {
-        router.push(`/admin/ports/${data.slug}`);
+        router.push(`/admin/ports/${data.slug}`)
       }
     },
     onError: ({ err }) => toast.error(err.message),
     onFinish: () => setIsStatusPending(false),
-  });
+  })
 
   const faviconAction = useServerAction(generateFavicon, {
     onSuccess: ({ data }) => {
-      form.setValue("faviconUrl", data);
+      form.setValue("faviconUrl", data)
     },
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
   const uploadImageAction = useServerAction(uploadImageToS3, {
     onSuccess: ({ data }) => {
-      toast.success(
-        "Image uploaded successfully. Please save the port to update.",
-      );
-      form.setValue("faviconUrl", data, { shouldDirty: true });
+      toast.success("Image uploaded successfully. Please save the port to update.")
+      form.setValue("faviconUrl", data, { shouldDirty: true })
     },
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
   const uploadScreenshotAction = useServerAction(uploadImageToS3, {
     onSuccess: ({ data }) => {
-      toast.success(
-        "Screenshot uploaded successfully. Please save the port to update.",
-      );
-      form.setValue("screenshotUrl", data, { shouldDirty: true });
+      toast.success("Screenshot uploaded successfully. Please save the port to update.")
+      form.setValue("screenshotUrl", data, { shouldDirty: true })
     },
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
   useEffect(() => {
-    const currentFaviconUrl = form.getValues("faviconUrl")?.trim();
-    if (currentFaviconUrl) return;
-    if (!isValidUrl(repositoryUrl)) return;
-    if (faviconAction.isPending || uploadImageAction.isPending) return;
+    const currentFaviconUrl = form.getValues("faviconUrl")?.trim()
+    if (currentFaviconUrl) return
+    if (!isValidUrl(repositoryUrl)) return
+    if (faviconAction.isPending || uploadImageAction.isPending) return
 
     faviconAction.execute({
       url: repositoryUrl,
       path: `ports/${slug || getRandomString(12)}`,
-    });
-  }, [
-    form,
-    repositoryUrl,
-    slug,
-    faviconAction.isPending,
-    uploadImageAction.isPending,
-  ]);
+    })
+  }, [form, repositoryUrl, slug, faviconAction.isPending, uploadImageAction.isPending])
 
   const handleSubmit = form.handleSubmit((data, event) => {
-    const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
-    const isStatusChange = submitter?.getAttribute("name") !== "submit";
+    const submitter = (event?.nativeEvent as SubmitEvent)?.submitter
+    const isStatusChange = submitter?.getAttribute("name") !== "submit"
 
-    if (isStatusChange) setIsStatusPending(true);
+    if (isStatusChange) setIsStatusPending(true)
 
-    upsertAction.execute({ id: port?.id, ...data });
-  });
+    upsertAction.execute({ id: port?.id, ...data })
+  })
 
   const handleStatusSubmit = (status: PortStatus, publishedAt: Date | null) => {
-    form.setValue("status", status);
-    form.setValue("publishedAt", publishedAt);
-    handleSubmit();
-  };
+    form.setValue("status", status)
+    form.setValue("publishedAt", publishedAt)
+    handleSubmit()
+  }
 
   return (
     <Form {...form}>
@@ -223,8 +208,7 @@ export function PortForm({
               href={`/themes/${port.theme.slug}/${port.platform.slug}/${port.slug}`}
               className="text-primary underline"
             >
-              {siteConfig.url}/themes/{port.theme.slug}/{port.platform.slug}/
-              {port.slug}
+              {siteConfig.url}/themes/{port.theme.slug}/{port.platform.slug}/{port.slug}
             </ExternalLink>
           </Note>
         )}
@@ -271,15 +255,12 @@ export function PortForm({
             <FormItem>
               <FormLabel>Theme</FormLabel>
               <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value ?? ""}
-                >
+                <Select onValueChange={field.onChange} value={field.value ?? ""}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a theme" />
                   </SelectTrigger>
                   <SelectContent>
-                    {themes.map((theme) => (
+                    {themes.map(theme => (
                       <SelectItem key={theme.id} value={theme.id}>
                         {theme.name}
                       </SelectItem>
@@ -299,15 +280,12 @@ export function PortForm({
             <FormItem>
               <FormLabel>Platform</FormLabel>
               <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value ?? ""}
-                >
+                <Select onValueChange={field.onChange} value={field.value ?? ""}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a platform" />
                   </SelectTrigger>
                   <SelectContent>
-                    {platforms.map((platform) => (
+                    {platforms.map(platform => (
                       <SelectItem key={platform.id} value={platform.id}>
                         {platform.name}
                       </SelectItem>
@@ -327,14 +305,10 @@ export function PortForm({
             <FormItem>
               <FormLabel>License</FormLabel>
               <FormControl>
-                <Input
-                  {...field}
-                  list="port-license-suggestions"
-                  placeholder="MIT"
-                />
+                <Input {...field} list="port-license-suggestions" placeholder="MIT" />
               </FormControl>
               <datalist id="port-license-suggestions">
-                {LICENSE_SUGGESTIONS.map((option) => (
+                {LICENSE_SUGGESTIONS.map(option => (
                   <option key={option} value={option} />
                 ))}
               </datalist>
@@ -370,12 +344,8 @@ export function PortForm({
                     type="button"
                     size="sm"
                     variant="secondary"
-                    onClick={() => setIsPreviewing((prev) => !prev)}
-                    prefix={
-                      <Icon
-                        name={isPreviewing ? "lucide/pencil" : "lucide/eye"}
-                      />
-                    }
+                    onClick={() => setIsPreviewing(prev => !prev)}
+                    prefix={<Icon name={isPreviewing ? "lucide/pencil" : "lucide/eye"} />}
                     className="-my-1"
                   >
                     {isPreviewing ? "Edit" : "Preview"}
@@ -387,10 +357,7 @@ export function PortForm({
                 {field.value && isPreviewing ? (
                   <Markdown
                     code={field.value}
-                    className={cx(
-                      inputVariants(),
-                      "max-w-none border leading-normal",
-                    )}
+                    className={cx(inputVariants(), "max-w-none border leading-normal")}
                   />
                 ) : (
                   <TextArea {...field} />
@@ -423,10 +390,7 @@ export function PortForm({
               <FormItem>
                 <FormLabel>Official</FormLabel>
                 <FormControl>
-                  <Switch
-                    onCheckedChange={field.onChange}
-                    checked={field.value}
-                  />
+                  <Switch onCheckedChange={field.onChange} checked={field.value} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -440,10 +404,7 @@ export function PortForm({
               <FormItem>
                 <FormLabel>Featured</FormLabel>
                 <FormControl>
-                  <Switch
-                    onCheckedChange={field.onChange}
-                    checked={field.value}
-                  />
+                  <Switch onCheckedChange={field.onChange} checked={field.value} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -470,14 +431,12 @@ export function PortForm({
                     />
                   }
                   className="-my-1"
-                  disabled={
-                    !isValidUrl(repositoryUrl) || faviconAction.isPending
-                  }
+                  disabled={!isValidUrl(repositoryUrl) || faviconAction.isPending}
                   onClick={() => {
                     faviconAction.execute({
                       url: repositoryUrl,
                       path: `ports/${slug || getRandomString(12)}`,
-                    });
+                    })
                   }}
                 >
                   {field.value ? "Regenerate" : "Generate"}
@@ -503,22 +462,20 @@ export function PortForm({
                   type="file"
                   hover
                   accept={IMAGE_ACCEPT}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (!file) return;
+                  onChange={event => {
+                    const file = event.target.files?.[0]
+                    if (!file) return
 
                     uploadImageAction.execute({
                       file,
                       path: `ports/${slug || getRandomString(12)}/favicon-upload`,
-                    });
+                    })
 
-                    event.currentTarget.value = "";
+                    event.currentTarget.value = ""
                   }}
                 />
 
-                <Note className="text-xs">
-                  Upload PNG, JPG, WebP, GIF, AVIF, or SVG. Max 8MB.
-                </Note>
+                <Note className="text-xs">Upload PNG, JPG, WebP, GIF, AVIF, or SVG. Max 8MB.</Note>
               </Stack>
 
               <FormMessage />
@@ -554,22 +511,20 @@ export function PortForm({
                   type="file"
                   hover
                   accept={IMAGE_ACCEPT}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (!file) return;
+                  onChange={event => {
+                    const file = event.target.files?.[0]
+                    if (!file) return
 
                     uploadScreenshotAction.execute({
                       file,
                       path: `ports/${slug || getRandomString(12)}/screenshot-upload`,
-                    });
+                    })
 
-                    event.currentTarget.value = "";
+                    event.currentTarget.value = ""
                   }}
                 />
 
-                <Note className="text-xs">
-                  Upload PNG, JPG, WebP, GIF, AVIF, or SVG. Max 8MB.
-                </Note>
+                <Note className="text-xs">Upload PNG, JPG, WebP, GIF, AVIF, or SVG. Max 8MB.</Note>
               </Stack>
 
               <FormMessage />
@@ -646,5 +601,5 @@ export function PortForm({
         </div>
       </form>
     </Form>
-  );
+  )
 }

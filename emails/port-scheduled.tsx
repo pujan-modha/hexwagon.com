@@ -20,7 +20,8 @@ const EmailPortScheduled = ({ port, ...props }: EmailProps) => {
       <Text>Hey {port.submitterName?.trim() ?? "there"}!</Text>
 
       <Text>
-        Great news! Your port, <strong>{port.name}</strong>, was accepted and scheduled for publication on {config.site.name}.
+        Great news! Your port, <strong>{port.name}</strong>, was accepted and scheduled for
+        publication on {config.site.name}.
       </Text>
 
       {isLongQueue ? (

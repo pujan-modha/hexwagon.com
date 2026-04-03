@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { getRandomString, isValidUrl } from "@primoui/utils";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { useFieldArray, useForm, type UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { toast } from "sonner";
-import { useServerAction } from "zsa-react";
-import { generateFavicon, uploadImageToS3 } from "~/actions/media";
-import { updateMaintainedTheme } from "~/actions/theme-maintainer";
-import { Button } from "~/components/common/button";
-import { Card } from "~/components/common/card";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { getRandomString, isValidUrl } from "@primoui/utils"
+import { useRouter } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
+import { type UseFormReturn, useFieldArray, useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { z } from "zod"
+import { useServerAction } from "zsa-react"
+import { generateFavicon, uploadImageToS3 } from "~/actions/media"
+import { updateMaintainedTheme } from "~/actions/theme-maintainer"
+import { Button } from "~/components/common/button"
+import { Card } from "~/components/common/card"
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/common/dialog";
+} from "~/components/common/dialog"
 import {
   Form,
   FormControl,
@@ -27,46 +27,41 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "~/components/common/form";
-import { H3, H4 } from "~/components/common/heading";
-import { Icon } from "~/components/common/icon";
-import { Input } from "~/components/common/input";
-import { Link } from "~/components/common/link";
-import { Note } from "~/components/common/note";
+} from "~/components/common/form"
+import { H3, H4 } from "~/components/common/heading"
+import { Icon } from "~/components/common/icon"
+import { Input } from "~/components/common/input"
+import { Link } from "~/components/common/link"
+import { Note } from "~/components/common/note"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/common/select";
-import { TextArea } from "~/components/common/textarea";
-import { Favicon } from "~/components/web/ui/favicon";
-import { VerifiedBadge } from "~/components/web/verified-badge";
-import {
-  setOfficialPort,
-  unsetOfficialPort,
-} from "~/server/admin/ports/actions";
-import { themePaletteSchema } from "~/server/admin/themes/schema";
-import type { findMaintainedThemesForEditor } from "~/server/web/theme-maintainers/queries";
-import { cx } from "~/utils/cva";
+} from "~/components/common/select"
+import { TextArea } from "~/components/common/textarea"
+import { Favicon } from "~/components/web/ui/favicon"
+import { VerifiedBadge } from "~/components/web/verified-badge"
+import { setOfficialPort, unsetOfficialPort } from "~/server/admin/ports/actions"
+import { themePaletteSchema } from "~/server/admin/themes/schema"
+import type { findMaintainedThemesForEditor } from "~/server/web/theme-maintainers/queries"
+import { cx } from "~/utils/cva"
 
-type MaintainedTheme = Awaited<
-  ReturnType<typeof findMaintainedThemesForEditor>
->[number];
+type MaintainedTheme = Awaited<ReturnType<typeof findMaintainedThemesForEditor>>[number]
 
 type DashboardMaintainerConsoleProps = {
-  themes: MaintainedTheme[];
-};
+  themes: MaintainedTheme[]
+}
 
-type MaintainerPort = MaintainedTheme["ports"][number];
-type PortStatusFilter = "all" | MaintainerPort["status"];
-type OfficialFilter = "all" | "official" | "unofficial";
-type SortKey = "platform" | "name" | "status" | "updatedAt" | "official";
-type SortDirection = "asc" | "desc";
-const PORTS_PER_PAGE = 25;
+type MaintainerPort = MaintainedTheme["ports"][number]
+type PortStatusFilter = "all" | MaintainerPort["status"]
+type OfficialFilter = "all" | "official" | "unofficial"
+type SortKey = "platform" | "name" | "status" | "updatedAt" | "official"
+type SortDirection = "asc" | "desc"
+const PORTS_PER_PAGE = 25
 const IMAGE_ACCEPT =
-  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg"
 
 const formSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -77,61 +72,58 @@ const formSchema = z.object({
   license: z.string().trim().max(120).optional().or(z.literal("")),
   guidelines: z.string().trim().max(50_000).optional().or(z.literal("")),
   palettes: z.array(themePaletteSchema),
-});
+})
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>
 
 const getStatusBadgeClassName = (status: string) => {
-  if (status === "Published")
-    return "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
+  if (status === "Published") return "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
 
-  if (status === "Scheduled")
-    return "border-sky-500/40 bg-sky-500/10 text-sky-300";
+  if (status === "Scheduled") return "border-sky-500/40 bg-sky-500/10 text-sky-300"
 
-  if (status === "PendingEdit")
-    return "border-amber-500/40 bg-amber-500/10 text-amber-300";
+  if (status === "PendingEdit") return "border-amber-500/40 bg-amber-500/10 text-amber-300"
 
-  return "border-border bg-muted text-muted-foreground";
-};
+  return "border-border bg-muted text-muted-foreground"
+}
 
 const groupPalettes = (theme: MaintainedTheme): FormValues["palettes"] => {
   const byPalette = new Map<
     string,
     Array<{ id?: string; label: string; hex: string; order: number }>
-  >();
+  >()
 
   for (const color of theme.colors) {
-    const list = byPalette.get(color.paletteName) ?? [];
+    const list = byPalette.get(color.paletteName) ?? []
 
     list.push({
       id: color.id,
       label: color.label,
       hex: color.hex,
       order: color.order,
-    });
+    })
 
-    byPalette.set(color.paletteName, list);
+    byPalette.set(color.paletteName, list)
   }
 
   return Array.from(byPalette.entries()).map(([name, colors]) => ({
     name,
     colors: colors.sort((a, b) => a.order - b.order),
-  }));
-};
+  }))
+}
 
 const PaletteEditor = ({
   form,
   paletteIndex,
   removePalette,
 }: {
-  form: UseFormReturn<FormValues>;
-  paletteIndex: number;
-  removePalette: () => void;
+  form: UseFormReturn<FormValues>
+  paletteIndex: number
+  removePalette: () => void
 }) => {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: `palettes.${paletteIndex}.colors` as const,
-  });
+  })
 
   return (
     <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3">
@@ -171,12 +163,9 @@ const PaletteEditor = ({
 
       <div className="space-y-2">
         {fields.map((field, colorIndex) => {
-          const hexPath =
-            `palettes.${paletteIndex}.colors.${colorIndex}.hex` as const;
-          const currentHex = form.watch(hexPath);
-          const previewHex = /^#[0-9A-Fa-f]{6}$/.test(currentHex)
-            ? currentHex
-            : "#000000";
+          const hexPath = `palettes.${paletteIndex}.colors.${colorIndex}.hex` as const
+          const currentHex = form.watch(hexPath)
+          const previewHex = /^#[0-9A-Fa-f]{6}$/.test(currentHex) ? currentHex : "#000000"
 
           return (
             <div
@@ -190,24 +179,16 @@ const PaletteEditor = ({
                 <input
                   type="color"
                   value={previewHex}
-                  onChange={(event) =>
-                    form.setValue(hexPath, event.target.value)
-                  }
+                  onChange={event => form.setValue(hexPath, event.target.value)}
                   className="absolute inset-0 size-full cursor-pointer opacity-0"
                 />
               </div>
 
-              <Input
-                className="font-mono"
-                placeholder="#000000"
-                {...form.register(hexPath)}
-              />
+              <Input className="font-mono" placeholder="#000000" {...form.register(hexPath)} />
 
               <Input
                 placeholder="Label"
-                {...form.register(
-                  `palettes.${paletteIndex}.colors.${colorIndex}.label` as const,
-                )}
+                {...form.register(`palettes.${paletteIndex}.colors.${colorIndex}.label` as const)}
               />
 
               <Button
@@ -220,15 +201,15 @@ const PaletteEditor = ({
                 <Icon name="lucide/trash" />
               </Button>
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
-};
+  )
+}
 
 const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
-  const router = useRouter();
+  const router = useRouter()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -242,7 +223,7 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
       guidelines: theme.guidelines ?? "",
       palettes: groupPalettes(theme),
     },
-  });
+  })
 
   const {
     fields: paletteFields,
@@ -251,122 +232,116 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
   } = useFieldArray({
     control: form.control,
     name: "palettes",
-  });
+  })
 
-  const [pendingPortId, setPendingPortId] = useState<string | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [portQuery, setPortQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<PortStatusFilter>("all");
-  const [officialFilter, setOfficialFilter] = useState<OfficialFilter>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("platform");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [pendingPortId, setPendingPortId] = useState<string | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [portQuery, setPortQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<PortStatusFilter>("all")
+  const [officialFilter, setOfficialFilter] = useState<OfficialFilter>("all")
+  const [sortKey, setSortKey] = useState<SortKey>("platform")
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
+  const [currentPage, setCurrentPage] = useState(1)
 
   const updateThemeAction = useServerAction(updateMaintainedTheme, {
     onSuccess: () => {
-      toast.success("Theme updated.");
-      setIsEditDialogOpen(false);
-      router.refresh();
+      toast.success("Theme updated.")
+      setIsEditDialogOpen(false)
+      router.refresh()
     },
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
   const faviconAction = useServerAction(generateFavicon, {
     onSuccess: ({ data }) => {
-      form.setValue("faviconUrl", data, { shouldDirty: true });
+      form.setValue("faviconUrl", data, { shouldDirty: true })
     },
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
   const uploadImageAction = useServerAction(uploadImageToS3, {
     onSuccess: ({ data }) => {
-      toast.success("Image uploaded. Save changes to persist it.");
-      form.setValue("faviconUrl", data, { shouldDirty: true });
+      toast.success("Image uploaded. Save changes to persist it.")
+      form.setValue("faviconUrl", data, { shouldDirty: true })
     },
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
-  const watchedWebsiteUrl = form.watch("websiteUrl")?.trim() ?? "";
-  const watchedFaviconUrl = form.watch("faviconUrl")?.trim() ?? "";
+  const watchedWebsiteUrl = form.watch("websiteUrl")?.trim() ?? ""
+  const watchedFaviconUrl = form.watch("faviconUrl")?.trim() ?? ""
 
   useEffect(() => {
-    if (watchedFaviconUrl) return;
-    if (!isValidUrl(watchedWebsiteUrl)) return;
-    if (faviconAction.isPending || uploadImageAction.isPending) return;
+    if (watchedFaviconUrl) return
+    if (!isValidUrl(watchedWebsiteUrl)) return
+    if (faviconAction.isPending || uploadImageAction.isPending) return
 
     faviconAction.execute({
       url: watchedWebsiteUrl,
       path: `themes/${theme.slug || getRandomString(12)}`,
-    });
+    })
   }, [
     theme.slug,
     uploadImageAction.isPending,
     watchedFaviconUrl,
     watchedWebsiteUrl,
     faviconAction.isPending,
-  ]);
+  ])
 
   const markOfficialAction = useServerAction(setOfficialPort, {
     onSuccess: () => {
-      toast.success("Official port updated.");
-      setPendingPortId(null);
-      router.refresh();
+      toast.success("Official port updated.")
+      setPendingPortId(null)
+      router.refresh()
     },
     onError: ({ err }) => {
-      toast.error(err.message);
-      setPendingPortId(null);
+      toast.error(err.message)
+      setPendingPortId(null)
     },
-  });
+  })
 
   const unmarkOfficialAction = useServerAction(unsetOfficialPort, {
     onSuccess: () => {
-      toast.success("Official badge removed.");
-      setPendingPortId(null);
-      router.refresh();
+      toast.success("Official badge removed.")
+      setPendingPortId(null)
+      router.refresh()
     },
     onError: ({ err }) => {
-      toast.error(err.message);
-      setPendingPortId(null);
+      toast.error(err.message)
+      setPendingPortId(null)
     },
-  });
+  })
 
-  const isPortsActionPending =
-    markOfficialAction.isPending || unmarkOfficialAction.isPending;
+  const isPortsActionPending = markOfficialAction.isPending || unmarkOfficialAction.isPending
 
   const filteredPorts = useMemo(() => {
-    const normalizedQuery = portQuery.trim().toLowerCase();
+    const normalizedQuery = portQuery.trim().toLowerCase()
 
-    const filtered = theme.ports.filter((port) => {
-      if (statusFilter !== "all" && port.status !== statusFilter) return false;
+    const filtered = theme.ports.filter(port => {
+      if (statusFilter !== "all" && port.status !== statusFilter) return false
 
-      if (officialFilter === "official" && !port.isOfficial) return false;
-      if (officialFilter === "unofficial" && port.isOfficial) return false;
+      if (officialFilter === "official" && !port.isOfficial) return false
+      if (officialFilter === "unofficial" && port.isOfficial) return false
 
-      if (!normalizedQuery) return true;
+      if (!normalizedQuery) return true
 
-      const searchableText = [
-        port.name ?? "",
-        port.slug,
-        port.platform.name,
-        port.platform.slug,
-      ]
+      const searchableText = [port.name ?? "", port.slug, port.platform.name, port.platform.slug]
         .join(" ")
-        .toLowerCase();
+        .toLowerCase()
 
-      return searchableText.includes(normalizedQuery);
-    });
+      return searchableText.includes(normalizedQuery)
+    })
 
     const sorted = [...filtered].sort((a, b) => {
-      const order = sortDirection === "asc" ? 1 : -1;
+      const order = sortDirection === "asc" ? 1 : -1
 
       if (sortKey === "official") {
-        const valueA = a.isOfficial ? 1 : 0;
-        const valueB = b.isOfficial ? 1 : 0;
-        return (valueA - valueB) * order;
+        const valueA = a.isOfficial ? 1 : 0
+        const valueB = b.isOfficial ? 1 : 0
+        return (valueA - valueB) * order
       }
 
       if (sortKey === "updatedAt") {
-        return (a.updatedAt.getTime() - b.updatedAt.getTime()) * order;
+        return (a.updatedAt.getTime() - b.updatedAt.getTime()) * order
       }
 
       const valueA =
@@ -374,52 +349,39 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
           ? a.platform.name
           : sortKey === "name"
             ? (a.name ?? `${theme.name} for ${a.platform.name}`)
-            : a.status;
+            : a.status
       const valueB =
         sortKey === "platform"
           ? b.platform.name
           : sortKey === "name"
             ? (b.name ?? `${theme.name} for ${b.platform.name}`)
-            : b.status;
+            : b.status
 
-      return valueA.localeCompare(valueB) * order;
-    });
+      return valueA.localeCompare(valueB) * order
+    })
 
-    return sorted;
-  }, [
-    officialFilter,
-    portQuery,
-    sortDirection,
-    sortKey,
-    statusFilter,
-    theme.name,
-    theme.ports,
-  ]);
+    return sorted
+  }, [officialFilter, portQuery, sortDirection, sortKey, statusFilter, theme.name, theme.ports])
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [portQuery, statusFilter, officialFilter, sortKey, sortDirection]);
+    setCurrentPage(1)
+  }, [portQuery, statusFilter, officialFilter, sortKey, sortDirection])
 
-  const pageCount = Math.max(
-    1,
-    Math.ceil(filteredPorts.length / PORTS_PER_PAGE),
-  );
+  const pageCount = Math.max(1, Math.ceil(filteredPorts.length / PORTS_PER_PAGE))
 
   useEffect(() => {
     if (currentPage > pageCount) {
-      setCurrentPage(pageCount);
+      setCurrentPage(pageCount)
     }
-  }, [currentPage, pageCount]);
+  }, [currentPage, pageCount])
 
   const paginatedPorts = filteredPorts.slice(
     (currentPage - 1) * PORTS_PER_PAGE,
     currentPage * PORTS_PER_PAGE,
-  );
+  )
 
-  const pageStart = filteredPorts.length
-    ? (currentPage - 1) * PORTS_PER_PAGE + 1
-    : 0;
-  const pageEnd = Math.min(currentPage * PORTS_PER_PAGE, filteredPorts.length);
+  const pageStart = filteredPorts.length ? (currentPage - 1) * PORTS_PER_PAGE + 1 : 0
+  const pageEnd = Math.min(currentPage * PORTS_PER_PAGE, filteredPorts.length)
 
   return (
     <Card className="gap-6 p-5">
@@ -443,18 +405,13 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
           </div>
 
           <Note>
-            Public page:{" "}
-            <Link href={`/themes/${theme.slug}`}>/themes/{theme.slug}</Link>
+            Public page: <Link href={`/themes/${theme.slug}`}>/themes/{theme.slug}</Link>
           </Note>
         </div>
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
-            <Button
-              size="sm"
-              variant="secondary"
-              prefix={<Icon name="lucide/pencil" />}
-            >
+            <Button size="sm" variant="secondary" prefix={<Icon name="lucide/pencil" />}>
               Edit Theme
             </Button>
           </DialogTrigger>
@@ -519,10 +476,7 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                       <FormItem>
                         <FormLabel>Repository URL</FormLabel>
                         <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="https://github.com/..."
-                          />
+                          <Input {...field} placeholder="https://github.com/..." />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -543,20 +497,15 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                             prefix={
                               <Icon
                                 name="lucide/refresh-cw"
-                                className={cx(
-                                  faviconAction.isPending && "animate-spin",
-                                )}
+                                className={cx(faviconAction.isPending && "animate-spin")}
                               />
                             }
-                            disabled={
-                              !isValidUrl(watchedWebsiteUrl) ||
-                              faviconAction.isPending
-                            }
+                            disabled={!isValidUrl(watchedWebsiteUrl) || faviconAction.isPending}
                             onClick={() => {
                               faviconAction.execute({
                                 url: watchedWebsiteUrl,
                                 path: `themes/${theme.slug || getRandomString(12)}`,
-                              });
+                              })
                             }}
                           >
                             {field.value ? "Regenerate" : "Generate"}
@@ -564,26 +513,23 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                         </div>
 
                         <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="https://.../favicon.png"
-                          />
+                          <Input {...field} placeholder="https://.../favicon.png" />
                         </FormControl>
 
                         <Input
                           type="file"
                           hover
                           accept={IMAGE_ACCEPT}
-                          onChange={(event) => {
-                            const file = event.target.files?.[0];
-                            if (!file) return;
+                          onChange={event => {
+                            const file = event.target.files?.[0]
+                            if (!file) return
 
                             uploadImageAction.execute({
                               file,
                               path: `themes/${theme.slug || getRandomString(12)}/favicon-upload`,
-                            });
+                            })
 
-                            event.currentTarget.value = "";
+                            event.currentTarget.value = ""
                           }}
                         />
 
@@ -666,7 +612,7 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                   <Button
                     size="sm"
                     isPending={updateThemeAction.isPending}
-                    onClick={form.handleSubmit((values) =>
+                    onClick={form.handleSubmit(values =>
                       updateThemeAction.execute({
                         themeId: theme.id,
                         ...values,
@@ -697,16 +643,14 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
             <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_160px_160px_170px_auto]">
               <Input
                 value={portQuery}
-                onChange={(event) => setPortQuery(event.target.value)}
+                onChange={event => setPortQuery(event.target.value)}
                 placeholder="Search by port/platform..."
                 className="h-9"
               />
 
               <Select
                 value={statusFilter}
-                onValueChange={(value) =>
-                  setStatusFilter(value as PortStatusFilter)
-                }
+                onValueChange={value => setStatusFilter(value as PortStatusFilter)}
               >
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Status" />
@@ -722,9 +666,7 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
 
               <Select
                 value={officialFilter}
-                onValueChange={(value) =>
-                  setOfficialFilter(value as OfficialFilter)
-                }
+                onValueChange={value => setOfficialFilter(value as OfficialFilter)}
               >
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Official" />
@@ -736,10 +678,7 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                 </SelectContent>
               </Select>
 
-              <Select
-                value={sortKey}
-                onValueChange={(value) => setSortKey(value as SortKey)}
-              >
+              <Select value={sortKey} onValueChange={value => setSortKey(value as SortKey)}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
@@ -757,19 +696,9 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                 variant="secondary"
                 className="h-9"
                 prefix={
-                  <Icon
-                    name={
-                      sortDirection === "asc"
-                        ? "lucide/arrow-up"
-                        : "lucide/arrow-down"
-                    }
-                  />
+                  <Icon name={sortDirection === "asc" ? "lucide/arrow-up" : "lucide/arrow-down"} />
                 }
-                onClick={() =>
-                  setSortDirection((value) =>
-                    value === "asc" ? "desc" : "asc",
-                  )
-                }
+                onClick={() => setSortDirection(value => (value === "asc" ? "desc" : "asc"))}
               >
                 {sortDirection === "asc" ? "Ascending" : "Descending"}
               </Button>
@@ -788,24 +717,18 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                 </thead>
 
                 <tbody>
-                  {paginatedPorts.map((port) => {
-                    const isPending =
-                      isPortsActionPending && pendingPortId === port.id;
+                  {paginatedPorts.map(port => {
+                    const isPending = isPortsActionPending && pendingPortId === port.id
 
                     return (
                       <tr key={port.id} className="border-t border-border/60">
                         <td className="px-3 py-2">
-                          <Link
-                            href={`/themes/${theme.slug}/${port.platform.slug}/${port.id}`}
-                          >
-                            {port.name ??
-                              `${theme.name} for ${port.platform.name}`}
+                          <Link href={`/themes/${theme.slug}/${port.platform.slug}/${port.id}`}>
+                            {port.name ?? `${theme.name} for ${port.platform.name}`}
                           </Link>
                         </td>
 
-                        <td className="px-3 py-2 text-muted-foreground">
-                          {port.platform.name}
-                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">{port.platform.name}</td>
 
                         <td className="px-3 py-2">
                           <span
@@ -821,16 +744,11 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                         <td className="px-3 py-2">
                           {port.isOfficial ? (
                             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
-                              <VerifiedBadge
-                                size="sm"
-                                className="-mb-[0.02em]"
-                              />
+                              <VerifiedBadge size="sm" className="-mb-[0.02em]" />
                               Official
                             </span>
                           ) : (
-                            <span className="text-xs text-muted-foreground">
-                              No
-                            </span>
+                            <span className="text-xs text-muted-foreground">No</span>
                           )}
                         </td>
 
@@ -843,10 +761,10 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                               isPending={isPending}
                               disabled={isPortsActionPending && !isPending}
                               onClick={() => {
-                                setPendingPortId(port.id);
+                                setPendingPortId(port.id)
                                 unmarkOfficialAction.execute({
                                   portId: port.id,
-                                });
+                                })
                               }}
                             >
                               Unmark Official
@@ -859,8 +777,8 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                               isPending={isPending}
                               disabled={isPortsActionPending && !isPending}
                               onClick={() => {
-                                setPendingPortId(port.id);
-                                markOfficialAction.execute({ portId: port.id });
+                                setPendingPortId(port.id)
+                                markOfficialAction.execute({ portId: port.id })
                               }}
                             >
                               Mark Official
@@ -868,7 +786,7 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                           )}
                         </td>
                       </tr>
-                    );
+                    )
                   })}
                 </tbody>
               </table>
@@ -886,9 +804,7 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                     size="sm"
                     variant="secondary"
                     disabled={currentPage <= 1}
-                    onClick={() =>
-                      setCurrentPage((value) => Math.max(1, value - 1))
-                    }
+                    onClick={() => setCurrentPage(value => Math.max(1, value - 1))}
                   >
                     Previous
                   </Button>
@@ -902,9 +818,7 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                     size="sm"
                     variant="secondary"
                     disabled={currentPage >= pageCount}
-                    onClick={() =>
-                      setCurrentPage((value) => Math.min(pageCount, value + 1))
-                    }
+                    onClick={() => setCurrentPage(value => Math.min(pageCount, value + 1))}
                   >
                     Next
                   </Button>
@@ -921,27 +835,23 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
         )}
       </div>
     </Card>
-  );
-};
+  )
+}
 
-export const DashboardMaintainerConsole = ({
-  themes,
-}: DashboardMaintainerConsoleProps) => {
+export const DashboardMaintainerConsole = ({ themes }: DashboardMaintainerConsoleProps) => {
   return (
     <section className="mt-2 space-y-5">
       <div className="space-y-1">
-        <h2 className="text-xl font-semibold tracking-tight">
-          Maintainer Console
-        </h2>
+        <h2 className="text-xl font-semibold tracking-tight">Maintainer Console</h2>
         <p className="text-sm text-muted-foreground">
-          Full theme management for maintainers. You can edit theme details,
-          guidelines, color palettes, and official port state.
+          Full theme management for maintainers. You can edit theme details, guidelines, color
+          palettes, and official port state.
         </p>
       </div>
 
       {themes.length > 0 ? (
         <div className="space-y-5">
-          {themes.map((theme) => (
+          {themes.map(theme => (
             <ThemeEditorCard key={theme.id} theme={theme} />
           ))}
         </div>
@@ -951,5 +861,5 @@ export const DashboardMaintainerConsole = ({
         </Card>
       )}
     </section>
-  );
-};
+  )
+}

@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { type HotkeyItem, useDebouncedState, useHotkeys } from "@mantine/hooks";
-import { getUrlHostname } from "@primoui/utils";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { posthog } from "posthog-js";
-import { type ReactNode, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import type { inferServerActionReturnData } from "zsa";
-import { useServerAction } from "zsa-react";
-import { indexAllData } from "~/actions/misc";
-import { searchItems } from "~/actions/search";
+import { type HotkeyItem, useDebouncedState, useHotkeys } from "@mantine/hooks"
+import { getUrlHostname } from "@primoui/utils"
+import Image from "next/image"
+import { usePathname, useRouter } from "next/navigation"
+import { posthog } from "posthog-js"
+import { type ReactNode, useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
+import type { inferServerActionReturnData } from "zsa"
+import { useServerAction } from "zsa-react"
+import { indexAllData } from "~/actions/misc"
+import { searchItems } from "~/actions/search"
 import {
   CommandDialog,
   CommandEmpty,
@@ -19,19 +19,19 @@ import {
   CommandItem,
   CommandList,
   CommandShortcut,
-} from "~/components/common/command";
-import { Icon } from "~/components/common/icon";
-import { Kbd } from "~/components/common/kbd";
-import { useSearch } from "~/contexts/search-context";
-import { useSession } from "~/lib/auth-client";
+} from "~/components/common/command"
+import { Icon } from "~/components/common/icon"
+import { Kbd } from "~/components/common/kbd"
+import { useSearch } from "~/contexts/search-context"
+import { useSession } from "~/lib/auth-client"
 
 type SearchResultsProps<T> = {
-  name: string;
-  items: T[] | undefined;
-  onItemSelect: (url: string) => void;
-  getHref: (item: T) => string;
-  renderItemDisplay: (item: T) => ReactNode;
-};
+  name: string
+  items: T[] | undefined
+  onItemSelect: (url: string) => void
+  getHref: (item: T) => string
+  renderItemDisplay: (item: T) => ReactNode
+}
 
 const SearchResults = <T extends { slug: string }>({
   name,
@@ -40,11 +40,11 @@ const SearchResults = <T extends { slug: string }>({
   getHref,
   renderItemDisplay,
 }: SearchResultsProps<T>) => {
-  if (!items?.length) return null;
+  if (!items?.length) return null
 
   return (
     <CommandGroup heading={name}>
-      {items.map((item) => (
+      {items.map(item => (
         <CommandItem
           key={item.slug}
           value={`${name.toLowerCase()}:${item.slug}`}
@@ -54,34 +54,33 @@ const SearchResults = <T extends { slug: string }>({
         </CommandItem>
       ))}
     </CommandGroup>
-  );
-};
+  )
+}
 
 type CommandSection = {
-  name: string;
+  name: string
   items: {
-    label: string;
-    path: string;
-    shortcut?: boolean;
-  }[];
-};
+    label: string
+    path: string
+    shortcut?: boolean
+  }[]
+}
 
 export const Search = () => {
-  const { data: session } = useSession();
-  const router = useRouter();
-  const pathname = usePathname();
-  const search = useSearch();
-  const [results, setResults] =
-    useState<inferServerActionReturnData<typeof searchItems>>();
-  const [query, setQuery] = useDebouncedState("", 500);
-  const listRef = useRef<HTMLDivElement>(null);
-  const normalizedQuery = query.trim();
-  const ports = results?.ports?.hits;
-  const themes = results?.themes?.hits;
-  const platforms = results?.platforms?.hits;
-  const isAdmin = session?.user.role === "admin";
-  const isAdminPath = pathname.startsWith("/admin");
-  const hasQuery = normalizedQuery.length > 0;
+  const { data: session } = useSession()
+  const router = useRouter()
+  const pathname = usePathname()
+  const search = useSearch()
+  const [results, setResults] = useState<inferServerActionReturnData<typeof searchItems>>()
+  const [query, setQuery] = useDebouncedState("", 500)
+  const listRef = useRef<HTMLDivElement>(null)
+  const normalizedQuery = query.trim()
+  const ports = results?.ports?.hits
+  const themes = results?.themes?.hits
+  const platforms = results?.platforms?.hits
+  const isAdmin = session?.user.role === "admin"
+  const isAdminPath = pathname.startsWith("/admin")
+  const hasQuery = normalizedQuery.length > 0
 
   const actions = [
     {
@@ -89,7 +88,7 @@ export const Search = () => {
       label: "Index All Data",
       successMessage: "Data indexed",
     },
-  ] as const;
+  ] as const
 
   const adminActions = actions.map(({ label, action, successMessage }) => ({
     label,
@@ -97,27 +96,27 @@ export const Search = () => {
       onSuccess: () => toast.success(successMessage),
       onError: ({ err }) => toast.error(err.message),
     }).execute,
-  }));
+  }))
 
   const clearSearch = () => {
     setTimeout(() => {
-      setResults(undefined);
-      setQuery("");
-    }, 250);
-  };
+      setResults(undefined)
+      setQuery("")
+    }, 250)
+  }
 
   const handleOpenChange = (open: boolean) => {
-    open ? search.open() : search.close();
-    if (!open) clearSearch();
-  };
+    open ? search.open() : search.close()
+    if (!open) clearSearch()
+  }
 
   const navigateTo = (path: string) => {
-    router.push(path);
-    handleOpenChange(false);
-  };
+    router.push(path)
+    handleOpenChange(false)
+  }
 
-  const commandSections: CommandSection[] = [];
-  const hotkeys: HotkeyItem[] = [["mod+K", () => search.open()]];
+  const commandSections: CommandSection[] = []
+  const hotkeys: HotkeyItem[] = [["mod+K", () => search.open()]]
 
   // Admin command sections & hotkeys
   if (isAdmin) {
@@ -140,10 +139,10 @@ export const Search = () => {
           shortcut: true,
         },
       ],
-    });
+    })
 
     for (const [i, { path, shortcut }] of commandSections[0].items.entries()) {
-      shortcut && hotkeys.push([`mod+${i + 1}`, () => navigateTo(path)]);
+      shortcut && hotkeys.push([`mod+${i + 1}`, () => navigateTo(path)])
     }
 
     // User command sections & hotkeys
@@ -155,14 +154,14 @@ export const Search = () => {
         { label: "Themes", path: "/themes" },
         { label: "Platforms", path: "/platforms" },
       ],
-    });
+    })
   }
 
-  useHotkeys(hotkeys, [], true);
+  useHotkeys(hotkeys, [], true)
 
   const { execute, isPending } = useServerAction(searchItems, {
     onSuccess: ({ data }) => {
-      setResults(data);
+      setResults(data)
 
       if (data?.telemetry.usedFallback) {
         posthog.capture("search_meili_fallback", {
@@ -171,55 +170,47 @@ export const Search = () => {
           fallbackIndexes: data.telemetry.fallbackIndexes,
           fallbackReasons: data.telemetry.fallbackReasons,
           meiliFailures: data.telemetry.meiliFailures,
-        });
+        })
       }
 
-      const q = normalizedQuery.toLowerCase();
+      const q = normalizedQuery.toLowerCase()
 
       if (q.length > 1) {
-        posthog.capture("search", { query: q });
+        posthog.capture("search", { query: q })
       }
     },
 
     onError: ({ err }) => {
-      console.error(err);
-      setResults(undefined);
+      console.error(err)
+      setResults(undefined)
     },
-  });
+  })
 
   useEffect(() => {
     const performSearch = async () => {
       if (normalizedQuery.length > 0) {
-        execute({ query: normalizedQuery });
-        listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+        execute({ query: normalizedQuery })
+        listRef.current?.scrollTo({ top: 0, behavior: "smooth" })
       } else {
-        setResults(undefined);
+        setResults(undefined)
       }
-    };
+    }
 
-    performSearch();
-  }, [normalizedQuery, execute]);
+    performSearch()
+  }, [normalizedQuery, execute])
 
   return (
-    <CommandDialog
-      open={search.isOpen}
-      onOpenChange={handleOpenChange}
-      shouldFilter={false}
-    >
+    <CommandDialog open={search.isOpen} onOpenChange={handleOpenChange} shouldFilter={false}>
       <CommandInput
         placeholder="Type to search..."
         onValueChange={setQuery}
         className="pr-10"
-        prefix={
-          isPending && <Icon name="lucide/loader" className="animate-spin" />
-        }
+        prefix={isPending && <Icon name="lucide/loader" className="animate-spin" />}
         suffix={<Kbd meta>K</Kbd>}
       />
 
       {hasQuery && !isPending && (
-        <CommandEmpty>
-          No results found. Please try a different query.
-        </CommandEmpty>
+        <CommandEmpty>No results found. Please try a different query.</CommandEmpty>
       )}
 
       <CommandList ref={listRef}>
@@ -251,27 +242,25 @@ export const Search = () => {
           onItemSelect={navigateTo}
           getHref={({ id, slug, name, themeSlug, platformSlug }) => {
             if (isAdminPath) {
-              return `/admin/ports/${slug}`;
+              return `/admin/ports/${slug}`
             }
 
             if (id && themeSlug && platformSlug) {
-              return `/themes/${themeSlug}/${platformSlug}/${id}`;
+              return `/themes/${themeSlug}/${platformSlug}/${id}`
             }
 
-            const q = encodeURIComponent(name || slug);
-            return `/themes?q=${q}`;
+            const q = encodeURIComponent(name || slug)
+            return `/themes?q=${q}`
           }}
           renderItemDisplay={({ name, repositoryUrl, websiteUrl }) => {
-            const url = repositoryUrl || websiteUrl;
+            const url = repositoryUrl || websiteUrl
 
             return (
               <>
                 <span className="flex-1 truncate">{name}</span>
-                <span className="opacity-50">
-                  {url ? getUrlHostname(url) : ""}
-                </span>
+                <span className="opacity-50">{url ? getUrlHostname(url) : ""}</span>
               </>
-            );
+            )
           }}
         />
 
@@ -279,14 +268,10 @@ export const Search = () => {
           name="Themes"
           items={themes}
           onItemSelect={navigateTo}
-          getHref={({ slug }) =>
-            `${isAdminPath ? "/admin" : ""}/themes/${slug}`
-          }
+          getHref={({ slug }) => `${isAdminPath ? "/admin" : ""}/themes/${slug}`}
           renderItemDisplay={({ name, faviconUrl }) => (
             <>
-              {faviconUrl && (
-                <Image src={faviconUrl} alt="" width={16} height={16} />
-              )}
+              {faviconUrl && <Image src={faviconUrl} alt="" width={16} height={16} />}
               <span className="flex-1 truncate">{name}</span>
             </>
           )}
@@ -296,9 +281,7 @@ export const Search = () => {
           name="Platforms"
           items={platforms}
           onItemSelect={navigateTo}
-          getHref={({ slug }) =>
-            isAdminPath ? `/admin/platforms/${slug}` : `/platforms/${slug}`
-          }
+          getHref={({ slug }) => (isAdminPath ? `/admin/platforms/${slug}` : `/platforms/${slug}`)}
           renderItemDisplay={({ name }) => name}
         />
       </CommandList>
@@ -319,5 +302,5 @@ export const Search = () => {
         </div>
       )}
     </CommandDialog>
-  );
-};
+  )
+}

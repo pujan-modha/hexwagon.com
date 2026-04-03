@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import { formatDate } from "@primoui/utils";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
-import { useServerAction } from "zsa-react";
-import { Button } from "~/components/common/button";
+import { formatDate } from "@primoui/utils"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { toast } from "sonner"
+import { useServerAction } from "zsa-react"
+import { Button } from "~/components/common/button"
 import {
   Dialog,
   DialogClose,
@@ -14,32 +14,30 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/common/dialog";
-import { deleteComment } from "~/server/admin/comments/actions";
-import type { findComments } from "~/server/admin/comments/queries";
+} from "~/components/common/dialog"
+import { deleteComment } from "~/server/admin/comments/actions"
+import type { findComments } from "~/server/admin/comments/queries"
 
-type CommentRow = Awaited<ReturnType<typeof findComments>>["comments"][number];
+type CommentRow = Awaited<ReturnType<typeof findComments>>["comments"][number]
 
 type CommentsTableProps = {
-  comments: CommentRow[];
-};
+  comments: CommentRow[]
+}
 
 export const CommentsTable = ({ comments }: CommentsTableProps) => {
-  const router = useRouter();
-  const [selectedComment, setSelectedComment] = useState<CommentRow | null>(
-    null,
-  );
+  const router = useRouter()
+  const [selectedComment, setSelectedComment] = useState<CommentRow | null>(null)
 
   const { execute, isPending } = useServerAction(deleteComment, {
     onSuccess: () => {
-      toast.success("Comment deleted");
-      setSelectedComment(null);
-      router.refresh();
+      toast.success("Comment deleted")
+      setSelectedComment(null)
+      router.refresh()
     },
     onError: ({ err }) => {
-      toast.error(err.message);
+      toast.error(err.message)
     },
-  });
+  })
 
   return (
     <>
@@ -56,7 +54,7 @@ export const CommentsTable = ({ comments }: CommentsTableProps) => {
           </thead>
 
           <tbody>
-            {comments.map((comment) => (
+            {comments.map(comment => (
               <tr key={comment.id} className="border-t align-top">
                 <td className="px-4 py-3">{comment.port?.name ?? "Unknown"}</td>
 
@@ -64,9 +62,7 @@ export const CommentsTable = ({ comments }: CommentsTableProps) => {
                   <div className="grid gap-1">
                     <span>{comment.author?.email ?? "Anonymous"}</span>
                     {comment.author?.name && (
-                      <span className="text-xs text-muted-foreground">
-                        {comment.author.name}
-                      </span>
+                      <span className="text-xs text-muted-foreground">{comment.author.name}</span>
                     )}
                   </div>
                 </td>
@@ -75,9 +71,7 @@ export const CommentsTable = ({ comments }: CommentsTableProps) => {
                   {comment.content}
                 </td>
 
-                <td className="px-4 py-3 whitespace-nowrap">
-                  {formatDate(comment.createdAt)}
-                </td>
+                <td className="px-4 py-3 whitespace-nowrap">{formatDate(comment.createdAt)}</td>
 
                 <td className="px-4 py-3 text-right">
                   <Button
@@ -96,9 +90,9 @@ export const CommentsTable = ({ comments }: CommentsTableProps) => {
 
       <Dialog
         open={Boolean(selectedComment)}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) {
-            setSelectedComment(null);
+            setSelectedComment(null)
           }
         }}
       >
@@ -106,8 +100,7 @@ export const CommentsTable = ({ comments }: CommentsTableProps) => {
           <DialogHeader>
             <DialogTitle>Delete comment?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. The selected comment will be
-              permanently removed.
+              This action cannot be undone. The selected comment will be permanently removed.
             </DialogDescription>
           </DialogHeader>
 
@@ -124,10 +117,10 @@ export const CommentsTable = ({ comments }: CommentsTableProps) => {
               isPending={isPending}
               onClick={() => {
                 if (!selectedComment) {
-                  return;
+                  return
                 }
 
-                execute({ id: selectedComment.id });
+                execute({ id: selectedComment.id })
               }}
             >
               Delete comment
@@ -136,5 +129,5 @@ export const CommentsTable = ({ comments }: CommentsTableProps) => {
         </DialogContent>
       </Dialog>
     </>
-  );
-};
+  )
+}

@@ -1,4 +1,4 @@
-import { type Prisma, PortStatus } from "@prisma/client"
+import { PortStatus, type Prisma } from "@prisma/client"
 import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from "next/cache"
 import { tagManyPayload } from "~/server/web/tags/payloads"
 import { db } from "~/services/db"

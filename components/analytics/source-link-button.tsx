@@ -1,15 +1,15 @@
-"use client";
+"use client"
 
-import type { ComponentProps } from "react";
-import { ExternalLink } from "~/components/web/external-link";
-import { trackEvent } from "~/hooks/use-analytics";
+import type { ComponentProps } from "react"
+import { ExternalLink } from "~/components/web/external-link"
+import { trackEvent } from "~/hooks/use-analytics"
 
 type SourceLinkButtonProps = {
-  href: string;
-  eventName: "repo_link_clicked";
-  eventProperties: { portId: string; repositoryUrl: string };
-  children: React.ReactNode;
-} & Omit<ComponentProps<typeof ExternalLink>, "eventName" | "eventProps">;
+  href: string
+  eventName: "repo_link_clicked"
+  eventProperties: { portId: string; repositoryUrl: string }
+  children: React.ReactNode
+} & Omit<ComponentProps<typeof ExternalLink>, "eventName" | "eventProps">
 
 const SourceLinkButton = ({
   href,
@@ -25,8 +25,8 @@ const SourceLinkButton = ({
         portId: eventProperties.portId,
         repositoryUrl: eventProperties.repositoryUrl,
       },
-    });
-  };
+    })
+  }
 
   return (
     <ExternalLink
@@ -38,7 +38,7 @@ const SourceLinkButton = ({
     >
       {children}
     </ExternalLink>
-  );
-};
+  )
+}
 
-export { SourceLinkButton };
+export { SourceLinkButton }

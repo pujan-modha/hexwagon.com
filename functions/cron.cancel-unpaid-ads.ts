@@ -1,9 +1,9 @@
-import { millisecondsInHour } from "date-fns/constants";
-import { revalidateTag } from "next/cache";
-import { adsConfig } from "~/config/ads";
-import { config } from "~/config";
-import { adStatus } from "~/utils/ads";
-import { inngest } from "~/services/inngest";
+import { millisecondsInHour } from "date-fns/constants"
+import { revalidateTag } from "next/cache"
+import { config } from "~/config"
+import { adsConfig } from "~/config/ads"
+import { inngest } from "~/services/inngest"
+import { adStatus } from "~/utils/ads"
 
 export const cancelUnpaidAds = inngest.createFunction(
   { id: `${config.site.slug}.cancel-unpaid-ads` },
@@ -12,7 +12,7 @@ export const cancelUnpaidAds = inngest.createFunction(
   async ({ step, db, logger }) => {
     const paymentDeadline = new Date(
       Date.now() - adsConfig.paymentDeadlineHours * millisecondsInHour,
-    );
+    )
 
     const { count } = await step.run("cancel-expired-unpaid-ads", async () => {
       return db.ad.updateMany({
@@ -29,22 +29,22 @@ export const cancelUnpaidAds = inngest.createFunction(
           rejectedAt: null,
           adminNote: "Auto-cancelled: payment deadline exceeded",
         },
-      });
-    });
+      })
+    })
 
     if (count > 0) {
       logger.info("Auto-cancelled unpaid ads after payment deadline", {
         count,
         paymentDeadlineHours: adsConfig.paymentDeadlineHours,
-      });
+      })
 
       await step.run("revalidate-ads-cache", async () => {
-        revalidateTag("ads", "max");
-      });
+        revalidateTag("ads", "max")
+      })
     }
 
     await step.run("disconnect-from-db", async () => {
-      return db.$disconnect();
-    });
+      return db.$disconnect()
+    })
   },
-);
+)

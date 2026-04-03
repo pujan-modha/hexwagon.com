@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import { formatDate } from "@primoui/utils";
-import { EditStatus } from "@prisma/client";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { useServerAction } from "zsa-react";
-import { Button } from "~/components/common/button";
+import { formatDate } from "@primoui/utils"
+import { EditStatus } from "@prisma/client"
+import { useRouter } from "next/navigation"
+import { useMemo, useState } from "react"
+import { toast } from "sonner"
+import { useServerAction } from "zsa-react"
+import { Button } from "~/components/common/button"
 import {
   Dialog,
   DialogContent,
@@ -14,29 +14,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/common/dialog";
-import { Note } from "~/components/common/note";
-import { TextArea } from "~/components/common/textarea";
-import type { findPortEdits } from "~/server/admin/port-edits/queries";
-import {
-  approvePortEdit,
-  rejectPortEdit,
-} from "~/server/admin/port-edits/actions";
+} from "~/components/common/dialog"
+import { Note } from "~/components/common/note"
+import { TextArea } from "~/components/common/textarea"
+import { approvePortEdit, rejectPortEdit } from "~/server/admin/port-edits/actions"
+import type { findPortEdits } from "~/server/admin/port-edits/queries"
 
-type PortEditRow = Awaited<
-  ReturnType<typeof findPortEdits>
->["portEdits"][number];
+type PortEditRow = Awaited<ReturnType<typeof findPortEdits>>["portEdits"][number]
 
 type PortEditsTableProps = {
-  portEdits: PortEditRow[];
-};
+  portEdits: PortEditRow[]
+}
 
-type EditableField =
-  | "name"
-  | "description"
-  | "content"
-  | "repositoryUrl"
-  | "license";
+type EditableField = "name" | "description" | "content" | "repositoryUrl" | "license"
 
 const fieldLabels: Record<EditableField, string> = {
   name: "Name",
@@ -44,138 +34,128 @@ const fieldLabels: Record<EditableField, string> = {
   content: "Content",
   repositoryUrl: "Port URL",
   license: "License",
-};
+}
 
-const isEditableField = (value: string): value is EditableField =>
-  value in fieldLabels;
+const isEditableField = (value: string): value is EditableField => value in fieldLabels
 
 const normalizeFieldValue = (value: unknown): string | null => {
   if (value === null || value === undefined) {
-    return null;
+    return null
   }
 
   if (typeof value === "string") {
-    return value;
+    return value
   }
 
   try {
-    return JSON.stringify(value);
+    return JSON.stringify(value)
   } catch {
-    return String(value);
+    return String(value)
   }
-};
+}
 
-const getDiffRecord = (
-  diff: unknown,
-): Partial<Record<EditableField, string | null>> => {
+const getDiffRecord = (diff: unknown): Partial<Record<EditableField, string | null>> => {
   if (typeof diff !== "object" || diff === null) {
-    return {};
+    return {}
   }
 
-  const record: Partial<Record<EditableField, string | null>> = {};
+  const record: Partial<Record<EditableField, string | null>> = {}
 
   for (const [key, value] of Object.entries(diff)) {
     if (isEditableField(key)) {
-      record[key] = normalizeFieldValue(value);
+      record[key] = normalizeFieldValue(value)
     }
   }
 
-  return record;
-};
+  return record
+}
 
 const getChangedFields = (diff: unknown) =>
-  Object.keys(getDiffRecord(diff)).filter(isEditableField).sort();
+  Object.keys(getDiffRecord(diff)).filter(isEditableField).sort()
 
 const getPortFieldValue = (
   port: PortEditRow["port"] | null | undefined,
   field: EditableField,
 ): string | null => {
   if (!port) {
-    return null;
+    return null
   }
 
   switch (field) {
     case "name":
-      return port.name;
+      return port.name
     case "description":
-      return port.description;
+      return port.description
     case "content":
-      return port.content;
+      return port.content
     case "repositoryUrl":
-      return port.repositoryUrl;
+      return port.repositoryUrl
     case "license":
-      return port.license;
+      return port.license
   }
-};
+}
 
 const DiffValue = ({ value }: { value: string | null | undefined }) => {
-  const normalized = value?.trim() ?? "";
-  const display = normalized.length > 0 ? normalized : "(empty)";
-  const isLong = display.includes("\n") || display.length > 120;
+  const normalized = value?.trim() ?? ""
+  const display = normalized.length > 0 ? normalized : "(empty)"
+  const isLong = display.includes("\n") || display.length > 120
 
   if (isLong) {
     return (
       <pre className="max-h-60 overflow-auto rounded-md border bg-muted/30 p-2 text-xs whitespace-pre-wrap break-words">
         {display}
       </pre>
-    );
+    )
   }
 
-  return (
-    <p className="rounded-md border bg-muted/30 p-2 text-sm break-words">
-      {display}
-    </p>
-  );
-};
+  return <p className="rounded-md border bg-muted/30 p-2 text-sm break-words">{display}</p>
+}
 
 export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
-  const router = useRouter();
-  const [previewingId, setPreviewingId] = useState<string | null>(null);
-  const [rejectingId, setRejectingId] = useState<string | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
+  const router = useRouter()
+  const [previewingId, setPreviewingId] = useState<string | null>(null)
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState("")
   const previewingEdit = useMemo(
-    () => portEdits.find((edit) => edit.id === previewingId) ?? null,
+    () => portEdits.find(edit => edit.id === previewingId) ?? null,
     [portEdits, previewingId],
-  );
-  const previewDiff = useMemo(
-    () => getDiffRecord(previewingEdit?.diff),
-    [previewingEdit?.diff],
-  );
+  )
+  const previewDiff = useMemo(() => getDiffRecord(previewingEdit?.diff), [previewingEdit?.diff])
   const previewFields = useMemo(
     () => Object.keys(previewDiff).filter(isEditableField).sort(),
     [previewDiff],
-  );
+  )
 
   const approveAction = useServerAction(approvePortEdit, {
     onSuccess: () => {
-      toast.success("Port edit approved and published.");
-      setPreviewingId(null);
-      router.refresh();
+      toast.success("Port edit approved and published.")
+      setPreviewingId(null)
+      router.refresh()
     },
     onError: ({ err }) => {
-      toast.error(err.message);
+      toast.error(err.message)
     },
-  });
+  })
 
   const rejectAction = useServerAction(rejectPortEdit, {
     onSuccess: () => {
-      toast.success("Port edit rejected.");
-      setRejectingId(null);
-      setRejectReason("");
-      router.refresh();
+      toast.success("Port edit rejected.")
+      setRejectingId(null)
+      setRejectReason("")
+      router.refresh()
     },
     onError: ({ err }) => {
-      toast.error(err.message);
+      toast.error(err.message)
     },
-  });
+  })
 
   const pendingCount = useMemo(
-    () => portEdits.filter((edit) => edit.status === EditStatus.Pending).length,
+    () => portEdits.filter(edit => edit.status === EditStatus.Pending).length,
     [portEdits],
-  );
+  )
 
   if (portEdits.length === 0) {
-    return <Note>No port edits found.</Note>;
+    return <Note>No port edits found.</Note>
   }
 
   return (
@@ -188,9 +168,7 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
             <tr>
               <th className="px-4 py-3 text-left font-medium">Port</th>
               <th className="px-4 py-3 text-left font-medium">Editor</th>
-              <th className="px-4 py-3 text-left font-medium">
-                Changed fields
-              </th>
+              <th className="px-4 py-3 text-left font-medium">Changed fields</th>
               <th className="px-4 py-3 text-left font-medium">Status</th>
               <th className="px-4 py-3 text-left font-medium">Created</th>
               <th className="px-4 py-3 text-right font-medium">Actions</th>
@@ -198,25 +176,19 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
           </thead>
 
           <tbody>
-            {portEdits.map((portEdit) => {
-              const changedFields = getChangedFields(portEdit.diff);
-              const isPending = portEdit.status === EditStatus.Pending;
+            {portEdits.map(portEdit => {
+              const changedFields = getChangedFields(portEdit.diff)
+              const isPending = portEdit.status === EditStatus.Pending
 
               return (
                 <tr key={portEdit.id} className="border-t align-top">
-                  <td className="px-4 py-3">
-                    {portEdit.port?.name ?? "Unknown"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {portEdit.editor?.name ?? "Unknown"}
-                  </td>
+                  <td className="px-4 py-3">{portEdit.port?.name ?? "Unknown"}</td>
+                  <td className="px-4 py-3">{portEdit.editor?.name ?? "Unknown"}</td>
                   <td className="px-4 py-3">
                     {changedFields.length > 0 ? changedFields.join(", ") : "-"}
                   </td>
                   <td className="px-4 py-3">{portEdit.status}</td>
-                  <td className="px-4 py-3">
-                    {formatDate(portEdit.createdAt)}
-                  </td>
+                  <td className="px-4 py-3">{formatDate(portEdit.createdAt)}</td>
                   <td className="px-4 py-3">
                     {isPending ? (
                       <div className="flex justify-end gap-2">
@@ -231,21 +203,19 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
                           size="sm"
                           variant="destructive"
                           onClick={() => {
-                            setRejectingId(portEdit.id);
-                            setRejectReason("");
+                            setRejectingId(portEdit.id)
+                            setRejectReason("")
                           }}
                         >
                           Reject
                         </Button>
                       </div>
                     ) : (
-                      <div className="text-right text-muted-foreground">
-                        Reviewed
-                      </div>
+                      <div className="text-right text-muted-foreground">Reviewed</div>
                     )}
                   </td>
                 </tr>
-              );
+              )
             })}
           </tbody>
         </table>
@@ -253,9 +223,9 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
 
       <Dialog
         open={Boolean(previewingEdit)}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) {
-            setPreviewingId(null);
+            setPreviewingId(null)
           }
         }}
       >
@@ -281,26 +251,18 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
               </div>
 
               {previewFields.length > 0 ? (
-                previewFields.map((field) => (
+                previewFields.map(field => (
                   <div key={field} className="rounded-md border p-4 grid gap-3">
-                    <h4 className="text-sm font-semibold">
-                      {fieldLabels[field]}
-                    </h4>
+                    <h4 className="text-sm font-semibold">{fieldLabels[field]}</h4>
 
                     <div className="grid gap-3 md:grid-cols-2">
                       <div className="grid gap-1.5">
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Current
-                        </span>
-                        <DiffValue
-                          value={getPortFieldValue(previewingEdit.port, field)}
-                        />
+                        <span className="text-xs font-medium text-muted-foreground">Current</span>
+                        <DiffValue value={getPortFieldValue(previewingEdit.port, field)} />
                       </div>
 
                       <div className="grid gap-1.5">
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Proposed
-                        </span>
+                        <span className="text-xs font-medium text-muted-foreground">Proposed</span>
                         <DiffValue value={previewDiff[field]} />
                       </div>
                     </div>
@@ -313,11 +275,7 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
           ) : null}
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setPreviewingId(null)}
-            >
+            <Button type="button" variant="secondary" onClick={() => setPreviewingId(null)}>
               Close
             </Button>
             <Button
@@ -327,10 +285,10 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
               disabled={!previewingEdit || previewFields.length === 0}
               onClick={() => {
                 if (!previewingEdit) {
-                  return;
+                  return
                 }
 
-                approveAction.execute({ id: previewingEdit.id });
+                approveAction.execute({ id: previewingEdit.id })
               }}
             >
               Approve and publish
@@ -341,10 +299,10 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
 
       <Dialog
         open={Boolean(rejectingId)}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) {
-            setRejectingId(null);
-            setRejectReason("");
+            setRejectingId(null)
+            setRejectReason("")
           }
         }}
       >
@@ -358,7 +316,7 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
 
           <TextArea
             value={rejectReason}
-            onChange={(event) => setRejectReason(event.target.value)}
+            onChange={event => setRejectReason(event.target.value)}
             placeholder="Optional rejection reason"
             rows={4}
           />
@@ -368,8 +326,8 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
               type="button"
               variant="secondary"
               onClick={() => {
-                setRejectingId(null);
-                setRejectReason("");
+                setRejectingId(null)
+                setRejectReason("")
               }}
             >
               Cancel
@@ -380,13 +338,13 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
               isPending={rejectAction.isPending}
               onClick={() => {
                 if (!rejectingId) {
-                  return;
+                  return
                 }
 
                 rejectAction.execute({
                   id: rejectingId,
                   adminNote: rejectReason.trim() || undefined,
-                });
+                })
               }}
             >
               Confirm reject
@@ -395,5 +353,5 @@ export const PortEditsTable = ({ portEdits }: PortEditsTableProps) => {
         </DialogContent>
       </Dialog>
     </div>
-  );
-};
+  )
+}

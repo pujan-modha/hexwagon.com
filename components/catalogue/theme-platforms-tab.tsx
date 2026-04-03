@@ -1,15 +1,15 @@
-import type { PlatformMany } from "~/server/web/platforms/payloads";
-import { themePlatformHref } from "~/lib/catalogue";
-import { CatalogueGrid } from "./catalogue-grid";
-import { PlatformCard } from "./platform-card";
-import { CatalogueSearchControls } from "~/components/web/catalogue-search-controls";
+import { CatalogueSearchControls } from "~/components/web/catalogue-search-controls"
+import { themePlatformHref } from "~/lib/catalogue"
+import type { PlatformMany } from "~/server/web/platforms/payloads"
+import { CatalogueGrid } from "./catalogue-grid"
+import { PlatformCard } from "./platform-card"
 
 type ThemePlatformsTabProps = {
-  platforms: PlatformMany[];
-  themeSlug: string;
-  query: string;
-  sort: string;
-};
+  platforms: PlatformMany[]
+  themeSlug: string
+  query: string
+  sort: string
+}
 
 const platformSortOptions = [
   { value: "default", label: "Best match" },
@@ -17,14 +17,9 @@ const platformSortOptions = [
   { value: "name.asc", label: "Name A-Z" },
   { value: "name.desc", label: "Name Z-A" },
   { value: "createdAt.desc", label: "Newest" },
-];
+]
 
-const ThemePlatformsTab = ({
-  platforms,
-  themeSlug,
-  query,
-  sort,
-}: ThemePlatformsTabProps) => {
+const ThemePlatformsTab = ({ platforms, themeSlug, query, sort }: ThemePlatformsTabProps) => {
   return (
     <div className="space-y-4">
       <CatalogueSearchControls
@@ -35,7 +30,7 @@ const ThemePlatformsTab = ({
       />
 
       <CatalogueGrid className="lg:grid-cols-2">
-        {platforms.map((platform) => (
+        {platforms.map(platform => (
           <PlatformCard
             key={platform.id}
             platform={platform}
@@ -45,7 +40,7 @@ const ThemePlatformsTab = ({
         ))}
       </CatalogueGrid>
     </div>
-  );
-};
+  )
+}
 
-export { ThemePlatformsTab };
+export { ThemePlatformsTab }

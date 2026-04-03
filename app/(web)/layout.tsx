@@ -26,10 +26,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
         "@id": `${url}/#/schema/organization/1`,
         name: config.site.name,
         url: `${url}/`,
-        sameAs: [
-          config.links.twitter,
-          config.links.linkedin,
-        ],
+        sameAs: [config.links.twitter, config.links.linkedin],
         logo: {
           "@type": "ImageObject",
           "@id": `${url}/#/schema/image/1`,

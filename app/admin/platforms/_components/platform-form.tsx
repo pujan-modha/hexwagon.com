@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { getRandomString, isValidUrl, slugify } from "@primoui/utils";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import type { ComponentProps } from "react";
-import { use, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { useServerAction } from "zsa-react";
-import { generateFavicon, uploadImageToS3 } from "~/actions/media";
-import { Button } from "~/components/common/button";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { getRandomString, isValidUrl, slugify } from "@primoui/utils"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
+import type { ComponentProps } from "react"
+import { use, useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { useServerAction } from "zsa-react"
+import { generateFavicon, uploadImageToS3 } from "~/actions/media"
+import { Button } from "~/components/common/button"
 import {
   Form,
   FormControl,
@@ -18,32 +18,32 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "~/components/common/form";
-import { H3 } from "~/components/common/heading";
-import { Icon } from "~/components/common/icon";
-import { Input, inputVariants } from "~/components/common/input";
-import { Link } from "~/components/common/link";
-import { Note } from "~/components/common/note";
-import { Stack } from "~/components/common/stack";
-import { Switch } from "~/components/common/switch";
-import { TextArea } from "~/components/common/textarea";
-import { ExternalLink } from "~/components/web/external-link";
-import { Markdown } from "~/components/web/markdown";
-import { LICENSE_SUGGESTIONS } from "~/config/licenses";
-import { siteConfig } from "~/config/site";
-import { useComputedField } from "~/hooks/use-computed-field";
-import { upsertPlatform } from "~/server/admin/platforms/actions";
-import type { findPlatformBySlug } from "~/server/admin/platforms/queries";
-import { platformSchema } from "~/server/admin/platforms/schema";
-import { PlatformActions } from "./platform-actions";
-import { cx } from "~/utils/cva";
+} from "~/components/common/form"
+import { H3 } from "~/components/common/heading"
+import { Icon } from "~/components/common/icon"
+import { Input, inputVariants } from "~/components/common/input"
+import { Link } from "~/components/common/link"
+import { Note } from "~/components/common/note"
+import { Stack } from "~/components/common/stack"
+import { Switch } from "~/components/common/switch"
+import { TextArea } from "~/components/common/textarea"
+import { ExternalLink } from "~/components/web/external-link"
+import { Markdown } from "~/components/web/markdown"
+import { LICENSE_SUGGESTIONS } from "~/config/licenses"
+import { siteConfig } from "~/config/site"
+import { useComputedField } from "~/hooks/use-computed-field"
+import { upsertPlatform } from "~/server/admin/platforms/actions"
+import type { findPlatformBySlug } from "~/server/admin/platforms/queries"
+import { platformSchema } from "~/server/admin/platforms/schema"
+import { cx } from "~/utils/cva"
+import { PlatformActions } from "./platform-actions"
 
 const IMAGE_ACCEPT =
-  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg"
 
 type PlatformFormProps = ComponentProps<"form"> & {
-  platform?: Awaited<ReturnType<typeof findPlatformBySlug>>;
-};
+  platform?: Awaited<ReturnType<typeof findPlatformBySlug>>
+}
 
 export function PlatformForm({
   children,
@@ -52,8 +52,8 @@ export function PlatformForm({
   platform,
   ...props
 }: PlatformFormProps) {
-  const router = useRouter();
-  const [isPreviewing, setIsPreviewing] = useState(false);
+  const router = useRouter()
+  const [isPreviewing, setIsPreviewing] = useState(false)
 
   const form = useForm({
     resolver: zodResolver(platformSchema),
@@ -69,7 +69,7 @@ export function PlatformForm({
       order: platform?.order ?? 0,
       license: platform?.license ?? "",
     },
-  });
+  })
 
   useComputedField({
     form,
@@ -77,61 +77,51 @@ export function PlatformForm({
     computedField: "slug",
     callback: slugify,
     enabled: !platform,
-  });
+  })
 
-  const [slug, websiteUrl] = form.watch(["slug", "websiteUrl"]);
+  const [slug, websiteUrl] = form.watch(["slug", "websiteUrl"])
 
   const upsertAction = useServerAction(upsertPlatform, {
     onSuccess: ({ data }) => {
-      toast.success(
-        `Platform successfully ${platform ? "updated" : "created"}`,
-      );
+      toast.success(`Platform successfully ${platform ? "updated" : "created"}`)
 
       if (!platform || data.slug !== platform.slug) {
-        router.push(`/admin/platforms/${data.slug}`);
+        router.push(`/admin/platforms/${data.slug}`)
       }
     },
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
   const faviconAction = useServerAction(generateFavicon, {
     onSuccess: ({ data }) => {
-      form.setValue("faviconUrl", data);
+      form.setValue("faviconUrl", data)
     },
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
   const uploadImageAction = useServerAction(uploadImageToS3, {
     onSuccess: ({ data }) => {
-      toast.success(
-        "Image uploaded successfully. Please save the platform to update.",
-      );
-      form.setValue("faviconUrl", data, { shouldDirty: true });
+      toast.success("Image uploaded successfully. Please save the platform to update.")
+      form.setValue("faviconUrl", data, { shouldDirty: true })
     },
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
   useEffect(() => {
-    const currentFaviconUrl = form.getValues("faviconUrl")?.trim();
-    if (currentFaviconUrl) return;
-    if (!isValidUrl(websiteUrl)) return;
-    if (faviconAction.isPending || uploadImageAction.isPending) return;
+    const currentFaviconUrl = form.getValues("faviconUrl")?.trim()
+    if (currentFaviconUrl) return
+    if (!isValidUrl(websiteUrl)) return
+    if (faviconAction.isPending || uploadImageAction.isPending) return
 
     faviconAction.execute({
       url: websiteUrl,
       path: `platforms/${slug || getRandomString(12)}`,
-    });
-  }, [
-    form,
-    slug,
-    websiteUrl,
-    faviconAction.isPending,
-    uploadImageAction.isPending,
-  ]);
+    })
+  }, [form, slug, websiteUrl, faviconAction.isPending, uploadImageAction.isPending])
 
-  const handleSubmit = form.handleSubmit((data) => {
-    upsertAction.execute({ id: platform?.id, ...data });
-  });
+  const handleSubmit = form.handleSubmit(data => {
+    upsertAction.execute({ id: platform?.id, ...data })
+  })
 
   return (
     <Form {...form}>
@@ -139,18 +129,13 @@ export function PlatformForm({
         <H3 className="flex-1 truncate">{title}</H3>
 
         <Stack size="sm" className="-my-0.5">
-          {platform && (
-            <PlatformActions platform={platform} className="ml-auto" />
-          )}
+          {platform && <PlatformActions platform={platform} className="ml-auto" />}
         </Stack>
 
         {platform && (
           <Note className="w-full">
             View:{" "}
-            <ExternalLink
-              href={`/platforms/${platform.slug}`}
-              className="text-primary underline"
-            >
+            <ExternalLink href={`/platforms/${platform.slug}`} className="text-primary underline">
               {siteConfig.url}/platforms/{platform.slug}
             </ExternalLink>
           </Note>
@@ -212,14 +197,10 @@ export function PlatformForm({
             <FormItem>
               <FormLabel>License</FormLabel>
               <FormControl>
-                <Input
-                  {...field}
-                  list="platform-license-suggestions"
-                  placeholder="MIT"
-                />
+                <Input {...field} list="platform-license-suggestions" placeholder="MIT" />
               </FormControl>
               <datalist id="platform-license-suggestions">
-                {LICENSE_SUGGESTIONS.map((option) => (
+                {LICENSE_SUGGESTIONS.map(option => (
                   <option key={option} value={option} />
                 ))}
               </datalist>
@@ -241,12 +222,8 @@ export function PlatformForm({
                     type="button"
                     size="sm"
                     variant="secondary"
-                    onClick={() => setIsPreviewing((prev) => !prev)}
-                    prefix={
-                      <Icon
-                        name={isPreviewing ? "lucide/pencil" : "lucide/eye"}
-                      />
-                    }
+                    onClick={() => setIsPreviewing(prev => !prev)}
+                    prefix={<Icon name={isPreviewing ? "lucide/pencil" : "lucide/eye"} />}
                     className="-my-1"
                   >
                     {isPreviewing ? "Edit" : "Preview"}
@@ -258,10 +235,7 @@ export function PlatformForm({
                 {field.value && isPreviewing ? (
                   <Markdown
                     code={field.value}
-                    className={cx(
-                      inputVariants(),
-                      "max-w-none border leading-normal",
-                    )}
+                    className={cx(inputVariants(), "max-w-none border leading-normal")}
                   />
                 ) : (
                   <TextArea {...field} />
@@ -308,10 +282,7 @@ export function PlatformForm({
               <FormItem>
                 <FormLabel>Featured</FormLabel>
                 <FormControl>
-                  <Switch
-                    onCheckedChange={field.onChange}
-                    checked={field.value}
-                  />
+                  <Switch onCheckedChange={field.onChange} checked={field.value} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -347,20 +318,16 @@ export function PlatformForm({
                     prefix={
                       <Icon
                         name="lucide/refresh-cw"
-                        className={cx(
-                          faviconAction.isPending && "animate-spin",
-                        )}
+                        className={cx(faviconAction.isPending && "animate-spin")}
                       />
                     }
                     className="-my-1"
-                    disabled={
-                      !isValidUrl(websiteUrl) || faviconAction.isPending
-                    }
+                    disabled={!isValidUrl(websiteUrl) || faviconAction.isPending}
                     onClick={() => {
                       faviconAction.execute({
                         url: websiteUrl,
                         path: `platforms/${slug || getRandomString(12)}`,
-                      });
+                      })
                     }}
                   >
                     {field.value ? "Regenerate" : "Generate"}
@@ -386,16 +353,16 @@ export function PlatformForm({
                     type="file"
                     hover
                     accept={IMAGE_ACCEPT}
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (!file) return;
+                    onChange={event => {
+                      const file = event.target.files?.[0]
+                      if (!file) return
 
                       uploadImageAction.execute({
                         file,
                         path: `platforms/${slug || getRandomString(12)}/favicon-upload`,
-                      });
+                      })
 
-                      event.currentTarget.value = "";
+                      event.currentTarget.value = ""
                     }}
                   />
 
@@ -421,5 +388,5 @@ export function PlatformForm({
         </div>
       </form>
     </Form>
-  );
+  )
 }

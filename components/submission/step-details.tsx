@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { useSubmissionStore } from "~/stores/submission-store";
-import { Button } from "~/components/common/button";
-import { Input } from "~/components/common/input";
-import { Label } from "~/components/common/label";
-import { Textarea } from "~/components/common/textarea";
-import { Switch } from "~/components/common/switch";
-import { LICENSE_SUGGESTIONS } from "~/config/licenses";
+import { Button } from "~/components/common/button"
+import { Input } from "~/components/common/input"
+import { Label } from "~/components/common/label"
+import { Switch } from "~/components/common/switch"
+import { Textarea } from "~/components/common/textarea"
+import { LICENSE_SUGGESTIONS } from "~/config/licenses"
+import { useSubmissionStore } from "~/stores/submission-store"
 
 type StepDetailsProps = {
-  onNext: () => void;
-  onBack: () => void;
-};
+  onNext: () => void
+  onBack: () => void
+}
 
 const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
   const {
@@ -23,7 +23,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
     submitterNote,
     newsletterOptIn,
     setPortDetails,
-  } = useSubmissionStore();
+  } = useSubmissionStore()
 
   return (
     <div className="flex flex-col gap-4">
@@ -32,7 +32,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         <Input
           id="port-name"
           value={name}
-          onChange={(e) => setPortDetails({ name: e.target.value })}
+          onChange={e => setPortDetails({ name: e.target.value })}
           placeholder="e.g., Dracula for VS Code"
         />
       </div>
@@ -42,7 +42,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         <Input
           id="port-description"
           value={description}
-          onChange={(e) => setPortDetails({ description: e.target.value })}
+          onChange={e => setPortDetails({ description: e.target.value })}
           placeholder="Brief description of this port"
         />
       </div>
@@ -52,7 +52,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         <Textarea
           id="port-content"
           value={content}
-          onChange={(e) => setPortDetails({ content: e.target.value })}
+          onChange={e => setPortDetails({ content: e.target.value })}
           placeholder="Detailed description, installation instructions, etc."
           rows={6}
         />
@@ -64,7 +64,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
           id="repository-url"
           type="url"
           value={repositoryUrl}
-          onChange={(e) => setPortDetails({ repositoryUrl: e.target.value })}
+          onChange={e => setPortDetails({ repositoryUrl: e.target.value })}
           placeholder="https://example.com/..."
         />
       </div>
@@ -74,12 +74,12 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         <Input
           id="port-license"
           value={license}
-          onChange={(e) => setPortDetails({ license: e.target.value })}
+          onChange={e => setPortDetails({ license: e.target.value })}
           placeholder="MIT"
           list="submission-license-suggestions"
         />
         <datalist id="submission-license-suggestions">
-          {LICENSE_SUGGESTIONS.map((option) => (
+          {LICENSE_SUGGESTIONS.map(option => (
             <option key={option} value={option} />
           ))}
         </datalist>
@@ -90,7 +90,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         <Textarea
           id="submitter-note"
           value={submitterNote}
-          onChange={(e) => setPortDetails({ submitterNote: e.target.value })}
+          onChange={e => setPortDetails({ submitterNote: e.target.value })}
           placeholder="Anything the review team should know?"
           rows={3}
         />
@@ -100,9 +100,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         <Switch
           id="newsletter-opt-in"
           checked={newsletterOptIn}
-          onCheckedChange={(checked) =>
-            setPortDetails({ newsletterOptIn: checked })
-          }
+          onCheckedChange={checked => setPortDetails({ newsletterOptIn: checked })}
         />
         <Label htmlFor="newsletter-opt-in">Subscribe to newsletter</Label>
       </div>
@@ -116,7 +114,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         </Button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export { StepDetails };
+export { StepDetails }

@@ -1,4 +1,4 @@
-import { Prisma, PortStatus } from "@prisma/client";
+import { PortStatus, Prisma } from "@prisma/client"
 
 export const platformOnePayload = Prisma.validator<Prisma.PlatformSelect>()({
   id: true,
@@ -20,7 +20,7 @@ export const platformOnePayload = Prisma.validator<Prisma.PlatformSelect>()({
       ports: { where: { status: PortStatus.Published } },
     },
   },
-});
+})
 
 export const platformManyPayload = Prisma.validator<Prisma.PlatformSelect>()({
   id: true,
@@ -38,11 +38,11 @@ export const platformManyPayload = Prisma.validator<Prisma.PlatformSelect>()({
       ports: { where: { status: PortStatus.Published } },
     },
   },
-});
+})
 
 export type PlatformOne = Prisma.PlatformGetPayload<{
-  select: typeof platformOnePayload;
-}>;
+  select: typeof platformOnePayload
+}>
 export type PlatformMany = Prisma.PlatformGetPayload<{
-  select: typeof platformManyPayload;
-}>;
+  select: typeof platformManyPayload
+}>

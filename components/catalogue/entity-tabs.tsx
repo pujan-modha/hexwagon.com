@@ -1,7 +1,7 @@
 "use client"
 
-import type { ReactNode } from "react"
 import { useQueryState } from "nuqs"
+import type { ReactNode } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/common/tabs"
 
 type Tab = {

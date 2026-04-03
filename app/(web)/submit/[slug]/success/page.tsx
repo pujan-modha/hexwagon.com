@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
+import { redirect } from "next/navigation"
 
 type PageProps = {
-  params: Promise<{ slug: string }>;
-};
+  params: Promise<{ slug: string }>
+}
 
 export default async function SuccessPage(props: PageProps) {
-  await props.params;
-  redirect("/dashboard");
+  await props.params
+  redirect("/dashboard")
 }

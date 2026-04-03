@@ -1,13 +1,11 @@
-"use client";
+"use client"
 
-import type { ComponentProps } from "react";
-import { useState } from "react";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "~/components/common/avatar";
-import { Button } from "~/components/common/button";
+import { formatDistanceToNow } from "date-fns"
+import type { ComponentProps } from "react"
+import { useState } from "react"
+import { deleteComment } from "~/actions/comment"
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/common/avatar"
+import { Button } from "~/components/common/button"
 import {
   Dialog,
   DialogContent,
@@ -15,31 +13,29 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/common/dialog";
-import { Icon } from "~/components/common/icon";
-import { useAuth } from "~/lib/auth-client";
-import { formatDistanceToNow } from "date-fns";
-import { deleteComment } from "~/actions/comment";
-import { cn } from "~/utils/cva";
+} from "~/components/common/dialog"
+import { Icon } from "~/components/common/icon"
+import { useAuth } from "~/lib/auth-client"
+import { cn } from "~/utils/cva"
 
 type Comment = {
-  id: string;
-  content: string;
-  createdAt: Date;
+  id: string
+  content: string
+  createdAt: Date
   author: {
-    id: string;
-    name: string | null;
-    email: string;
-    image: string | null;
-  };
-  replies?: Comment[];
-};
+    id: string
+    name: string | null
+    email: string
+    image: string | null
+  }
+  replies?: Comment[]
+}
 
 type CommentThreadProps = {
-  comments: Comment[];
-  portId: string;
-  onReply?: (parentId: string) => void;
-} & ComponentProps<"div">;
+  comments: Comment[]
+  portId: string
+  onReply?: (parentId: string) => void
+} & ComponentProps<"div">
 
 const CommentItem = ({
   comment,
@@ -47,30 +43,27 @@ const CommentItem = ({
   onReply,
   isReply = false,
 }: {
-  comment: Comment;
-  portId: string;
-  onReply?: (parentId: string) => void;
-  isReply?: boolean;
+  comment: Comment
+  portId: string
+  onReply?: (parentId: string) => void
+  isReply?: boolean
 }) => {
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const { user } = useAuth();
-  const isAuthor = user?.id === comment.author.id;
-  const displayName = comment.author.email.split("@")[0] || "Anonymous";
-  const avatarFallback = displayName[0]?.toUpperCase() ?? "?";
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const { user } = useAuth()
+  const isAuthor = user?.id === comment.author.id
+  const displayName = comment.author.email.split("@")[0] || "Anonymous"
+  const avatarFallback = displayName[0]?.toUpperCase() ?? "?"
 
   const handleDelete = async () => {
-    await deleteComment({ id: comment.id });
-    setIsDeleteOpen(false);
-  };
+    await deleteComment({ id: comment.id })
+    setIsDeleteOpen(false)
+  }
 
   return (
     <>
       <div className={cn("flex gap-3", isReply && "ml-8 mt-3")}>
         <Avatar className="size-8">
-          <AvatarImage
-            src={comment.author.image ?? undefined}
-            alt={displayName}
-          />
+          <AvatarImage src={comment.author.image ?? undefined} alt={displayName} />
           <AvatarFallback>{avatarFallback}</AvatarFallback>
         </Avatar>
 
@@ -101,24 +94,14 @@ const CommentItem = ({
 
           <div className="mt-2 flex gap-2">
             {onReply && !isReply && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onReply(comment.id)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => onReply(comment.id)}>
                 Reply
               </Button>
             )}
           </div>
 
-          {comment.replies?.map((reply) => (
-            <CommentItem
-              key={reply.id}
-              comment={reply}
-              portId={portId}
-              onReply={onReply}
-              isReply
-            />
+          {comment.replies?.map(reply => (
+            <CommentItem key={reply.id} comment={reply} portId={portId} onReply={onReply} isReply />
           ))}
         </div>
       </div>
@@ -131,11 +114,7 @@ const CommentItem = ({
           </DialogHeader>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setIsDeleteOpen(false)}
-            >
+            <Button type="button" variant="secondary" onClick={() => setIsDeleteOpen(false)}>
               Cancel
             </Button>
             <Button type="button" variant="destructive" onClick={handleDelete}>
@@ -145,35 +124,25 @@ const CommentItem = ({
         </DialogContent>
       </Dialog>
     </>
-  );
-};
+  )
+}
 
-const CommentThread = ({
-  comments,
-  portId,
-  onReply,
-  ...props
-}: CommentThreadProps) => {
+const CommentThread = ({ comments, portId, onReply, ...props }: CommentThreadProps) => {
   if (!comments.length) {
     return (
       <p className="py-4 text-center text-sm text-muted-foreground">
         No comments yet. Be the first to comment!
       </p>
-    );
+    )
   }
 
   return (
     <div className={cn("flex flex-col gap-4", props.className)} {...props}>
-      {comments.map((comment) => (
-        <CommentItem
-          key={comment.id}
-          comment={comment}
-          portId={portId}
-          onReply={onReply}
-        />
+      {comments.map(comment => (
+        <CommentItem key={comment.id} comment={comment} portId={portId} onReply={onReply} />
       ))}
     </div>
-  );
-};
+  )
+}
 
-export { CommentThread };
+export { CommentThread }

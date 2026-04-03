@@ -1,18 +1,18 @@
-import { CatalogueGrid } from "~/components/catalogue/catalogue-grid";
-import { PlatformCard } from "~/components/catalogue/platform-card";
-import { PortCard } from "~/components/catalogue/port-card";
-import { ThemeCard } from "~/components/catalogue/theme-card";
-import { canonicalPortHref } from "~/lib/catalogue";
-import type { findUserLikedEntities } from "~/server/web/likes/queries";
-import { DashboardUnlikeButton } from "~/app/(web)/dashboard/unlike-button";
+import { DashboardUnlikeButton } from "~/app/(web)/dashboard/unlike-button"
+import { CatalogueGrid } from "~/components/catalogue/catalogue-grid"
+import { PlatformCard } from "~/components/catalogue/platform-card"
+import { PortCard } from "~/components/catalogue/port-card"
+import { ThemeCard } from "~/components/catalogue/theme-card"
+import { canonicalPortHref } from "~/lib/catalogue"
+import type { findUserLikedEntities } from "~/server/web/likes/queries"
 
 type LikedSectionProps = {
-  liked: Awaited<ReturnType<typeof findUserLikedEntities>>;
-};
+  liked: Awaited<ReturnType<typeof findUserLikedEntities>>
+}
 
 const EmptyState = ({ message }: { message: string }) => (
   <p className="text-sm text-muted-foreground">{message}</p>
-);
+)
 
 export const DashboardLikedSection = ({ liked }: LikedSectionProps) => {
   return (
@@ -25,22 +25,16 @@ export const DashboardLikedSection = ({ liked }: LikedSectionProps) => {
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
-          Liked Ports ({liked.ports.length})
-        </h3>
+        <h3 className="text-lg font-medium">Liked Ports ({liked.ports.length})</h3>
 
         {liked.ports.length > 0 ? (
           <CatalogueGrid>
-            {liked.ports.map((port) => (
+            {liked.ports.map(port => (
               <div key={port.id} className="relative">
                 <DashboardUnlikeButton entityType="port" entityId={port.id} />
                 <PortCard
                   port={port}
-                  href={canonicalPortHref(
-                    port.theme.slug,
-                    port.platform.slug,
-                    port.id,
-                  )}
+                  href={canonicalPortHref(port.theme.slug, port.platform.slug, port.id)}
                 />
               </div>
             ))}
@@ -51,13 +45,11 @@ export const DashboardLikedSection = ({ liked }: LikedSectionProps) => {
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
-          Liked Themes ({liked.themes.length})
-        </h3>
+        <h3 className="text-lg font-medium">Liked Themes ({liked.themes.length})</h3>
 
         {liked.themes.length > 0 ? (
           <CatalogueGrid>
-            {liked.themes.map((theme) => (
+            {liked.themes.map(theme => (
               <div key={theme.id} className="relative">
                 <DashboardUnlikeButton entityType="theme" entityId={theme.id} />
                 <ThemeCard theme={theme} showCount />
@@ -70,18 +62,13 @@ export const DashboardLikedSection = ({ liked }: LikedSectionProps) => {
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
-          Liked Platforms ({liked.platforms.length})
-        </h3>
+        <h3 className="text-lg font-medium">Liked Platforms ({liked.platforms.length})</h3>
 
         {liked.platforms.length > 0 ? (
           <CatalogueGrid>
-            {liked.platforms.map((platform) => (
+            {liked.platforms.map(platform => (
               <div key={platform.id} className="relative">
-                <DashboardUnlikeButton
-                  entityType="platform"
-                  entityId={platform.id}
-                />
+                <DashboardUnlikeButton entityType="platform" entityId={platform.id} />
                 <PlatformCard platform={platform} showCount />
               </div>
             ))}
@@ -91,5 +78,5 @@ export const DashboardLikedSection = ({ liked }: LikedSectionProps) => {
         )}
       </div>
     </section>
-  );
-};
+  )
+}

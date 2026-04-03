@@ -16,18 +16,13 @@ const EmailPortEditRejected = ({ portEdit, ...props }: EmailProps) => {
       <Text>Hey!</Text>
 
       <Text>
-        Thank you for submitting an edit to <strong>{portEdit.port?.name ?? "this port"}</strong>. Unfortunately, we were unable to approve your edit at this time.
+        Thank you for submitting an edit to <strong>{portEdit.port?.name ?? "this port"}</strong>.
+        Unfortunately, we were unable to approve your edit at this time.
       </Text>
 
-      {portEdit.adminNote && (
-        <Text>
-          Note: {portEdit.adminNote}
-        </Text>
-      )}
+      {portEdit.adminNote && <Text>Note: {portEdit.adminNote}</Text>}
 
-      <Text>
-        If you have any questions, feel free to reach out to us.
-      </Text>
+      <Text>If you have any questions, feel free to reach out to us.</Text>
     </EmailWrapper>
   )
 }

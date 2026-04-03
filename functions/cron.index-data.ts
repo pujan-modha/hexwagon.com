@@ -1,6 +1,6 @@
 import { millisecondsInMinute } from "date-fns/constants"
 import { config } from "~/config"
-import { indexPorts, indexThemes, indexPlatforms } from "~/lib/indexing"
+import { indexPlatforms, indexPorts, indexThemes } from "~/lib/indexing"
 import { inngest } from "~/services/inngest"
 
 export const indexData = inngest.createFunction(

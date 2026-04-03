@@ -1,4 +1,4 @@
-import { siteConfig } from "~/config/site";
+import { siteConfig } from "~/config/site"
 
 export const linksConfig = {
   author: "https://pujan.pm",
@@ -12,4 +12,4 @@ export const linksConfig = {
     { title: "Themes", url: `${siteConfig.url}/rss/themes.xml` },
     { title: "Platforms", url: `${siteConfig.url}/rss/platforms.xml` },
   ],
-};
+}

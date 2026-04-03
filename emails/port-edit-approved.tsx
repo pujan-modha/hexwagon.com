@@ -15,12 +15,11 @@ const EmailPortEditApproved = ({ portEdit, ...props }: EmailProps) => {
       <Text>Hey!</Text>
 
       <Text>
-        Great news! Your edit to <strong>{portEdit.port.name ?? "this port"}</strong> has been approved and published.
+        Great news! Your edit to <strong>{portEdit.port.name ?? "this port"}</strong> has been
+        approved and published.
       </Text>
 
-      <Text>
-        Thank you for keeping {config.site.name} up to date!
-      </Text>
+      <Text>Thank you for keeping {config.site.name} up to date!</Text>
     </EmailWrapper>
   )
 }

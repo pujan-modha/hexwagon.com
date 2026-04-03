@@ -1,5 +1,5 @@
-import { withContentCollections } from "@content-collections/next";
-import type { NextConfig } from "next";
+import { withContentCollections } from "@content-collections/next"
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
@@ -28,14 +28,22 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 768, 1024],
     remotePatterns: [
       {
+        protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+      },
+      {
         hostname: `${process.env.S3_BUCKET}.s3.${process.env.S3_REGION}.amazonaws.com`,
       },
     ],
   },
 
   rewrites: async () => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-    const posthogUrl = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+    const posthogUrl = process.env.NEXT_PUBLIC_POSTHOG_HOST
 
     const rewrites = [
       // RSS rewrites
@@ -51,7 +59,7 @@ const nextConfig: NextConfig = {
         source: "/platforms/rss.xml",
         destination: `${siteUrl}/rss/platforms.xml`,
       },
-    ];
+    ]
 
     // Add PostHog proxy rewrites only if the host is configured
     if (posthogUrl) {
@@ -68,11 +76,11 @@ const nextConfig: NextConfig = {
           source: "/_proxy/posthog/ingest/decide",
           destination: `${posthogUrl}/decide`,
         },
-      );
+      )
     }
 
-    return rewrites;
+    return rewrites
   },
-};
+}
 
-export default withContentCollections(nextConfig);
+export default withContentCollections(nextConfig)

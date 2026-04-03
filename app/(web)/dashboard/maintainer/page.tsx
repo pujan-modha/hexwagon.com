@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { DashboardMaintainerConsole } from "~/app/(web)/dashboard/maintainer/theme-console";
-import { metadataConfig } from "~/config/metadata";
-import { auth } from "~/lib/auth";
-import { findMaintainedThemesForEditor } from "~/server/web/theme-maintainers/queries";
+import type { Metadata } from "next"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
+import { DashboardMaintainerConsole } from "~/app/(web)/dashboard/maintainer/theme-console"
+import { metadataConfig } from "~/config/metadata"
+import { auth } from "~/lib/auth"
+import { findMaintainedThemesForEditor } from "~/server/web/theme-maintainers/queries"
 
 export const metadata: Metadata = {
   title: "Maintainer Console",
@@ -14,16 +14,16 @@ export const metadata: Metadata = {
     ...metadataConfig.alternates,
     canonical: "/dashboard/maintainer",
   },
-};
+}
 
 export default async function DashboardMaintainerPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await auth.api.getSession({ headers: await headers() })
 
   if (!session?.user) {
-    throw redirect("/auth/login?next=/dashboard/maintainer");
+    throw redirect("/auth/login?next=/dashboard/maintainer")
   }
 
-  const themes = await findMaintainedThemesForEditor(session.user.id);
+  const themes = await findMaintainedThemesForEditor(session.user.id)
 
-  return <DashboardMaintainerConsole themes={themes} />;
+  return <DashboardMaintainerConsole themes={themes} />
 }

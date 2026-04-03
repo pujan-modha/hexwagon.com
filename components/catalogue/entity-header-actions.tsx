@@ -1,11 +1,11 @@
-import type { ReactNode } from "react";
-import { cx } from "~/utils/cva";
+import type { ReactNode } from "react"
+import { cx } from "~/utils/cva"
 
 type EntityHeaderActionsProps = {
-  primaryAction?: ReactNode;
-  children: ReactNode;
-  className?: string;
-};
+  primaryAction?: ReactNode
+  children: ReactNode
+  className?: string
+}
 
 export const EntityHeaderActions = ({
   primaryAction,
@@ -26,5 +26,5 @@ export const EntityHeaderActions = ({
         {children}
       </div>
     </div>
-  );
-};
+  )
+}

@@ -31,6 +31,18 @@ enum AdStatus {
   Cancelled
 }
 
+enum AdBillingCycle {
+  Weekly
+  Monthly
+}
+
+enum AdSlot {
+  Banner
+  Listing
+  Sidebar
+  Footer
+}
+
 enum PortStatus {
   Draft
   Scheduled
@@ -102,6 +114,8 @@ model User {
   reviewedThemeMaintainerClaims ThemeMaintainerClaim[] @relation("ThemeMaintainerClaimReviewer")
   updatedAdSpotPricing AdSpotPricing[] @relation("AdSpotPricingUpdatedBy")
   updatedAdConfigs     AdConfig[]      @relation("AdConfigUpdatedBy")
+  updatedAdPackageConfigs AdPackageConfig[] @relation("AdPackageConfigUpdatedBy")
+  updatedAdFixedSlotOverrides AdFixedSlotOverride[] @relation("AdFixedSlotOverrideUpdatedBy")
 
   // Indexes
   @@index([id])
@@ -178,12 +192,31 @@ model Ad {
   customCss      String?  @db.Text
   customJs       String?  @db.Text
   sessionId      String?
+  stripeCheckoutSessionId String?
+  stripePaymentIntentId   String?
+  stripeChargeId          String?
   subscriptionId String?  @unique
+  billingCycle   AdBillingCycle?
+  packageBasePriceCents       Int?
+  packageDiscountedPriceCents Int?
+  targetingUnitPriceCents     Int?
+  targetingTargetCount        Int   @default(0)
+  targetingTotalPriceCents    Int?
+  refundAmountCents Int?
+  stripeRefundId    String?
+  refundedAt        DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
-  themes Theme[]
+  themes Theme[]    @relation("LegacyThemeAd")
+  targetThemes Theme[] @relation("AdTargetThemes")
+  targetPlatforms Platform[] @relation("AdTargetPlatforms")
+  fixedSlotOverrides AdFixedSlotOverride[]
+
+  // Indexes
+  @@index([status, paidAt, startsAt, endsAt])
+  @@index([billingCycle])
 }
 
 model AdSpotPricing {
@@ -200,6 +233,30 @@ model AdConfig {
   updatedById           String?
   updatedBy             User?    @relation("AdConfigUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
   updatedAt             DateTime @updatedAt
+}
+
+model AdPackageConfig {
+  id Int @id @default(1)
+  weeklyBasePriceCents       Int @default(0)
+  weeklyDiscountedPriceCents Int @default(0)
+  monthlyBasePriceCents      Int @default(0)
+  monthlyDiscountedPriceCents Int @default(0)
+  weeklyTargetUnitPriceCents Int @default(0)
+  monthlyTargetUnitPriceCents Int @default(0)
+  updatedById String?
+  updatedBy   User? @relation("AdPackageConfigUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt
+}
+
+model AdFixedSlotOverride {
+  slot AdSlot @id
+  adId String?
+  ad   Ad?    @relation(fields: [adId], references: [id], onDelete: SetNull)
+  updatedById String?
+  updatedBy User? @relation("AdFixedSlotOverrideUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt DateTime @updatedAt
+
+  @@index([adId])
 }
 
 model Theme {
@@ -229,8 +286,9 @@ model Theme {
   reports     Report[]
   maintainers ThemeMaintainer[]
   maintainerClaims ThemeMaintainerClaim[]
-  ad          Ad?       @relation(fields: [adId], references: [id])
+  ad          Ad?       @relation("LegacyThemeAd", fields: [adId], references: [id])
   adId        String?
+  targetedByAds Ad[]    @relation("AdTargetThemes")
 
   // Indexes
   @@index([slug])
@@ -257,6 +315,7 @@ model Platform {
   ports   Port[]
   likes   Like[]
   reports Report[]
+  targetedByAds Ad[] @relation("AdTargetPlatforms")
 
   // Indexes
   @@index([slug])

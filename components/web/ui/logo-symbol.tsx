@@ -1,5 +1,5 @@
-import type { ComponentProps } from "react";
-import { cx } from "~/utils/cva";
+import type { ComponentProps } from "react"
+import { cx } from "~/utils/cva"
 
 export const LogoSymbol = ({ className, ...props }: ComponentProps<"svg">) => {
   return (
@@ -34,10 +34,7 @@ export const LogoSymbol = ({ className, ...props }: ComponentProps<"svg">) => {
           d="M32.4256 9L96.4256 9L128.426 64.4256L96.4256 119.851H32.4256L0.425627 64.4256L32.4256 9Z"
           fill="white"
         />
-        <path
-          d="M64 32L91.7128 48V80L64 96L36.2872 80V48L64 32Z"
-          fill="black"
-        />
+        <path d="M64 32L91.7128 48V80L64 96L36.2872 80V48L64 32Z" fill="black" />
         <path
           d="M55.8564 50L71.8564 50L79.8564 63.8564L71.8564 77.7128H55.8564L47.8564 63.8564L55.8564 50Z"
           fill="white"
@@ -49,5 +46,5 @@ export const LogoSymbol = ({ className, ...props }: ComponentProps<"svg">) => {
         </clipPath>
       </defs>
     </svg>
-  );
-};
+  )
+}

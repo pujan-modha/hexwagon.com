@@ -1,11 +1,11 @@
 "use client"
 
-import { useSubmissionStore } from "~/stores/submission-store"
-import { StepTheme } from "./step-theme"
-import { StepPlatform } from "./step-platform"
-import { StepDetails } from "./step-details"
-import { StepReview } from "./step-review"
 import { Card } from "~/components/common/card"
+import { useSubmissionStore } from "~/stores/submission-store"
+import { StepDetails } from "./step-details"
+import { StepPlatform } from "./step-platform"
+import { StepReview } from "./step-review"
+import { StepTheme } from "./step-theme"
 
 const steps = [
   { id: 1, title: "Select Theme" },

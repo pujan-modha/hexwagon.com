@@ -1,31 +1,31 @@
-import type { ComponentProps, ReactNode } from "react";
-import type { Properties } from "posthog-js";
-import { Button } from "~/components/common/button";
-import { Card } from "~/components/common/card";
-import { H5 } from "~/components/common/heading";
-import { Icon } from "~/components/common/icon";
-import { Stack } from "~/components/common/stack";
-import { ExternalLink } from "~/components/web/external-link";
-import { Insights } from "~/components/web/ui/insights";
-import { cx } from "~/utils/cva";
+import type { Properties } from "posthog-js"
+import type { ComponentProps, ReactNode } from "react"
+import { Button } from "~/components/common/button"
+import { Card } from "~/components/common/card"
+import { H5 } from "~/components/common/heading"
+import { Icon } from "~/components/common/icon"
+import { Stack } from "~/components/common/stack"
+import { ExternalLink } from "~/components/web/external-link"
+import { Insights } from "~/components/web/ui/insights"
+import { cx } from "~/utils/cva"
 
 type EntitySidebarInsight = {
-  label: string;
-  value: ReactNode;
-  link?: string;
-  title?: string;
-  icon?: ReactNode;
-};
+  label: string
+  value: ReactNode
+  link?: string
+  title?: string
+  icon?: ReactNode
+}
 
 type EntitySidebarCardProps = ComponentProps<typeof Card> & {
-  title: string;
-  insights: EntitySidebarInsight[];
-  buttonHref?: string;
-  buttonLabel?: string;
-  buttonEventName?: string;
-  buttonEventProps?: Properties;
-  footer?: ReactNode;
-};
+  title: string
+  insights: EntitySidebarInsight[]
+  buttonHref?: string
+  buttonLabel?: string
+  buttonEventName?: string
+  buttonEventProps?: Properties
+  footer?: ReactNode
+}
 
 export const EntitySidebarCard = ({
   title,
@@ -61,19 +61,13 @@ export const EntitySidebarCard = ({
           className="mt-1 self-start"
           asChild
         >
-          <ExternalLink
-            href={buttonHref}
-            eventName={buttonEventName}
-            eventProps={buttonEventProps}
-          >
+          <ExternalLink href={buttonHref} eventName={buttonEventName} eventProps={buttonEventProps}>
             {buttonLabel}
           </ExternalLink>
         </Button>
       )}
 
-      {footer && (
-        <p className="text-muted-foreground/75 text-[11px]">{footer}</p>
-      )}
+      {footer && <p className="text-muted-foreground/75 text-[11px]">{footer}</p>}
     </Card>
-  );
-};
+  )
+}

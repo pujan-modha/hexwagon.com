@@ -13,18 +13,13 @@ const EmailPortRejected = ({ port, ...props }: EmailProps) => {
       <Text>Hey {port.submitterName?.trim() ?? "there"}!</Text>
 
       <Text>
-        Thank you for submitting <strong>{port.name}</strong> to {config.site.name}. Unfortunately, we were unable to approve this port at this time.
+        Thank you for submitting <strong>{port.name}</strong> to {config.site.name}. Unfortunately,
+        we were unable to approve this port at this time.
       </Text>
 
-      {port.rejectionReason && (
-        <Text>
-          Reason: {port.rejectionReason}
-        </Text>
-      )}
+      {port.rejectionReason && <Text>Reason: {port.rejectionReason}</Text>}
 
-      <Text>
-        If you have any questions, feel free to reach out to us.
-      </Text>
+      <Text>If you have any questions, feel free to reach out to us.</Text>
     </EmailWrapper>
   )
 }

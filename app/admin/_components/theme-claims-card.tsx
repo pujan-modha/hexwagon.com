@@ -1,17 +1,17 @@
-import { Card, CardDescription, CardHeader } from "~/components/common/card";
-import { H2 } from "~/components/common/heading";
-import { Link } from "~/components/common/link";
-import { Note } from "~/components/common/note";
+import { Card, CardDescription, CardHeader } from "~/components/common/card"
+import { H2 } from "~/components/common/heading"
+import { Link } from "~/components/common/link"
+import { Note } from "~/components/common/note"
 import {
   countPendingThemeMaintainerClaims,
   findPendingThemeMaintainerClaims,
-} from "~/server/admin/theme-claims/queries";
+} from "~/server/admin/theme-claims/queries"
 
 export const ThemeClaimsCard = async () => {
   const [pendingCount, claims] = await Promise.all([
     countPendingThemeMaintainerClaims(),
     findPendingThemeMaintainerClaims(5),
-  ]);
+  ])
 
   return (
     <Card hover={false} focus={false} className="items-stretch">
@@ -22,7 +22,7 @@ export const ThemeClaimsCard = async () => {
 
       {claims.length ? (
         <div className="grid gap-1.5 text-sm">
-          {claims.map((claim) => (
+          {claims.map(claim => (
             <Link
               key={claim.id}
               href={`/admin/themes/${claim.theme.slug}`}
@@ -40,5 +40,5 @@ export const ThemeClaimsCard = async () => {
         <Note>No pending claims right now.</Note>
       )}
     </Card>
-  );
-};
+  )
+}

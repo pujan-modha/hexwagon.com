@@ -2,7 +2,6 @@
 
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
-import { ThemesDeleteDialog } from "./themes-delete-dialog"
 import { Button } from "~/components/common/button"
 import {
   DropdownMenu,
@@ -14,6 +13,7 @@ import {
 import { Icon } from "~/components/common/icon"
 import { Link } from "~/components/common/link"
 import { cx } from "~/utils/cva"
+import { ThemesDeleteDialog } from "./themes-delete-dialog"
 
 type ThemeActionsProps = {
   theme: {

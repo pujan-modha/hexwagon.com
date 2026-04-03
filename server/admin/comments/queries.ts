@@ -1,5 +1,5 @@
 import { isTruthy } from "@primoui/utils"
-import { type Prisma } from "@prisma/client"
+import type { Prisma } from "@prisma/client"
 import { db } from "~/services/db"
 
 export const findComments = async (search: {

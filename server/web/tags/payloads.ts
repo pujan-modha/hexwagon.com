@@ -1,4 +1,4 @@
-import { Prisma, PortStatus } from "@prisma/client"
+import { PortStatus, Prisma } from "@prisma/client"
 
 export const tagManyPayload = Prisma.validator<Prisma.TagSelect>()({
   slug: true,

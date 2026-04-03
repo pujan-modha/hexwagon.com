@@ -2,13 +2,13 @@
 
 import { formatDate } from "@primoui/utils"
 import type { ColumnDef } from "@tanstack/react-table"
-import { PlatformActions } from "./platform-actions"
 import { RowCheckbox } from "~/components/admin/row-checkbox"
 import { Badge } from "~/components/common/badge"
 import { Note } from "~/components/common/note"
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header"
 import { DataTableLink } from "~/components/data-table/data-table-link"
 import type { findPlatforms } from "~/server/admin/platforms/queries"
+import { PlatformActions } from "./platform-actions"
 
 type PlatformRow = Awaited<ReturnType<typeof findPlatforms>>["platforms"][number]
 

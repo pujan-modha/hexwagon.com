@@ -23,7 +23,9 @@ const SuggestionsPage = async ({ searchParams }: SuggestionsPageProps) => {
 export default withAdminPage(SuggestionsPage)
 
 // Inline table component for now - full table component would be created separately
-const SuggestionsTable = async ({ suggestionsPromise }: { suggestionsPromise: ReturnType<typeof findSuggestions> }) => {
+const SuggestionsTable = async ({
+  suggestionsPromise,
+}: { suggestionsPromise: ReturnType<typeof findSuggestions> }) => {
   const { suggestions } = await suggestionsPromise
 
   return (

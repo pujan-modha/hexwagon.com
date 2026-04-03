@@ -1,47 +1,38 @@
-import { formatNumber } from "@primoui/utils";
-import { AdType } from "@prisma/client";
-import { Suspense, type ComponentProps } from "react";
+import { formatNumber } from "@primoui/utils"
+import { type ComponentProps, Suspense } from "react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "~/components/common/dropdown-menu";
-import { H5, H6 } from "~/components/common/heading";
-import { Icon } from "~/components/common/icon";
-import { Stack } from "~/components/common/stack";
-import { Tooltip } from "~/components/common/tooltip";
-import { BuiltWith } from "~/components/web/built-with";
-import { ExternalLink } from "~/components/web/external-link";
-import { NewsletterForm } from "~/components/web/newsletter-form";
-import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card";
-import { NavLink } from "~/components/web/ui/nav-link";
-import { config } from "~/config";
-import { cx } from "~/utils/cva";
+} from "~/components/common/dropdown-menu"
+import { H5, H6 } from "~/components/common/heading"
+import { Icon } from "~/components/common/icon"
+import { Stack } from "~/components/common/stack"
+import { Tooltip } from "~/components/common/tooltip"
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
+import { BuiltWith } from "~/components/web/built-with"
+import { ExternalLink } from "~/components/web/external-link"
+import { NewsletterForm } from "~/components/web/newsletter-form"
+import { NavLink } from "~/components/web/ui/nav-link"
+import { config } from "~/config"
+import { cx } from "~/utils/cva"
 
 const footerLinkClassName =
-  "group flex items-center gap-2 p-0.5 -m-0.5 cursor-pointer disabled:opacity-50 text-muted-foreground hover:text-foreground";
+  "group flex items-center gap-2 p-0.5 -m-0.5 cursor-pointer disabled:opacity-50 text-muted-foreground hover:text-foreground"
 
 type FooterProps = ComponentProps<"div"> & {
-  hideNewsletter?: boolean;
-};
+  hideNewsletter?: boolean
+}
 
-export const Footer = ({
-  children,
-  className,
-  hideNewsletter,
-  ...props
-}: FooterProps) => {
+export const Footer = ({ children, className, hideNewsletter, ...props }: FooterProps) => {
   return (
     <footer
       className="flex flex-col gap-y-8 mt-auto pt-8 border-t border-foreground/10 md:pt-10 lg:pt-12"
       {...props}
     >
       <div
-        className={cx(
-          "grid grid-cols-3 gap-y-8 gap-x-4 md:gap-x-6 md:grid-cols-16",
-          className,
-        )}
+        className={cx("grid grid-cols-3 gap-y-8 gap-x-4 md:gap-x-6 md:grid-cols-16", className)}
         {...props}
       >
         <Stack
@@ -54,12 +45,8 @@ export const Footer = ({
             </H5>
 
             <p className="-mt-2 px-0.5 text-xs text-muted-foreground first:mt-0">
-              Join{" "}
-              {formatNumber(
-                config.stats.subscribers,
-                "standard",
-              )}
-              + other members and get updates on new theme ports.
+              Join {formatNumber(config.stats.subscribers, "standard")}+ other members and get
+              updates on new theme ports.
             </p>
 
             <NewsletterForm medium="footer_form" />
@@ -68,14 +55,8 @@ export const Footer = ({
           <Stack className="text-xl opacity-75">
             <DropdownMenu modal={false}>
               <Tooltip tooltip="RSS Feeds">
-                <DropdownMenuTrigger
-                  id="footer-rss-menu-trigger"
-                  aria-label="RSS Feeds"
-                >
-                  <Icon
-                    name="lucide/rss"
-                    className="text-muted-foreground hover:text-foreground"
-                  />
+                <DropdownMenuTrigger id="footer-rss-menu-trigger" aria-label="RSS Feeds">
+                  <Icon name="lucide/rss" className="text-muted-foreground hover:text-foreground" />
                 </DropdownMenuTrigger>
               </Tooltip>
 
@@ -91,48 +72,32 @@ export const Footer = ({
             </DropdownMenu>
 
             <Tooltip tooltip="Contact us">
-              <ExternalLink
-                href={`mailto:${config.site.email}`}
-                className={footerLinkClassName}
-              >
+              <ExternalLink href={`mailto:${config.site.email}`} className={footerLinkClassName}>
                 <Icon name="lucide/at-sign" />
               </ExternalLink>
             </Tooltip>
 
             <Tooltip tooltip="Follow us on X/Twitter">
-              <ExternalLink
-                href={config.links.twitter}
-                className={footerLinkClassName}
-              >
+              <ExternalLink href={config.links.twitter} className={footerLinkClassName}>
                 <Icon name="tabler/brand-x" />
               </ExternalLink>
             </Tooltip>
 
-
             <Tooltip tooltip="Follow us on LinkedIn">
-              <ExternalLink
-                href={config.links.linkedin}
-                className={footerLinkClassName}
-              >
+              <ExternalLink href={config.links.linkedin} className={footerLinkClassName}>
                 <Icon name="tabler/brand-linkedin" />
               </ExternalLink>
             </Tooltip>
 
             <Tooltip tooltip="Join our community on Reddit">
-              <ExternalLink
-                href={config.links.reddit}
-                className={footerLinkClassName}
-              >
+              <ExternalLink href={config.links.reddit} className={footerLinkClassName}>
                 <Icon name="tabler/brand-reddit" />
               </ExternalLink>
             </Tooltip>
           </Stack>
         </Stack>
 
-        <Stack
-          direction="column"
-          className="text-sm col-span-full md:col-span-5 md:items-stretch"
-        >
+        <Stack direction="column" className="text-sm col-span-full md:col-span-5 md:items-stretch">
           <Suspense
             fallback={
               <AdCardSkeleton className="w-full md:w-[328px] md:max-w-[328px] h-[190px] max-h-[190px] md:ml-auto" />
@@ -140,17 +105,12 @@ export const Footer = ({
           >
             <AdCard
               className="w-full md:w-[328px] md:max-w-[328px] h-[190px] max-h-[190px] md:ml-auto"
-              where={{
-                type: AdType.Footer,
-              }}
+              slot="Footer"
             />
           </Suspense>
         </Stack>
 
-        <Stack
-          direction="column"
-          className="text-sm md:col-span-3 md:col-start-14"
-        >
+        <Stack direction="column" className="text-sm md:col-span-3 md:col-start-14">
           <H6 as="strong">Quick Links</H6>
 
           <NavLink href="/about">About Us</NavLink>
@@ -168,5 +128,5 @@ export const Footer = ({
 
       {children}
     </footer>
-  );
-};
+  )
+}

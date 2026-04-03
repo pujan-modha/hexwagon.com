@@ -15,10 +15,15 @@ export const ToolEntry = ({ id, tool, ...props }: ToolEntryProps) => {
       <article id={id} {...props}>
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
-            <Link href={`/themes/${tool.theme.slug}/${tool.platform.slug}/${tool.id}`} className="font-semibold">
+            <Link
+              href={`/themes/${tool.theme.slug}/${tool.platform.slug}/${tool.id}`}
+              className="font-semibold"
+            >
               {tool.name ?? `${tool.theme.name} for ${tool.platform.name}`}
             </Link>
-            {tool.description && <p className="text-sm text-muted-foreground">{tool.description}</p>}
+            {tool.description && (
+              <p className="text-sm text-muted-foreground">{tool.description}</p>
+            )}
           </div>
 
           <ToolBadges tool={tool} />

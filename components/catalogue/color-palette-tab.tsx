@@ -1,13 +1,15 @@
 "use client"
 
-import type { ComponentProps } from "react"
 import type { Prisma } from "@prisma/client"
+import type { ComponentProps } from "react"
 import { toast } from "sonner"
 import { Card } from "~/components/common/card"
 import { Icon } from "~/components/common/icon"
 import { cn } from "~/utils/cva"
 
-type ColorPayload = Prisma.ColorPaletteGetPayload<{ select: { id: true; label: true; hex: true; order: true; paletteName: true } }>
+type ColorPayload = Prisma.ColorPaletteGetPayload<{
+  select: { id: true; label: true; hex: true; order: true; paletteName: true }
+}>
 
 type ColorPaletteTabProps = {
   colors: ColorPayload[]
@@ -33,14 +35,17 @@ const ColorPaletteTab = ({ colors, className }: ColorPaletteTabProps) => {
   }
 
   // Group colors by paletteName
-  const groupedColors = colors.reduce((acc, color) => {
-    const pName = color.paletteName || "Default"
-    if (!acc[pName]) {
-      acc[pName] = []
-    }
-    acc[pName].push(color)
-    return acc
-  }, {} as Record<string, ColorPayload[]>)
+  const groupedColors = colors.reduce(
+    (acc, color) => {
+      const pName = color.paletteName || "Default"
+      if (!acc[pName]) {
+        acc[pName] = []
+      }
+      acc[pName].push(color)
+      return acc
+    },
+    {} as Record<string, ColorPayload[]>,
+  )
 
   const paletteNames = Object.keys(groupedColors)
   const defaultTab = paletteNames[0]
@@ -57,30 +62,28 @@ const ColorPaletteTab = ({ colors, className }: ColorPaletteTabProps) => {
         </thead>
         <tbody className="bg-background">
           {paletteColors.map((color, index) => (
-            <tr 
-              key={color.id} 
+            <tr
+              key={color.id}
               className={cn(
                 "transition-colors duration-200 hover:bg-muted focus:bg-muted group",
                 index === 0 && "[&>td:first-child]:rounded-tl-md [&>td:last-child]:rounded-tr-md",
-                index === paletteColors.length - 1 && "[&>td:first-child]:rounded-bl-md [&>td:last-child]:rounded-br-md"
+                index === paletteColors.length - 1 &&
+                  "[&>td:first-child]:rounded-bl-md [&>td:last-child]:rounded-br-md",
               )}
             >
               <td className="min-w-[9rem] px-5 py-3 font-medium">{color.label}</td>
               <td className="min-w-[13rem] px-5 py-3">
-                <button 
+                <button
                   type="button"
                   onClick={() => copyToClipboard(color.hex)}
                   className="inline-flex items-center gap-2 text-xs font-mono text-muted-foreground group-hover:text-foreground transition-colors"
                   title={`Copy ${color.hex}`}
                 >
                   <Icon name="lucide/hash" className="size-3.5 opacity-50 relative top-px" />
-                  <span>{color.hex.replace(/^#/, '')}</span>
+                  <span>{color.hex.replace(/^#/, "")}</span>
                 </button>
               </td>
-              <td 
-                className="min-w-[13rem] p-0 m-0"
-                style={{ backgroundColor: color.hex }}
-              />
+              <td className="min-w-[13rem] p-0 m-0" style={{ backgroundColor: color.hex }} />
             </tr>
           ))}
         </tbody>
@@ -93,7 +96,9 @@ const ColorPaletteTab = ({ colors, className }: ColorPaletteTabProps) => {
       {Object.entries(groupedColors).map(([name, paletteColors]) => (
         <div key={name} className="flex flex-col gap-2 w-full">
           {paletteNames.length > 1 && (
-            <h3 className="text-lg font-semibold tracking-tight px-1 max-w-full text-center mx-auto w-full">{name}</h3>
+            <h3 className="text-lg font-semibold tracking-tight px-1 max-w-full text-center mx-auto w-full">
+              {name}
+            </h3>
           )}
           <PaletteTable paletteColors={paletteColors} />
         </div>

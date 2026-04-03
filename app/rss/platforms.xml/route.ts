@@ -1,16 +1,16 @@
-import { getUrlHostname } from "@primoui/utils";
-import { PortStatus } from "@prisma/client";
-import RSS from "rss";
-import { config } from "~/config";
-import { db } from "~/services/db";
-import { addSearchParams } from "~/utils/search-params";
+import { getUrlHostname } from "@primoui/utils"
+import { PortStatus } from "@prisma/client"
+import RSS from "rss"
+import { config } from "~/config"
+import { db } from "~/services/db"
+import { addSearchParams } from "~/utils/search-params"
 
 export const GET = async () => {
-  const { url, name, tagline } = config.site;
+  const { url, name, tagline } = config.site
   const rssSearchParams = {
     utm_source: getUrlHostname(url),
     utm_medium: "rss",
-  };
+  }
 
   const platforms = await db.platform.findMany({
     where: { ports: { some: { status: PortStatus.Published } } },
@@ -23,7 +23,7 @@ export const GET = async () => {
       description: true,
       createdAt: true,
     },
-  });
+  })
 
   const feed = new RSS({
     title: name,
@@ -34,20 +34,17 @@ export const GET = async () => {
     language: "en",
     ttl: 14400,
     pubDate: new Date(),
-  });
+  })
 
-  platforms.map((platform) => {
+  platforms.map(platform => {
     feed.item({
       guid: platform.id,
       title: platform.name,
-      url: addSearchParams(
-        `${url}/platforms/${platform.slug}`,
-        rssSearchParams,
-      ),
+      url: addSearchParams(`${url}/platforms/${platform.slug}`, rssSearchParams),
       date: platform.createdAt.toUTCString(),
       description: platform.description ?? "",
-    });
-  });
+    })
+  })
 
   return new Response(feed.xml({ indent: true }), {
     headers: {
@@ -55,5 +52,5 @@ export const GET = async () => {
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "public, max-age=14400",
     },
-  });
-};
+  })
+}

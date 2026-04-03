@@ -17,9 +17,7 @@ const EmailPortSubmitted = ({ port, ...props }: EmailProps) => {
         Thanks for submitting <strong>{port.name}</strong>! It will be reviewed shortly.
       </Text>
 
-      <Text>
-        We&apos;ll send you an email once your port is approved.
-      </Text>
+      <Text>We&apos;ll send you an email once your port is approved.</Text>
     </EmailWrapper>
   )
 }

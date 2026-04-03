@@ -1,32 +1,29 @@
-"use client";
+"use client"
 
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { useServerAction } from "zsa-react";
-import { removeLike } from "~/actions/like";
-import { Button } from "~/components/common/button";
-import { Icon } from "~/components/common/icon";
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { useServerAction } from "zsa-react"
+import { removeLike } from "~/actions/like"
+import { Button } from "~/components/common/button"
+import { Icon } from "~/components/common/icon"
 
-type EntityType = "port" | "theme" | "platform";
+type EntityType = "port" | "theme" | "platform"
 
 type DashboardUnlikeButtonProps = {
-  entityType: EntityType;
-  entityId: string;
-};
+  entityType: EntityType
+  entityId: string
+}
 
-export const DashboardUnlikeButton = ({
-  entityType,
-  entityId,
-}: DashboardUnlikeButtonProps) => {
-  const router = useRouter();
+export const DashboardUnlikeButton = ({ entityType, entityId }: DashboardUnlikeButtonProps) => {
+  const router = useRouter()
 
   const unlikeAction = useServerAction(removeLike, {
     onSuccess: () => {
-      toast.success("Removed from likes.");
-      router.refresh();
+      toast.success("Removed from likes.")
+      router.refresh()
     },
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
   return (
     <Button
@@ -42,5 +39,5 @@ export const DashboardUnlikeButton = ({
     >
       Unlike
     </Button>
-  );
-};
+  )
+}

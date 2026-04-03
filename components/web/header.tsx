@@ -1,49 +1,46 @@
-"use client";
+"use client"
 
-import { usePathname } from "next/navigation";
-import { type ComponentProps, useEffect, useState } from "react";
-import { Button } from "~/components/common/button";
-import { Icon } from "~/components/common/icon";
-import { Link } from "~/components/common/link";
-import { Stack } from "~/components/common/stack";
-import { Container } from "~/components/web/ui/container";
-import { Hamburger } from "~/components/web/ui/hamburger";
-import { Logo } from "~/components/web/ui/logo";
-import { NavLink, navLinkVariants } from "~/components/web/ui/nav-link";
-import { UserMenu } from "~/components/web/user-menu";
-import { useSearch } from "~/contexts/search-context";
-import type { auth } from "~/lib/auth";
-import { cx } from "~/utils/cva";
+import { usePathname } from "next/navigation"
+import { type ComponentProps, useEffect, useState } from "react"
+import { Button } from "~/components/common/button"
+import { Icon } from "~/components/common/icon"
+import { Link } from "~/components/common/link"
+import { Stack } from "~/components/common/stack"
+import { Container } from "~/components/web/ui/container"
+import { Hamburger } from "~/components/web/ui/hamburger"
+import { Logo } from "~/components/web/ui/logo"
+import { NavLink, navLinkVariants } from "~/components/web/ui/nav-link"
+import { UserMenu } from "~/components/web/user-menu"
+import { useSearch } from "~/contexts/search-context"
+import type { auth } from "~/lib/auth"
+import { cx } from "~/utils/cva"
 
 type HeaderProps = ComponentProps<"div"> & {
-  session: typeof auth.$Infer.Session | null;
-};
+  session: typeof auth.$Infer.Session | null
+}
 
 const Header = ({ children, className, session, ...props }: HeaderProps) => {
-  const pathname = usePathname();
-  const search = useSearch();
-  const [isNavOpen, setNavOpen] = useState(false);
+  const pathname = usePathname()
+  const search = useSearch()
+  const [isNavOpen, setNavOpen] = useState(false)
 
   // Close the mobile navigation when the user presses the "Escape" key
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setNavOpen(false);
-    };
+      if (e.key === "Escape") setNavOpen(false)
+    }
 
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [])
 
   useEffect(() => {
-    setNavOpen(false);
-  }, [pathname]);
+    setNavOpen(false)
+  }, [pathname])
 
   return (
     <div
-      className={cx(
-        "fixed top-(--header-top) inset-x-0 z-50 bg-background",
-        className,
-      )}
+      className={cx("fixed top-(--header-top) inset-x-0 z-50 bg-background", className)}
       id="header"
       role="banner"
       data-state={isNavOpen ? "open" : "close"}
@@ -112,13 +109,13 @@ const Header = ({ children, className, session, ...props }: HeaderProps) => {
         </nav>
       </Container>
     </div>
-  );
-};
+  )
+}
 
 const HeaderBackdrop = () => {
   return (
     <div className="fixed top-(--header-offset) inset-x-0 z-40 h-8 pointer-events-none bg-linear-to-b from-background to-transparent" />
-  );
-};
+  )
+}
 
-export { Header, HeaderBackdrop, type HeaderProps };
+export { Header, HeaderBackdrop, type HeaderProps }

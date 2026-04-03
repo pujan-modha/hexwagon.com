@@ -1,39 +1,33 @@
-"use server";
+"use server"
 
-import { createServerAction } from "zsa";
-import { z } from "zod";
-import { db } from "~/services/db";
-import { getMeiliIndex } from "~/services/meilisearch";
-import { tryCatch } from "~/utils/helpers";
+import { z } from "zod"
+import { createServerAction } from "zsa"
+import { db } from "~/services/db"
+import { getMeiliIndex } from "~/services/meilisearch"
+import { tryCatch } from "~/utils/helpers"
 
-const SEARCH_LIMIT = 10;
+const SEARCH_LIMIT = 10
 
 export const searchThemesAction = createServerAction()
   .input(z.object({ query: z.string().trim().min(2) }))
   .handler(async ({ input: { query } }) => {
     const { data, error } = await tryCatch(
       getMeiliIndex("themes").search<{
-        id: string;
-        name: string;
-        slug: string;
-        faviconUrl?: string | null;
-        isVerified?: boolean;
+        id: string
+        name: string
+        slug: string
+        faviconUrl?: string | null
+        isVerified?: boolean
       }>(query, {
         limit: SEARCH_LIMIT,
         rankingScoreThreshold: 0.5,
         hybrid: { embedder: "openAi", semanticRatio: 0.5 },
-        attributesToRetrieve: [
-          "id",
-          "name",
-          "slug",
-          "faviconUrl",
-          "isVerified",
-        ],
+        attributesToRetrieve: ["id", "name", "slug", "faviconUrl", "isVerified"],
       }),
-    );
+    )
 
     if (!error && data?.hits.length) {
-      return data.hits;
+      return data.hits
     }
 
     const themes = await db.theme.findMany({
@@ -52,43 +46,37 @@ export const searchThemesAction = createServerAction()
       },
       take: SEARCH_LIMIT,
       orderBy: { name: "asc" },
-    });
+    })
 
-    return themes.map((theme) => ({
+    return themes.map(theme => ({
       id: theme.id,
       name: theme.name,
       slug: theme.slug,
       faviconUrl: theme.faviconUrl,
       isVerified: theme._count.maintainers > 0,
-    }));
-  });
+    }))
+  })
 
 export const searchPlatformsAction = createServerAction()
   .input(z.object({ query: z.string().trim().min(2) }))
   .handler(async ({ input: { query } }) => {
     const { data, error } = await tryCatch(
       getMeiliIndex("platforms").search<{
-        id: string;
-        name: string;
-        slug: string;
-        faviconUrl?: string | null;
-        isVerified?: boolean;
+        id: string
+        name: string
+        slug: string
+        faviconUrl?: string | null
+        isVerified?: boolean
       }>(query, {
         limit: SEARCH_LIMIT,
         rankingScoreThreshold: 0.5,
         hybrid: { embedder: "openAi", semanticRatio: 0.5 },
-        attributesToRetrieve: [
-          "id",
-          "name",
-          "slug",
-          "faviconUrl",
-          "isVerified",
-        ],
+        attributesToRetrieve: ["id", "name", "slug", "faviconUrl", "isVerified"],
       }),
-    );
+    )
 
     if (!error && data?.hits.length) {
-      return data.hits;
+      return data.hits
     }
 
     const platforms = await db.platform.findMany({
@@ -107,13 +95,13 @@ export const searchPlatformsAction = createServerAction()
       },
       take: SEARCH_LIMIT,
       orderBy: { name: "asc" },
-    });
+    })
 
-    return platforms.map((platform) => ({
+    return platforms.map(platform => ({
       id: platform.id,
       name: platform.name,
       slug: platform.slug,
       faviconUrl: platform.faviconUrl,
       isVerified: platform.isFeatured,
-    }));
-  });
+    }))
+  })
