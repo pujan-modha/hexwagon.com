@@ -16,11 +16,19 @@ export const searchThemesAction = createServerAction()
         id: string;
         name: string;
         slug: string;
+        faviconUrl?: string | null;
+        isVerified?: boolean;
       }>(query, {
         limit: SEARCH_LIMIT,
         rankingScoreThreshold: 0.5,
         hybrid: { embedder: "openAi", semanticRatio: 0.5 },
-        attributesToRetrieve: ["id", "name", "slug"],
+        attributesToRetrieve: [
+          "id",
+          "name",
+          "slug",
+          "faviconUrl",
+          "isVerified",
+        ],
       }),
     );
 
@@ -30,14 +38,29 @@ export const searchThemesAction = createServerAction()
 
     const themes = await db.theme.findMany({
       where: {
-        name: { contains: query, mode: "insensitive" },
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { slug: { contains: query, mode: "insensitive" } },
+        ],
       },
-      select: { id: true, name: true, slug: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        faviconUrl: true,
+        _count: { select: { maintainers: true } },
+      },
       take: SEARCH_LIMIT,
       orderBy: { name: "asc" },
     });
 
-    return themes;
+    return themes.map((theme) => ({
+      id: theme.id,
+      name: theme.name,
+      slug: theme.slug,
+      faviconUrl: theme.faviconUrl,
+      isVerified: theme._count.maintainers > 0,
+    }));
   });
 
 export const searchPlatformsAction = createServerAction()
@@ -48,11 +71,19 @@ export const searchPlatformsAction = createServerAction()
         id: string;
         name: string;
         slug: string;
+        faviconUrl?: string | null;
+        isVerified?: boolean;
       }>(query, {
         limit: SEARCH_LIMIT,
         rankingScoreThreshold: 0.5,
         hybrid: { embedder: "openAi", semanticRatio: 0.5 },
-        attributesToRetrieve: ["id", "name", "slug"],
+        attributesToRetrieve: [
+          "id",
+          "name",
+          "slug",
+          "faviconUrl",
+          "isVerified",
+        ],
       }),
     );
 
@@ -62,12 +93,27 @@ export const searchPlatformsAction = createServerAction()
 
     const platforms = await db.platform.findMany({
       where: {
-        name: { contains: query, mode: "insensitive" },
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { slug: { contains: query, mode: "insensitive" } },
+        ],
       },
-      select: { id: true, name: true, slug: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        faviconUrl: true,
+        isFeatured: true,
+      },
       take: SEARCH_LIMIT,
       orderBy: { name: "asc" },
     });
 
-    return platforms;
+    return platforms.map((platform) => ({
+      id: platform.id,
+      name: platform.name,
+      slug: platform.slug,
+      faviconUrl: platform.faviconUrl,
+      isVerified: platform.isFeatured,
+    }));
   });

@@ -1,110 +1,101 @@
-"use server"
+"use server";
 
-import { getUrlHostname, slugify } from "@primoui/utils"
-import { PortStatus } from "@prisma/client"
-import { revalidateTag } from "next/cache"
-import { headers } from "next/headers"
-import { after } from "next/server"
-import { createServerAction } from "zsa"
-import { subscribeToNewsletter } from "~/actions/subscribe"
-import { auth } from "~/lib/auth"
+import { slugify } from "@primoui/utils";
+import { PortStatus } from "@prisma/client";
+import { revalidateTag } from "next/cache";
+import { after } from "next/server";
+import { subscribeToNewsletter } from "~/actions/subscribe";
 import {
   notifySubmitterOfPortApproved,
   notifySubmitterOfPortSubmitted,
-} from "~/lib/notifications"
-import { getIP, isRateLimited } from "~/lib/rate-limiter"
-import { submitPortSchema } from "~/server/web/shared/schema"
-import { db } from "~/services/db"
-import { isDisposableEmail } from "~/utils/helpers"
+} from "~/lib/notifications";
+import { isRateLimited } from "~/lib/rate-limiter";
+import { userProcedure } from "~/lib/safe-actions";
+import { submitPortSchema } from "~/server/web/shared/schema";
+import { db } from "~/services/db";
 
 /**
  * Generates a unique slug by adding a numeric suffix if needed
  */
 const generateUniqueSlug = async (baseName: string): Promise<string> => {
-  const baseSlug = slugify(baseName)
-  let slug = baseSlug
-  let suffix = 2
+  const baseSlug = slugify(baseName);
+  let slug = baseSlug;
+  let suffix = 2;
 
   while (true) {
     if (!(await db.port.findUnique({ where: { slug } }))) {
-      return slug
+      return slug;
     }
 
-    slug = `${baseSlug}-${suffix}`
-    suffix++
+    slug = `${baseSlug}-${suffix}`;
+    suffix++;
   }
-}
+};
 
 /**
  * Submit a port to the database
  */
-export const submitPort = createServerAction()
+export const submitPort = userProcedure
+  .createServerAction()
   .input(submitPortSchema)
-  .handler(async ({ input: { newsletterOptIn, ...data } }) => {
-    const session = await auth.api.getSession({ headers: await headers() })
+  .handler(async ({ input: { newsletterOptIn, ...data }, ctx: { user } }) => {
+    const submitterName = user.name?.trim() || null;
+    const submitterEmail = user.email?.trim() || null;
 
-    const isThemeMaintainer = session?.user
-      ? session.user.role === "admin" ||
-        Boolean(
-          await db.themeMaintainer.findUnique({
-            where: {
-              userId_themeId: {
-                userId: session.user.id,
-                themeId: data.themeId,
-              },
-            },
-            select: { id: true },
-          }),
-        )
-      : false
-
-    if (!session?.user) {
-      const ip = await getIP()
-      const rateLimitKey = `submission:${ip}`
-
-      if (await isRateLimited(rateLimitKey, "submission")) {
-        throw new Error("Too many submissions. Please try again later.")
-      }
-
-      if (await isDisposableEmail(data.submitterEmail)) {
-        throw new Error("Invalid email address, please use a real one")
-      }
+    const rateLimitKey = `submission:${user.id}`;
+    if (await isRateLimited(rateLimitKey, "submission")) {
+      throw new Error("Too many submissions. Please try again later.");
     }
 
-    if (newsletterOptIn) {
+    const isThemeMaintainer =
+      user.role === "admin" ||
+      Boolean(
+        await db.themeMaintainer.findUnique({
+          where: {
+            userId_themeId: {
+              userId: user.id,
+              themeId: data.themeId,
+            },
+          },
+          select: { id: true },
+        }),
+      );
+
+    if (newsletterOptIn && submitterEmail) {
       await subscribeToNewsletter({
-        value: data.submitterEmail,
+        value: submitterEmail,
         utm_medium: "submit_form",
         send_welcome_email: false,
-      })
+      });
     }
 
     // Check for duplicate submission (same user + theme + platform with pending status)
-    if (session?.user) {
-      const existingPort = await db.port.findFirst({
-        where: {
-          themeId: data.themeId,
-          platformId: data.platformId,
-          authorId: session.user.id,
-          status: { in: ["Draft", "PendingEdit"] },
-        },
-      })
+    const existingPort = await db.port.findFirst({
+      where: {
+        themeId: data.themeId,
+        platformId: data.platformId,
+        authorId: user.id,
+        status: { in: ["Draft", "PendingEdit"] },
+      },
+    });
 
-      if (existingPort) {
-        throw new Error("You already have a pending submission for this theme+platform.")
-      }
+    if (existingPort) {
+      throw new Error(
+        "You already have a pending submission for this theme+platform.",
+      );
     }
 
     // Generate a unique slug
-    const slug = await generateUniqueSlug(data.name)
+    const slug = await generateUniqueSlug(data.name);
 
-    // Check if the email domain matches the website domain for ownership
-    const authorId = session?.user.id
+    const authorId = user.id;
 
     // Save the port to the database
     const port = await db.port.create({
       data: {
         ...data,
+        submitterName,
+        submitterEmail,
         slug,
         authorId,
         ...(isThemeMaintainer
@@ -114,17 +105,17 @@ export const submitPort = createServerAction()
             }
           : {}),
       },
-    })
+    });
 
     if (isThemeMaintainer) {
-      revalidateTag("ports", "max")
-      revalidateTag(`port-${port.slug}`, "max")
-      after(async () => await notifySubmitterOfPortApproved(port))
+      revalidateTag("ports", "max");
+      revalidateTag(`port-${port.slug}`, "max");
+      after(async () => await notifySubmitterOfPortApproved(port));
     } else {
-      after(async () => await notifySubmitterOfPortSubmitted(port))
+      after(async () => await notifySubmitterOfPortSubmitted(port));
     }
 
-    return port
-  })
+    return port;
+  });
 
-export const submitTool = submitPort
+export const submitTool = submitPort;

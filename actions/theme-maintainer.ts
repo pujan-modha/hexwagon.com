@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
+import { getUrlHostname } from "@primoui/utils";
 import { z } from "zod";
 import { userProcedure } from "~/lib/safe-actions";
+import { normalizeImageUrlToS3, uploadFavicon } from "~/lib/media";
 import { themePaletteSchema } from "~/server/admin/themes/schema";
 import { db } from "~/services/db";
+import { tryCatch } from "~/utils/helpers";
 
 const updateMaintainedThemeSchema = z.object({
   themeId: z.string().min(1),
@@ -59,6 +62,33 @@ export const updateMaintainedTheme = userProcedure
       }
     }
 
+    const slugCandidate =
+      (
+        await db.theme.findUnique({
+          where: { id: themeId },
+          select: { slug: true },
+        })
+      )?.slug ?? name.trim().toLowerCase().replace(/\s+/g, "-");
+
+    const providedFaviconUrl = faviconUrl?.trim();
+    const website = websiteUrl?.trim();
+
+    let resolvedFaviconUrl: string | null = null;
+
+    if (providedFaviconUrl) {
+      resolvedFaviconUrl = await normalizeImageUrlToS3({
+        imageUrl: providedFaviconUrl,
+        s3Path: `themes/${slugCandidate}/favicon`,
+      });
+    } else if (website) {
+      resolvedFaviconUrl =
+        (
+          await tryCatch(
+            uploadFavicon(getUrlHostname(website), `themes/${slugCandidate}`),
+          )
+        ).data ?? null;
+    }
+
     const theme = await db.theme.update({
       where: { id: themeId },
       data: {
@@ -66,7 +96,7 @@ export const updateMaintainedTheme = userProcedure
         description: toNullableString(description),
         websiteUrl: toNullableString(websiteUrl),
         repositoryUrl: toNullableString(repositoryUrl),
-        faviconUrl: toNullableString(faviconUrl),
+        faviconUrl: resolvedFaviconUrl,
         guidelines: toNullableString(guidelines),
         license: toNullableString(license),
       },

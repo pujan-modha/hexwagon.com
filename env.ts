@@ -41,16 +41,11 @@ export const env = createEnv({
     S3_PUBLIC_URL: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
+    INNGEST_SIGNING_KEY: z.string().optional(),
+    INNGEST_EVENT_KEY: z.string().optional(),
     PLAUSIBLE_API_KEY: z.string().min(1),
     BEEHIIV_API_KEY: z.string().min(1),
     BEEHIIV_PUBLICATION_ID: z.string().min(1),
-    TWITTER_API_KEY: z.string().optional(),
-    TWITTER_API_SECRET: z.string().optional(),
-    TWITTER_ACCESS_TOKEN: z.string().optional(),
-    TWITTER_ACCESS_SECRET: z.string().optional(),
-    BLUESKY_USERNAME: z.string().optional(),
-    BLUESKY_PASSWORD: z.string().optional(),
-    MASTODON_ACCESS_TOKEN: z.string().optional(),
   },
 
   /**

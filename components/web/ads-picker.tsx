@@ -46,11 +46,11 @@ export const AdsPicker = ({
 
   const { execute, isPending } = useServerAction(createStripeAdsCheckout, {
     onSuccess: ({ data }) => {
-      posthog.capture("stripe_checkout_ad", {
+      posthog.capture("ad_booking_started", {
         ...price,
       });
 
-      window.open(data, "_blank")?.focus();
+      window.location.href = data;
     },
 
     onError: ({ err }) => {
@@ -183,7 +183,7 @@ export const AdsPicker = ({
           className="max-sm:w-full sm:-my-2"
           onClick={handleCheckout}
         >
-          Purchase Now
+          Continue
         </Button>
       </Stack>
     </div>

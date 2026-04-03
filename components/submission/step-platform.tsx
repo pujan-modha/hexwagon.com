@@ -18,6 +18,9 @@ import {
 } from "~/components/common/dialog";
 import { Button } from "~/components/common/button";
 import { Label } from "~/components/common/label";
+import { Icon } from "~/components/common/icon";
+import { Favicon } from "~/components/web/ui/favicon";
+import { VerifiedBadge } from "~/components/web/verified-badge";
 
 type StepPlatformProps = {
   onNext: () => void;
@@ -30,7 +33,12 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [platforms, setPlatforms] = useState<
-    Array<{ id: string; name: string }>
+    Array<{
+      id: string;
+      name: string;
+      faviconUrl?: string | null;
+      isVerified?: boolean;
+    }>
   >([]);
 
   const handleSearch = useCallback(async (q: string) => {
@@ -81,7 +89,9 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
           </DialogTrigger>
 
           <DialogContent className="p-0">
-            <DialogPrimitive.Title className="sr-only">Search for a platform</DialogPrimitive.Title>
+            <DialogPrimitive.Title className="sr-only">
+              Search for a platform
+            </DialogPrimitive.Title>
             <Command>
               <CommandInput
                 placeholder="Search platforms..."
@@ -95,10 +105,30 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
                 {platforms.map((platform) => (
                   <CommandItem
                     key={platform.id}
-                    value={platform.id}
+                    value={platform.name}
                     onSelect={() => handleSelect(platform.id, platform.name)}
                   >
-                    {platform.name}
+                    {platform.faviconUrl ? (
+                      <Favicon
+                        src={platform.faviconUrl}
+                        title={platform.name}
+                        plain
+                        className="size-5"
+                      />
+                    ) : (
+                      <span className="flex size-5 items-center justify-center rounded-sm border bg-muted/40">
+                        <Icon
+                          name="lucide/globe"
+                          className="size-3.5 text-muted-foreground"
+                        />
+                      </span>
+                    )}
+
+                    <span className="truncate">{platform.name}</span>
+
+                    {platform.isVerified ? (
+                      <VerifiedBadge size="xs" className="mr-auto" />
+                    ) : null}
                   </CommandItem>
                 ))}
               </CommandList>

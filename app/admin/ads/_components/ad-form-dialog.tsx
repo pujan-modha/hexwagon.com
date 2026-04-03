@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { getRandomString } from "@primoui/utils";
 import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -40,6 +41,10 @@ import {
   AdPreviewCard,
   type AdPreviewAd,
 } from "~/components/web/ads/ad-preview";
+import { uploadImageToS3 } from "~/actions/media";
+
+const IMAGE_ACCEPT =
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
 
 type AdFormDialogProps = {
   open: boolean;
@@ -208,6 +213,15 @@ const AdFormDialog = ({
   );
 
   const isPending = createPending || updatePending;
+
+  const { execute: uploadImageAction, isPending: isUploadingImage } =
+    useServerAction(uploadImageToS3, {
+      onSuccess: ({ data }) => {
+        toast.success("Image uploaded successfully.");
+        setValue("faviconUrl", data, { shouldValidate: true });
+      },
+      onError: ({ err }) => toast.error(err.message),
+    });
 
   const previewAd: AdPreviewAd = {
     type: watchedSpot,
@@ -440,10 +454,31 @@ const AdFormDialog = ({
                   placeholder="https://example.com/image.png"
                   {...register("faviconUrl")}
                 />
+                <Input
+                  type="file"
+                  hover
+                  accept={IMAGE_ACCEPT}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+
+                    uploadImageAction({
+                      file,
+                      path: `ads/${getRandomString(12)}/favicon-upload`,
+                    });
+
+                    event.currentTarget.value = "";
+                  }}
+                />
                 <p className="text-xs text-muted-foreground">
                   Leave blank to use the website favicon. If none exists, the ad
                   will render without an image.
                 </p>
+                {isUploadingImage && (
+                  <p className="text-xs text-muted-foreground">
+                    Uploading image...
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="buttonLabel">Button Label</Label>

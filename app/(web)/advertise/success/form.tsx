@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useServerAction } from "zsa-react";
-import { createAdFromCheckout } from "~/actions/stripe";
+import { createAdFromCheckout, createAdFromDraft } from "~/actions/stripe";
 import { Button } from "~/components/common/button";
 import {
   Form,
@@ -26,28 +26,53 @@ import {
 } from "~/server/web/shared/schema";
 import { cx } from "~/utils/cva";
 
+const IMAGE_ACCEPT =
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
+
 type AdDetailsFormProps = ComponentProps<"form"> & {
-  sessionId: string;
+  sessionId: string | null;
+  sessionToken: string | null;
+  draftToken: string | null;
+  defaultEmail: string | null;
   ad?: AdOne | null;
 };
 
 export const AdDetailsForm = ({
   className,
   sessionId,
+  sessionToken,
+  draftToken,
+  defaultEmail,
   ad,
   ...props
 }: AdDetailsFormProps) => {
   const form = useForm<AdDetailsSchema>({
     resolver: zodResolver(adDetailsSchema),
     defaultValues: {
+      email: defaultEmail ?? "",
       name: ad?.name ?? "",
       websiteUrl: ad?.websiteUrl ?? "",
       description: ad?.description ?? "",
+      faviconUrl: ad?.faviconUrl ?? "",
+      faviconFile: undefined,
       buttonLabel: ad?.buttonLabel ?? "",
     },
   });
 
-  const { execute, isPending } = useServerAction(createAdFromCheckout, {
+  const checkoutAction = useServerAction(createAdFromCheckout, {
+    onSuccess: () => {
+      toast.success(
+        ad
+          ? "Advertisement updated successfully!"
+          : "Advertisement submitted for review!",
+      );
+    },
+    onError: ({ err }) => {
+      toast.error(err.message);
+    },
+  });
+
+  const draftAction = useServerAction(createAdFromDraft, {
     onSuccess: () => {
       toast.success(
         ad
@@ -61,11 +86,27 @@ export const AdDetailsForm = ({
   });
 
   const handleSubmit = form.handleSubmit((data) => {
-    execute({
+    if (draftToken) {
+      draftAction.execute({
+        draftToken,
+        ...data,
+      });
+      return;
+    }
+
+    if (!sessionId || !sessionToken) {
+      toast.error("Invalid booking session.");
+      return;
+    }
+
+    checkoutAction.execute({
       sessionId,
+      sessionToken,
       ...data,
     });
   });
+
+  const isPending = checkoutAction.isPending || draftAction.isPending;
 
   return (
     <Form {...form}>
@@ -75,6 +116,25 @@ export const AdDetailsForm = ({
         noValidate
         {...props}
       >
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel isRequired>Email</FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  size="lg"
+                  placeholder="you@company.com"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="name"
@@ -127,6 +187,58 @@ export const AdDetailsForm = ({
                   size="lg"
                   placeholder="Brief description of your product"
                   {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="faviconUrl"
+          render={({ field }) => (
+            <FormItem>
+              <Stack className="w-full justify-between">
+                <FormLabel>Icon URL</FormLabel>
+                <Note className="text-xs">
+                  Leave empty to use website favicon
+                </Note>
+              </Stack>
+              <FormControl>
+                <Input
+                  type="url"
+                  size="lg"
+                  placeholder="https://yourwebsite.com/icon.png"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="faviconFile"
+          render={({ field: { onChange } }) => (
+            <FormItem>
+              <Stack className="w-full justify-between">
+                <FormLabel>Icon File</FormLabel>
+                <Note className="text-xs">
+                  PNG, JPG, WebP, GIF, AVIF, or SVG (max 8MB)
+                </Note>
+              </Stack>
+              <FormControl>
+                <Input
+                  type="file"
+                  size="lg"
+                  hover
+                  accept={IMAGE_ACCEPT}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    onChange(file);
+                  }}
                 />
               </FormControl>
               <FormMessage />

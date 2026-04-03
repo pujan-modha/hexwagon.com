@@ -206,14 +206,17 @@ export const notifyEditorOfPortEditRejected = async (portEdit: {
 /**
  * Notify the advertiser of an approved ad
  */
-export const notifyAdvertiserOfAdApproved = async (ad: AdWithContact) => {
+export const notifyAdvertiserOfAdApproved = async (
+  ad: AdWithContact,
+  paymentUrl?: string,
+) => {
   const to = ad.email;
   const subject = `🎉 Your ad for ${ad.name} has been approved!`;
 
   return await sendEmail({
     to,
     subject,
-    react: EmailAdApproved({ to, ad }),
+    react: EmailAdApproved({ to, ad, paymentUrl }),
   });
 };
 

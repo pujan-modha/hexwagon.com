@@ -7,6 +7,7 @@ import {
   CardHeader,
 } from "~/components/common/card";
 import { H4 } from "~/components/common/heading";
+import { Icon } from "~/components/common/icon";
 import { Link } from "~/components/common/link";
 import { Skeleton } from "~/components/common/skeleton";
 import { VerifiedBadge } from "~/components/web/verified-badge";
@@ -49,8 +50,19 @@ const ThemeCard = ({
         </CardDescription>
 
         {showCount && (
-          <CardFooter className="mt-auto">
-            {theme._count.ports} {plur("port", theme._count.ports)}
+          <CardFooter className="mt-auto w-full text-sm">
+            <div className="flex w-full items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-muted-foreground">
+                <Icon name="lucide/layout-dashboard" className="size-3.5" />
+                Ports
+              </span>
+
+              <span className="h-px flex-1 bg-border/70" />
+
+              <span className="tabular-nums font-semibold text-foreground">
+                {theme._count.ports.toLocaleString()}
+              </span>
+            </div>
           </CardFooter>
         )}
       </Link>

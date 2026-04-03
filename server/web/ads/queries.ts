@@ -23,6 +23,7 @@ const getActiveAdWhere = (where?: Prisma.AdWhereInput): Prisma.AdWhereInput => {
     startsAt: { lte: new Date() },
     endsAt: { gt: new Date() },
     status: adStatus.Approved,
+    paidAt: { not: null },
     ...where,
   };
 };
@@ -68,7 +69,25 @@ export const findAds = async ({
   return db.ad.findMany({
     ...args,
     orderBy: orderBy ?? { startsAt: "desc" },
-    where: { status: adStatus.Approved, ...where },
+    where: { status: adStatus.Approved, paidAt: { not: null }, ...where },
+    select: adManyPayload,
+  });
+};
+
+export const findAdsForBooking = async () => {
+  "use cache";
+
+  cacheTag("ads");
+  cacheLife("minutes");
+
+  return db.ad.findMany({
+    where: {
+      status: adStatus.Approved,
+      cancelledAt: null,
+      rejectedAt: null,
+      endsAt: { gt: new Date() },
+    },
+    orderBy: { startsAt: "desc" },
     select: adManyPayload,
   });
 };

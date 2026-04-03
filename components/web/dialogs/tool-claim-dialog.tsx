@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useServerAction } from "zsa-react";
-import { sendToolClaimOtp, verifyToolClaimOtp } from "~/actions/claim";
+import { sendPortClaimOtp, verifyPortClaimOtp } from "~/actions/claim";
 import { Button } from "~/components/common/button";
 import {
   Dialog,
@@ -90,7 +90,7 @@ export const ToolClaimDialog = ({
   }, [cooldownRemaining]);
 
   const { execute: sendOtp, isPending: isSendingOtp } = useServerAction(
-    sendToolClaimOtp,
+    sendPortClaimOtp,
     {
       onSuccess: () => {
         toast.success("OTP code sent to your email");
@@ -105,7 +105,7 @@ export const ToolClaimDialog = ({
   );
 
   const { execute: verifyOtp, isPending: isVerifying } = useServerAction(
-    verifyToolClaimOtp,
+    verifyPortClaimOtp,
     {
       onSuccess: () => {
         toast.success(`You've successfully claimed ${tool.name}`);

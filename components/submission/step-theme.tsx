@@ -18,6 +18,9 @@ import {
 } from "~/components/common/dialog";
 import { Button } from "~/components/common/button";
 import { Label } from "~/components/common/label";
+import { Icon } from "~/components/common/icon";
+import { Favicon } from "~/components/web/ui/favicon";
+import { VerifiedBadge } from "~/components/web/verified-badge";
 
 type StepThemeProps = {
   onNext: () => void;
@@ -28,7 +31,14 @@ const StepTheme = ({ onNext }: StepThemeProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [themes, setThemes] = useState<Array<{ id: string; name: string }>>([]);
+  const [themes, setThemes] = useState<
+    Array<{
+      id: string;
+      name: string;
+      faviconUrl?: string | null;
+      isVerified?: boolean;
+    }>
+  >([]);
 
   const handleSearch = useCallback(async (q: string) => {
     setSearch(q);
@@ -78,7 +88,9 @@ const StepTheme = ({ onNext }: StepThemeProps) => {
           </DialogTrigger>
 
           <DialogContent className="p-0">
-            <DialogPrimitive.Title className="sr-only">Search for a theme</DialogPrimitive.Title>
+            <DialogPrimitive.Title className="sr-only">
+              Search for a theme
+            </DialogPrimitive.Title>
             <Command>
               <CommandInput
                 placeholder="Search themes..."
@@ -92,10 +104,30 @@ const StepTheme = ({ onNext }: StepThemeProps) => {
                 {themes.map((theme) => (
                   <CommandItem
                     key={theme.id}
-                    value={theme.id}
+                    value={theme.name}
                     onSelect={() => handleSelect(theme.id, theme.name)}
                   >
-                    {theme.name}
+                    {theme.faviconUrl ? (
+                      <Favicon
+                        src={theme.faviconUrl}
+                        title={theme.name}
+                        plain
+                        className="size-5"
+                      />
+                    ) : (
+                      <span className="flex size-5 items-center justify-center rounded-sm border bg-muted/40">
+                        <Icon
+                          name="lucide/hash"
+                          className="size-3.5 text-muted-foreground"
+                        />
+                      </span>
+                    )}
+
+                    <span className="truncate">{theme.name}</span>
+
+                    {theme.isVerified ? (
+                      <VerifiedBadge size="xs" className="mr-auto" />
+                    ) : null}
                   </CommandItem>
                 ))}
               </CommandList>

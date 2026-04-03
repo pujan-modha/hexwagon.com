@@ -6,6 +6,7 @@ import {
   CardHeader,
 } from "~/components/common/card";
 import { H4 } from "~/components/common/heading";
+import { Icon } from "~/components/common/icon";
 import { Link } from "~/components/common/link";
 import { Skeleton } from "~/components/common/skeleton";
 import { VerifiedBadge } from "~/components/web/verified-badge";
@@ -38,30 +39,48 @@ const PortCard = ({ port, href, className, ...props }: PortCardProps) => {
           </H4>
         </CardHeader>
 
-        <CardDescription className="min-h-[3.75rem] line-clamp-3">
+        <CardDescription className="min-h-[3.25rem] line-clamp-3">
           {port.description || "\u00A0"}
         </CardDescription>
 
-        <CardFooter className="mt-auto text-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
-            <Favicon
-              src={port.theme.faviconUrl}
-              title={port.theme.name}
-              plain
-              className="size-4"
-            />
-            <span className="truncate">{port.theme.name}</span>
-          </span>
-          <span aria-hidden="true">·</span>
-          <span className="inline-flex items-center gap-1.5">
-            <Favicon
-              src={port.platform.faviconUrl}
-              title={port.platform.name}
-              plain
-              className="size-4"
-            />
-            <span className="truncate">{port.platform.name}</span>
-          </span>
+        <CardFooter className="mt-auto w-full flex-col items-stretch gap-1.5 text-sm">
+          <div className="flex w-full items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-muted-foreground">
+              <Icon name="lucide/hash" className="size-3.5" />
+              Theme
+            </span>
+
+            <span className="h-px flex-1 bg-border/70" />
+
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-foreground">
+              <Favicon
+                src={port.theme.faviconUrl}
+                title={port.theme.name}
+                plain
+                className="size-4"
+              />
+              <span className="truncate">{port.theme.name}</span>
+            </span>
+          </div>
+
+          <div className="flex w-full items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-muted-foreground">
+              <Icon name="lucide/globe" className="size-3.5" />
+              Platform
+            </span>
+
+            <span className="h-px flex-1 bg-border/70" />
+
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-foreground">
+              <Favicon
+                src={port.platform.faviconUrl}
+                title={port.platform.name}
+                plain
+                className="size-4"
+              />
+              <span className="truncate">{port.platform.name}</span>
+            </span>
+          </div>
         </CardFooter>
       </Link>
     </Card>

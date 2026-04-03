@@ -5,11 +5,11 @@ import { getRandomString, isValidUrl, slugify } from "@primoui/utils";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useServerAction } from "zsa-react";
-import { generateFavicon } from "~/actions/media";
+import { generateFavicon, uploadImageToS3 } from "~/actions/media";
 import { Button } from "~/components/common/button";
 import {
   Form,
@@ -37,6 +37,9 @@ import type { findPlatformBySlug } from "~/server/admin/platforms/queries";
 import { platformSchema } from "~/server/admin/platforms/schema";
 import { PlatformActions } from "./platform-actions";
 import { cx } from "~/utils/cva";
+
+const IMAGE_ACCEPT =
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
 
 type PlatformFormProps = ComponentProps<"form"> & {
   platform?: Awaited<ReturnType<typeof findPlatformBySlug>>;
@@ -93,13 +96,38 @@ export function PlatformForm({
 
   const faviconAction = useServerAction(generateFavicon, {
     onSuccess: ({ data }) => {
-      toast.success(
-        "Favicon successfully generated. Please save the platform to update.",
-      );
       form.setValue("faviconUrl", data);
     },
     onError: ({ err }) => toast.error(err.message),
   });
+
+  const uploadImageAction = useServerAction(uploadImageToS3, {
+    onSuccess: ({ data }) => {
+      toast.success(
+        "Image uploaded successfully. Please save the platform to update.",
+      );
+      form.setValue("faviconUrl", data, { shouldDirty: true });
+    },
+    onError: ({ err }) => toast.error(err.message),
+  });
+
+  useEffect(() => {
+    const currentFaviconUrl = form.getValues("faviconUrl")?.trim();
+    if (currentFaviconUrl) return;
+    if (!isValidUrl(websiteUrl)) return;
+    if (faviconAction.isPending || uploadImageAction.isPending) return;
+
+    faviconAction.execute({
+      url: websiteUrl,
+      path: `platforms/${slug || getRandomString(12)}`,
+    });
+  }, [
+    form,
+    slug,
+    websiteUrl,
+    faviconAction.isPending,
+    uploadImageAction.isPending,
+  ]);
 
   const handleSubmit = form.handleSubmit((data) => {
     upsertAction.execute({ id: platform?.id, ...data });
@@ -353,6 +381,27 @@ export function PlatformForm({
                   <FormControl>
                     <Input type="url" className="flex-1" {...field} />
                   </FormControl>
+
+                  <Input
+                    type="file"
+                    hover
+                    accept={IMAGE_ACCEPT}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+
+                      uploadImageAction.execute({
+                        file,
+                        path: `platforms/${slug || getRandomString(12)}/favicon-upload`,
+                      });
+
+                      event.currentTarget.value = "";
+                    }}
+                  />
+
+                  <Note className="text-xs">
+                    Upload PNG, JPG, WebP, GIF, AVIF, or SVG. Max 8MB.
+                  </Note>
                 </Stack>
 
                 <FormMessage />

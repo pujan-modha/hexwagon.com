@@ -21,8 +21,6 @@ const StepReview = ({ onBack }: StepReviewProps) => {
     content,
     repositoryUrl,
     license,
-    submitterName,
-    submitterEmail,
     submitterNote,
     newsletterOptIn,
     reset,
@@ -38,8 +36,6 @@ const StepReview = ({ onBack }: StepReviewProps) => {
         content,
         repositoryUrl,
         license,
-        submitterName,
-        submitterEmail,
         submitterNote,
         newsletterOptIn,
       });
@@ -97,12 +93,6 @@ const StepReview = ({ onBack }: StepReviewProps) => {
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">License:</span>
             <span>{license}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <span className="text-muted-foreground">Submitter:</span>
-            <span>
-              {submitterName} ({submitterEmail})
-            </span>
           </div>
           {submitterNote && (
             <div className="grid grid-cols-2 gap-2">

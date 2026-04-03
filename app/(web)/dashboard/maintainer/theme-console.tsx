@@ -1,12 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { getRandomString, isValidUrl } from "@primoui/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useServerAction } from "zsa-react";
+import { generateFavicon, uploadImageToS3 } from "~/actions/media";
 import { updateMaintainedTheme } from "~/actions/theme-maintainer";
 import { Button } from "~/components/common/button";
 import { Card } from "~/components/common/card";
@@ -63,6 +65,8 @@ type OfficialFilter = "all" | "official" | "unofficial";
 type SortKey = "platform" | "name" | "status" | "updatedAt" | "official";
 type SortDirection = "asc" | "desc";
 const PORTS_PER_PAGE = 25;
+const IMAGE_ACCEPT =
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
 
 const formSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -267,6 +271,41 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
     onError: ({ err }) => toast.error(err.message),
   });
 
+  const faviconAction = useServerAction(generateFavicon, {
+    onSuccess: ({ data }) => {
+      form.setValue("faviconUrl", data, { shouldDirty: true });
+    },
+    onError: ({ err }) => toast.error(err.message),
+  });
+
+  const uploadImageAction = useServerAction(uploadImageToS3, {
+    onSuccess: ({ data }) => {
+      toast.success("Image uploaded. Save changes to persist it.");
+      form.setValue("faviconUrl", data, { shouldDirty: true });
+    },
+    onError: ({ err }) => toast.error(err.message),
+  });
+
+  const watchedWebsiteUrl = form.watch("websiteUrl")?.trim() ?? "";
+  const watchedFaviconUrl = form.watch("faviconUrl")?.trim() ?? "";
+
+  useEffect(() => {
+    if (watchedFaviconUrl) return;
+    if (!isValidUrl(watchedWebsiteUrl)) return;
+    if (faviconAction.isPending || uploadImageAction.isPending) return;
+
+    faviconAction.execute({
+      url: watchedWebsiteUrl,
+      path: `themes/${theme.slug || getRandomString(12)}`,
+    });
+  }, [
+    theme.slug,
+    uploadImageAction.isPending,
+    watchedFaviconUrl,
+    watchedWebsiteUrl,
+    faviconAction.isPending,
+  ]);
+
   const markOfficialAction = useServerAction(setOfficialPort, {
     onSuccess: () => {
       toast.success("Official port updated.");
@@ -361,7 +400,10 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
     setCurrentPage(1);
   }, [portQuery, statusFilter, officialFilter, sortKey, sortDirection]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredPorts.length / PORTS_PER_PAGE));
+  const pageCount = Math.max(
+    1,
+    Math.ceil(filteredPorts.length / PORTS_PER_PAGE),
+  );
 
   useEffect(() => {
     if (currentPage > pageCount) {
@@ -408,7 +450,11 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" variant="secondary" prefix={<Icon name="lucide/pencil" />}>
+            <Button
+              size="sm"
+              variant="secondary"
+              prefix={<Icon name="lucide/pencil" />}
+            >
               Edit Theme
             </Button>
           </DialogTrigger>
@@ -473,7 +519,10 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                       <FormItem>
                         <FormLabel>Repository URL</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="https://github.com/..." />
+                          <Input
+                            {...field}
+                            placeholder="https://github.com/..."
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -485,10 +534,62 @@ const ThemeEditorCard = ({ theme }: { theme: MaintainedTheme }) => {
                     name="faviconUrl"
                     render={({ field }) => (
                       <FormItem className="md:col-span-2">
-                        <FormLabel>Favicon URL</FormLabel>
+                        <div className="flex items-center justify-between gap-2">
+                          <FormLabel>Favicon URL</FormLabel>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            prefix={
+                              <Icon
+                                name="lucide/refresh-cw"
+                                className={cx(
+                                  faviconAction.isPending && "animate-spin",
+                                )}
+                              />
+                            }
+                            disabled={
+                              !isValidUrl(watchedWebsiteUrl) ||
+                              faviconAction.isPending
+                            }
+                            onClick={() => {
+                              faviconAction.execute({
+                                url: watchedWebsiteUrl,
+                                path: `themes/${theme.slug || getRandomString(12)}`,
+                              });
+                            }}
+                          >
+                            {field.value ? "Regenerate" : "Generate"}
+                          </Button>
+                        </div>
+
                         <FormControl>
-                          <Input {...field} placeholder="https://.../favicon.png" />
+                          <Input
+                            {...field}
+                            placeholder="https://.../favicon.png"
+                          />
                         </FormControl>
+
+                        <Input
+                          type="file"
+                          hover
+                          accept={IMAGE_ACCEPT}
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) return;
+
+                            uploadImageAction.execute({
+                              file,
+                              path: `themes/${theme.slug || getRandomString(12)}/favicon-upload`,
+                            });
+
+                            event.currentTarget.value = "";
+                          }}
+                        />
+
+                        <Note className="text-xs">
+                          Upload PNG, JPG, WebP, GIF, AVIF, or SVG. Max 8MB.
+                        </Note>
                         <FormMessage />
                       </FormItem>
                     )}

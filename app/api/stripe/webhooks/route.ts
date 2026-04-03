@@ -1,6 +1,8 @@
 import { revalidateTag } from "next/cache";
+import { AdStatus } from "@prisma/client";
 import type Stripe from "stripe";
 import { env } from "~/env";
+import { notifyAdvertiserOfAdLive } from "~/lib/notifications";
 import { db } from "~/services/db";
 import { stripe } from "~/services/stripe";
 
@@ -32,6 +34,33 @@ export const POST = async (req: Request) => {
         const session = event.data.object;
 
         switch (session.mode) {
+          case "payment": {
+            const adId = session.metadata?.adId;
+
+            if (adId) {
+              const { count } = await db.ad.updateMany({
+                where: {
+                  id: adId,
+                  paidAt: null,
+                  status: AdStatus.Approved,
+                  cancelledAt: null,
+                },
+                data: { paidAt: new Date() },
+              });
+
+              if (count > 0) {
+                const ad = await db.ad.findUnique({ where: { id: adId } });
+                if (ad) {
+                  await notifyAdvertiserOfAdLive(ad);
+                }
+              }
+
+              revalidateTag("ads", "max");
+            }
+
+            break;
+          }
+
           case "subscription": {
             const subscription = await stripe.subscriptions.retrieve(
               session.subscription as string,

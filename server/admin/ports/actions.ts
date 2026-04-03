@@ -1,24 +1,65 @@
 "use server";
 
-import { slugify } from "@primoui/utils";
+import { getUrlHostname, slugify } from "@primoui/utils";
 import { PortStatus } from "@prisma/client";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
-import { removeS3Directories } from "~/lib/media";
+import {
+  normalizeImageUrlToS3,
+  removeS3Directories,
+  uploadFavicon,
+} from "~/lib/media";
 import {
   notifySubmitterOfPortApproved,
   notifySubmitterOfPortRejected,
-  notifySubmitterOfPortScheduled,
 } from "~/lib/notifications";
 import { adminProcedure, userProcedure } from "~/lib/safe-actions";
 import { portSchema } from "~/server/admin/ports/schema";
 import { db } from "~/services/db";
+import { tryCatch } from "~/utils/helpers";
 
 export const upsertPort = adminProcedure
   .createServerAction()
   .input(portSchema)
   .handler(async ({ input: { id, themeId, platformId, ...input } }) => {
+    const slug =
+      input.slug || slugify(input.name ?? `${themeId}-${platformId}`);
+    const providedFaviconUrl = input.faviconUrl?.trim();
+    const providedScreenshotUrl = input.screenshotUrl?.trim();
+    const repositoryUrl = input.repositoryUrl?.trim();
+
+    let faviconUrl: string | null = null;
+    if (providedFaviconUrl) {
+      faviconUrl = await normalizeImageUrlToS3({
+        imageUrl: providedFaviconUrl,
+        s3Path: `ports/${slug}/favicon`,
+      });
+    } else if (repositoryUrl) {
+      faviconUrl =
+        (
+          await tryCatch(
+            uploadFavicon(getUrlHostname(repositoryUrl), `ports/${slug}`),
+          )
+        ).data ?? null;
+    }
+
+    const screenshotUrl = providedScreenshotUrl
+      ? await normalizeImageUrlToS3({
+          imageUrl: providedScreenshotUrl,
+          s3Path: `ports/${slug}/screenshot`,
+        })
+      : null;
+
+    const status =
+      input.status === PortStatus.Scheduled
+        ? PortStatus.Published
+        : input.status;
+    const publishedAt =
+      status === PortStatus.Published
+        ? (input.publishedAt ?? new Date())
+        : null;
+
     const existingPort = id
       ? await db.port.findUnique({ where: { id } })
       : null;
@@ -28,41 +69,40 @@ export const upsertPort = adminProcedure
           where: { id },
           data: {
             ...input,
-            slug:
-              input.slug || slugify(input.name ?? `${themeId}-${platformId}`),
+            status,
+            publishedAt,
+            slug,
             themeId: themeId ?? existingPort?.themeId,
             platformId: platformId ?? existingPort?.platformId,
+            faviconUrl,
+            screenshotUrl,
           },
         })
       : await db.port.create({
           data: {
             ...input,
-            slug:
-              input.slug || slugify(input.name ?? `${themeId}-${platformId}`),
+            status,
+            publishedAt,
+            slug,
             themeId: themeId!,
             platformId: platformId!,
+            faviconUrl,
+            screenshotUrl,
           },
         });
 
     revalidateTag("ports", "max");
     revalidateTag(`port-${port.slug}`, "max");
 
-    if (port.status === PortStatus.Scheduled) {
-      revalidateTag("schedule", "max");
-    }
-
     if (!existingPort || existingPort.status !== port.status) {
       after(async () => await notifySubmitterOfPortApproved(port));
-      after(async () => await notifySubmitterOfPortScheduled(port));
     }
 
     const hasRejectionReason = Boolean(port.rejectionReason?.trim());
     const hadRejectionReason = Boolean(existingPort?.rejectionReason?.trim());
     const rejectionReasonChanged =
       (existingPort?.rejectionReason ?? "") !== (port.rejectionReason ?? "");
-    const isRejectedState =
-      port.status !== PortStatus.Published &&
-      port.status !== PortStatus.Scheduled;
+    const isRejectedState = port.status !== PortStatus.Published;
 
     if (
       existingPort &&

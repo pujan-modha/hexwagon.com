@@ -6,11 +6,11 @@ import { type Port, PortStatus } from "@prisma/client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useServerAction } from "zsa-react";
-import { generateFavicon } from "~/actions/media";
+import { generateFavicon, uploadImageToS3 } from "~/actions/media";
 import { Button } from "~/components/common/button";
 import {
   Form,
@@ -49,6 +49,9 @@ import {
   SelectValue,
 } from "~/components/common/select";
 
+const IMAGE_ACCEPT =
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
+
 type PortFormProps = ComponentProps<"form"> & {
   port?: Awaited<ReturnType<typeof findPortBySlug>>;
   platformsPromise: ReturnType<typeof findPlatformList>;
@@ -64,13 +67,7 @@ const PortStatusChange = ({ port }: { port: Port }) => {
       >
         {port.name ?? port.slug}
       </ExternalLink>{" "}
-      is now {port.status.toLowerCase()}.{" "}
-      {port.status === PortStatus.Scheduled && (
-        <>
-          Will be published on{" "}
-          {port.publishedAt ? port.publishedAt.toLocaleString() : "soon"}.
-        </>
-      )}
+      is now {port.status.toLowerCase()}.
     </>
   );
 };
@@ -152,13 +149,48 @@ export function PortForm({
 
   const faviconAction = useServerAction(generateFavicon, {
     onSuccess: ({ data }) => {
-      toast.success(
-        "Favicon successfully generated. Please save the port to update.",
-      );
       form.setValue("faviconUrl", data);
     },
     onError: ({ err }) => toast.error(err.message),
   });
+
+  const uploadImageAction = useServerAction(uploadImageToS3, {
+    onSuccess: ({ data }) => {
+      toast.success(
+        "Image uploaded successfully. Please save the port to update.",
+      );
+      form.setValue("faviconUrl", data, { shouldDirty: true });
+    },
+    onError: ({ err }) => toast.error(err.message),
+  });
+
+  const uploadScreenshotAction = useServerAction(uploadImageToS3, {
+    onSuccess: ({ data }) => {
+      toast.success(
+        "Screenshot uploaded successfully. Please save the port to update.",
+      );
+      form.setValue("screenshotUrl", data, { shouldDirty: true });
+    },
+    onError: ({ err }) => toast.error(err.message),
+  });
+
+  useEffect(() => {
+    const currentFaviconUrl = form.getValues("faviconUrl")?.trim();
+    if (currentFaviconUrl) return;
+    if (!isValidUrl(repositoryUrl)) return;
+    if (faviconAction.isPending || uploadImageAction.isPending) return;
+
+    faviconAction.execute({
+      url: repositoryUrl,
+      path: `ports/${slug || getRandomString(12)}`,
+    });
+  }, [
+    form,
+    repositoryUrl,
+    slug,
+    faviconAction.isPending,
+    uploadImageAction.isPending,
+  ]);
 
   const handleSubmit = form.handleSubmit((data, event) => {
     const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
@@ -194,15 +226,6 @@ export function PortForm({
               {siteConfig.url}/themes/{port.theme.slug}/{port.platform.slug}/
               {port.slug}
             </ExternalLink>
-            {port.status === PortStatus.Scheduled && port.publishedAt && (
-              <>
-                <br />
-                Scheduled to be published on{" "}
-                <strong className="text-foreground">
-                  {port.publishedAt.toLocaleString()}
-                </strong>
-              </>
-            )}
           </Note>
         )}
       </Stack>
@@ -475,6 +498,27 @@ export function PortForm({
                 <FormControl>
                   <Input type="url" className="flex-1" {...field} />
                 </FormControl>
+
+                <Input
+                  type="file"
+                  hover
+                  accept={IMAGE_ACCEPT}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+
+                    uploadImageAction.execute({
+                      file,
+                      path: `ports/${slug || getRandomString(12)}/favicon-upload`,
+                    });
+
+                    event.currentTarget.value = "";
+                  }}
+                />
+
+                <Note className="text-xs">
+                  Upload PNG, JPG, WebP, GIF, AVIF, or SVG. Max 8MB.
+                </Note>
               </Stack>
 
               <FormMessage />
@@ -505,6 +549,27 @@ export function PortForm({
                 <FormControl>
                   <Input type="url" className="flex-1" {...field} />
                 </FormControl>
+
+                <Input
+                  type="file"
+                  hover
+                  accept={IMAGE_ACCEPT}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+
+                    uploadScreenshotAction.execute({
+                      file,
+                      path: `ports/${slug || getRandomString(12)}/screenshot-upload`,
+                    });
+
+                    event.currentTarget.value = "";
+                  }}
+                />
+
+                <Note className="text-xs">
+                  Upload PNG, JPG, WebP, GIF, AVIF, or SVG. Max 8MB.
+                </Note>
               </Stack>
 
               <FormMessage />
@@ -576,7 +641,6 @@ export function PortForm({
           <PortPublishActions
             isPending={!isStatusPending && upsertAction.isPending}
             isStatusPending={isStatusPending}
-            canSchedule={Boolean(port)}
             onStatusSubmit={handleStatusSubmit}
           />
         </div>

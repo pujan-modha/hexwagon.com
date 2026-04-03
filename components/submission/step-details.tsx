@@ -20,8 +20,6 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
     content,
     repositoryUrl,
     license,
-    submitterName,
-    submitterEmail,
     submitterNote,
     newsletterOptIn,
     setPortDetails,
@@ -88,27 +86,6 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="submitter-name">Your Name</Label>
-        <Input
-          id="submitter-name"
-          value={submitterName}
-          onChange={(e) => setPortDetails({ submitterName: e.target.value })}
-          placeholder="Your name"
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="submitter-email">Your Email</Label>
-        <Input
-          id="submitter-email"
-          type="email"
-          value={submitterEmail}
-          onChange={(e) => setPortDetails({ submitterEmail: e.target.value })}
-          placeholder="your@email.com"
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
         <Label htmlFor="submitter-note">Note for moderators</Label>
         <Textarea
           id="submitter-note"
@@ -134,16 +111,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         <Button variant="secondary" onClick={onBack}>
           Back
         </Button>
-        <Button
-          onClick={onNext}
-          disabled={
-            !name ||
-            !repositoryUrl ||
-            !license ||
-            !submitterName ||
-            !submitterEmail
-          }
-        >
+        <Button onClick={onNext} disabled={!name || !repositoryUrl || !license}>
           Next
         </Button>
       </div>

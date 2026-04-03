@@ -1,19 +1,9 @@
-import { isTruthy } from "@primoui/utils";
 import { PortStatus } from "@prisma/client";
-import { addDays, formatDate, isFriday, isMonday, isWednesday } from "date-fns";
 import { type ComponentProps, type ReactNode, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { Button, type ButtonProps } from "~/components/common/button";
-import { Calendar } from "~/components/common/calendar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/common/dialog";
 import { H5, H6 } from "~/components/common/heading";
 import { Icon } from "~/components/common/icon";
-import { Input } from "~/components/common/input";
 import { Note } from "~/components/common/note";
 import {
   Popover,
@@ -27,7 +17,6 @@ import type { PortSchema } from "~/server/admin/ports/schema";
 type PortPublishActionsProps = ComponentProps<typeof Stack> & {
   isPending: boolean;
   isStatusPending: boolean;
-  canSchedule: boolean;
   onStatusSubmit: (status: PortStatus, publishedAt: Date | null) => void;
 };
 
@@ -48,58 +37,10 @@ type ActionConfig = Omit<ButtonProps, "popover"> & {
 
 const getStatusConfig = (
   status: PortStatus,
-  canSchedule: boolean,
   onPublished: () => void,
-  onScheduled: () => void,
   onDraft: () => void,
 ): ActionConfig[] => {
   switch (status) {
-    case PortStatus.Scheduled:
-      return [
-        {
-          type: "button",
-          children: "Scheduled",
-          variant: "secondary",
-          prefix: <Icon name="lucide/calendar" />,
-          popover: {
-            title: "Update port status",
-            options: [
-              {
-                status: PortStatus.Draft,
-                title: "Revert to draft",
-                description: "Do not publish this port",
-                button: {
-                  onClick: onDraft,
-                  children: "Unschedule",
-                },
-              },
-              {
-                status: PortStatus.Scheduled,
-                title: "Schedule for later",
-                description: "Set automatic future publish date",
-                button: {
-                  onClick: onScheduled,
-                  children: "Reschedule",
-                },
-              },
-              {
-                status: PortStatus.Published,
-                title: "Publish now",
-                description: "Set this port live immediately",
-                button: {
-                  onClick: onPublished,
-                  children: "Publish",
-                },
-              },
-            ],
-          },
-        },
-        {
-          type: "submit",
-          children: "Update",
-          variant: "primary",
-        },
-      ];
     case PortStatus.Published:
       return [
         {
@@ -136,30 +77,6 @@ const getStatusConfig = (
     case PortStatus.PendingEdit:
     case PortStatus.Draft:
     default:
-      const options: PopoverOption[] = [
-        {
-          status: PortStatus.Published,
-          title: "Publish now",
-          description: "Set this port live immediately",
-          button: {
-            onClick: onPublished,
-            children: "Publish",
-          },
-        },
-      ];
-
-      if (canSchedule) {
-        options.push({
-          status: PortStatus.Scheduled,
-          title: "Schedule for later",
-          description: "Set automatic future publish date",
-          button: {
-            onClick: onScheduled,
-            children: "Schedule",
-          },
-        });
-      }
-
       return [
         {
           type: "button",
@@ -168,7 +85,17 @@ const getStatusConfig = (
           variant: "fancy",
           popover: {
             title: "Ready to publish this port?",
-            options,
+            options: [
+              {
+                status: PortStatus.Published,
+                title: "Publish now",
+                description: "Set this port live immediately",
+                button: {
+                  onClick: onPublished,
+                  children: "Publish",
+                },
+              },
+            ],
           },
         },
         {
@@ -183,33 +110,18 @@ const getStatusConfig = (
 export const PortPublishActions = ({
   isPending,
   isStatusPending,
-  canSchedule,
   onStatusSubmit,
   children,
   ...props
 }: PortPublishActionsProps) => {
   const { watch } = useFormContext<PortSchema>();
-  const [status, publishedAt] = watch(["status", "publishedAt"]);
-  const publishedAtDate = new Date(publishedAt ?? new Date());
+  const [status] = watch(["status"]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(status);
-  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(
-    formatDate(publishedAtDate, "yyyy-MM-dd"),
-  );
-  const [selectedTime, setSelectedTime] = useState(
-    formatDate(publishedAtDate, "HH:mm"),
-  );
 
   const handlePublished = () => {
     onStatusSubmit(PortStatus.Published, new Date());
-    setIsOpen(false);
-  };
-
-  const handleScheduled = () => {
-    const scheduledDate = new Date(`${selectedDate}T${selectedTime}`);
-    onStatusSubmit(PortStatus.Scheduled, scheduledDate);
     setIsOpen(false);
   };
 
@@ -218,13 +130,7 @@ export const PortPublishActions = ({
     setIsOpen(false);
   };
 
-  const portActions = getStatusConfig(
-    status,
-    canSchedule,
-    handlePublished,
-    handleScheduled,
-    handleDraft,
-  );
+  const portActions = getStatusConfig(status, handlePublished, handleDraft);
 
   return (
     <Stack size="sm" {...props}>
@@ -296,80 +202,6 @@ export const PortPublishActions = ({
                             {option.description && (
                               <Note>{option.description}</Note>
                             )}
-
-                            {option.status === PortStatus.Scheduled &&
-                              currentStatus === PortStatus.Scheduled && (
-                                <Stack
-                                  size="sm"
-                                  wrap={false}
-                                  className="mt-2 items-stretch w-full"
-                                >
-                                  <Button
-                                    size="md"
-                                    variant="secondary"
-                                    onClick={() => setIsScheduleOpen(true)}
-                                    suffix={<Icon name="lucide/calendar" />}
-                                    className="w-full tabular-nums"
-                                  >
-                                    {selectedDate}
-                                  </Button>
-
-                                  <Input
-                                    type="time"
-                                    value={selectedTime}
-                                    onChange={(e) =>
-                                      setSelectedTime(e.target.value)
-                                    }
-                                    className="w-full tabular-nums"
-                                  />
-
-                                  <Dialog
-                                    open={isScheduleOpen}
-                                    onOpenChange={setIsScheduleOpen}
-                                  >
-                                    <DialogContent className="max-w-sm">
-                                      <DialogHeader>
-                                        <DialogTitle>
-                                          Pick a date to publish
-                                        </DialogTitle>
-                                      </DialogHeader>
-
-                                      <Calendar
-                                        mode="single"
-                                        selected={new Date(selectedDate)}
-                                        disabled={{ before: new Date() }}
-                                        onSelect={(date) => {
-                                          date &&
-                                            setSelectedDate(
-                                              formatDate(date, "yyyy-MM-dd"),
-                                            );
-                                          setIsScheduleOpen(false);
-                                        }}
-                                        modifiers={{
-                                          schedulable: Array.from(
-                                            { length: 365 },
-                                            (_, i) => {
-                                              const date = addDays(
-                                                new Date(),
-                                                i,
-                                              );
-                                              return isMonday(date) ||
-                                                isWednesday(date) ||
-                                                isFriday(date)
-                                                ? date
-                                                : undefined;
-                                            },
-                                          ).filter(isTruthy),
-                                        }}
-                                        modifiersClassNames={{
-                                          schedulable:
-                                            "before:absolute before:bottom-0.5 before:left-1/2 before:z-10 before:size-1 before:rounded-full before:bg-chart-1 before:-translate-x-1/2",
-                                        }}
-                                      />
-                                    </DialogContent>
-                                  </Dialog>
-                                </Stack>
-                              )}
                           </label>
                         </Stack>
                       </Stack>

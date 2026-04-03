@@ -7,6 +7,90 @@ import { env, isProd } from "~/env";
 import { s3Client } from "~/services/s3";
 import { tryCatch } from "~/utils/helpers";
 
+export const ALLOWED_IMAGE_MIME_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+  "image/svg+xml",
+] as const;
+
+export const IMAGE_ACCEPT = `${ALLOWED_IMAGE_MIME_TYPES.join(",")},.svg`;
+export const MAX_IMAGE_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+const IMAGE_EXTENSION_BY_MIME: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/avif": "avif",
+  "image/svg+xml": "svg",
+};
+
+const getS3PublicBaseUrl = () =>
+  (
+    env.S3_PUBLIC_URL ??
+    `https://${env.S3_BUCKET}.s3.${env.S3_REGION}.amazonaws.com`
+  ).replace(/\/$/, "");
+
+const getFileExtension = (fileName: string) => {
+  const extension = fileName.split(".").pop()?.trim().toLowerCase();
+  return extension && extension.length <= 8 ? extension : null;
+};
+
+const normalizeContentType = (contentType: string | null) =>
+  (contentType ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
+
+export const isAllowedImageMimeType = (mimeType: string) => {
+  const normalized = normalizeContentType(mimeType);
+  return (ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(normalized);
+};
+
+export const isStoredOnS3 = (url: string) => {
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+
+  return trimmed.startsWith(getS3PublicBaseUrl());
+};
+
+const assertValidImageMimeType = (mimeType: string) => {
+  if (!isAllowedImageMimeType(mimeType)) {
+    throw new Error(
+      "Unsupported image format. Please use PNG, JPG, WebP, GIF, AVIF, or SVG.",
+    );
+  }
+};
+
+const assertImageSizeLimit = (sizeInBytes: number) => {
+  if (sizeInBytes > MAX_IMAGE_UPLOAD_BYTES) {
+    throw new Error("Image is too large. Maximum size is 8MB.");
+  }
+};
+
+const buildImageKey = ({
+  s3Path,
+  mimeType,
+  originalFileName,
+}: {
+  s3Path: string;
+  mimeType: string;
+  originalFileName?: string;
+}) => {
+  const normalizedPath = s3Path.replace(/^\/+|\/+$/g, "");
+  const mimeExtension = IMAGE_EXTENSION_BY_MIME[normalizeContentType(mimeType)];
+  const fileExtension = originalFileName
+    ? getFileExtension(originalFileName)
+    : null;
+  const extension = mimeExtension ?? fileExtension ?? "png";
+
+  return normalizedPath.includes(".")
+    ? normalizedPath
+    : `${normalizedPath}.${extension}`;
+};
+
 /**
  * Uploads a file to S3 and returns the S3 location.
  * @param file - The file to upload.
@@ -14,9 +98,7 @@ import { tryCatch } from "~/utils/helpers";
  * @returns The S3 location of the uploaded file.
  */
 export const uploadToS3Storage = async (file: Buffer, key: string) => {
-  const endpoint =
-    env.S3_PUBLIC_URL ??
-    `https://${env.S3_BUCKET}.s3.${env.S3_REGION}.amazonaws.com`;
+  const endpoint = getS3PublicBaseUrl();
 
   const upload = new Upload({
     client: s3Client,
@@ -154,4 +236,77 @@ export const uploadFavicon = async (url: string, s3Key: string) => {
     s3Key: `${s3Key}/favicon.png`,
     options,
   });
+};
+
+export const uploadImageFromUrl = async ({
+  imageUrl,
+  s3Path,
+}: {
+  imageUrl: string;
+  s3Path: string;
+}) => {
+  const response = await fetch(imageUrl);
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch image URL: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  const contentType = normalizeContentType(
+    response.headers.get("content-type"),
+  );
+  assertValidImageMimeType(contentType);
+
+  const contentLengthHeader = response.headers.get("content-length");
+  const contentLength = contentLengthHeader
+    ? Number(contentLengthHeader)
+    : null;
+  if (contentLength && Number.isFinite(contentLength)) {
+    assertImageSizeLimit(contentLength);
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  assertImageSizeLimit(buffer.byteLength);
+
+  const key = buildImageKey({ s3Path, mimeType: contentType });
+  return uploadToS3Storage(buffer, key);
+};
+
+export const uploadImageFile = async ({
+  file,
+  s3Path,
+}: {
+  file: File;
+  s3Path: string;
+}) => {
+  const contentType = normalizeContentType(file.type);
+  assertValidImageMimeType(contentType);
+  assertImageSizeLimit(file.size);
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const key = buildImageKey({
+    s3Path,
+    mimeType: contentType,
+    originalFileName: file.name,
+  });
+
+  return uploadToS3Storage(buffer, key);
+};
+
+export const normalizeImageUrlToS3 = async ({
+  imageUrl,
+  s3Path,
+}: {
+  imageUrl: string;
+  s3Path: string;
+}) => {
+  const trimmed = imageUrl.trim();
+  if (!trimmed) return null;
+
+  if (isStoredOnS3(trimmed)) {
+    return trimmed;
+  }
+
+  return uploadImageFromUrl({ imageUrl: trimmed, s3Path });
 };

@@ -9,9 +9,10 @@ import {
 
 type EmailProps = EmailWrapperProps & {
   ad: Ad;
+  paymentUrl?: string;
 };
 
-const EmailAdApproved = ({ ad, ...props }: EmailProps) => {
+const EmailAdApproved = ({ ad, paymentUrl, ...props }: EmailProps) => {
   return (
     <EmailWrapper signature {...props}>
       <Text>Hey {ad.name}!</Text>
@@ -22,12 +23,13 @@ const EmailAdApproved = ({ ad, ...props }: EmailProps) => {
       </Text>
 
       <Text>
-        It is now queued for the booked dates starting{" "}
-        {ad.startsAt.toLocaleDateString()}.
+        {paymentUrl
+          ? "Your campaign is ready to launch. Complete payment using the secure link below to confirm your slot."
+          : `It is now queued for the booked dates starting ${ad.startsAt.toLocaleDateString()}.`}
       </Text>
 
-      <EmailButton href={`${config.site.url}/advertise`}>
-        View advertising options
+      <EmailButton href={paymentUrl ?? `${config.site.url}/advertise`}>
+        {paymentUrl ? "Complete Payment" : "View advertising options"}
       </EmailButton>
     </EmailWrapper>
   );

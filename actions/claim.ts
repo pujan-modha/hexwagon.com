@@ -155,6 +155,3 @@ export const verifyPortClaimOtp = userProcedure
 
     return { success: true };
   });
-
-export const sendToolClaimOtp = sendPortClaimOtp;
-export const verifyToolClaimOtp = verifyPortClaimOtp;

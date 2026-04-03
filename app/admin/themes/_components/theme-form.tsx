@@ -5,12 +5,12 @@ import { getRandomString, isValidUrl, slugify } from "@primoui/utils";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useServerAction } from "zsa-react";
-import { generateFavicon } from "~/actions/media";
+import { generateFavicon, uploadImageToS3 } from "~/actions/media";
 import { Button } from "~/components/common/button";
 import {
   Form,
@@ -40,6 +40,9 @@ import { ThemeActions } from "./theme-actions";
 import { ThemeMaintainersManager } from "./theme-maintainers-manager";
 import { PaletteGroupEditor } from "./palette-group-editor";
 import { cx } from "~/utils/cva";
+
+const IMAGE_ACCEPT =
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
 
 type ThemeFormProps = ComponentProps<"form"> & {
   theme?: Awaited<ReturnType<typeof findThemeBySlug>>;
@@ -125,13 +128,38 @@ export function ThemeForm({
 
   const faviconAction = useServerAction(generateFavicon, {
     onSuccess: ({ data }) => {
-      toast.success(
-        "Favicon successfully generated. Please save the theme to update.",
-      );
       form.setValue("faviconUrl", data);
     },
     onError: ({ err }) => toast.error(err.message),
   });
+
+  const uploadImageAction = useServerAction(uploadImageToS3, {
+    onSuccess: ({ data }) => {
+      toast.success(
+        "Image uploaded successfully. Please save the theme to update.",
+      );
+      form.setValue("faviconUrl", data, { shouldDirty: true });
+    },
+    onError: ({ err }) => toast.error(err.message),
+  });
+
+  useEffect(() => {
+    const currentFaviconUrl = form.getValues("faviconUrl")?.trim();
+    if (currentFaviconUrl) return;
+    if (!isValidUrl(websiteUrl)) return;
+    if (faviconAction.isPending || uploadImageAction.isPending) return;
+
+    faviconAction.execute({
+      url: websiteUrl,
+      path: `themes/${slug || getRandomString(12)}`,
+    });
+  }, [
+    form,
+    slug,
+    uploadImageAction.isPending,
+    websiteUrl,
+    faviconAction.isPending,
+  ]);
 
   const handleSubmit = form.handleSubmit(
     (data) => {
@@ -400,6 +428,27 @@ export function ThemeForm({
                     <FormControl>
                       <Input type="url" className="flex-1" {...field} />
                     </FormControl>
+
+                    <Input
+                      type="file"
+                      hover
+                      accept={IMAGE_ACCEPT}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (!file) return;
+
+                        uploadImageAction.execute({
+                          file,
+                          path: `themes/${slug || getRandomString(12)}/favicon-upload`,
+                        });
+
+                        event.currentTarget.value = "";
+                      }}
+                    />
+
+                    <Note className="text-xs">
+                      Upload PNG, JPG, WebP, GIF, AVIF, or SVG. Max 8MB.
+                    </Note>
                   </Stack>
 
                   <FormMessage />

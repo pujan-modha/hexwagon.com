@@ -1,10 +1,15 @@
 "use server";
 
-import { slugify } from "@primoui/utils";
+import { getUrlHostname, slugify } from "@primoui/utils";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
-import { removeS3Directories } from "~/lib/media";
+import {
+  normalizeImageUrlToS3,
+  removeS3Directories,
+  uploadFavicon,
+} from "~/lib/media";
+import { tryCatch } from "~/utils/helpers";
 import { adminProcedure } from "~/lib/safe-actions";
 import { themeSchema } from "~/server/admin/themes/schema";
 import { db } from "~/services/db";
@@ -66,14 +71,32 @@ export const upsertTheme = adminProcedure
   .input(themeSchema)
   .handler(async ({ input: { id, palettes, ...input } }) => {
     const slug = input.slug || slugify(input.name);
+    const providedFaviconUrl = input.faviconUrl?.trim();
+    const websiteUrl = input.websiteUrl?.trim();
+
+    let faviconUrl: string | null = null;
+
+    if (providedFaviconUrl) {
+      faviconUrl = await normalizeImageUrlToS3({
+        imageUrl: providedFaviconUrl,
+        s3Path: `themes/${slug}/favicon`,
+      });
+    } else if (websiteUrl) {
+      faviconUrl =
+        (
+          await tryCatch(
+            uploadFavicon(getUrlHostname(websiteUrl), `themes/${slug}`),
+          )
+        ).data ?? null;
+    }
 
     const theme = id
       ? await db.theme.update({
           where: { id },
-          data: { ...input, slug },
+          data: { ...input, slug, faviconUrl },
         })
       : await db.theme.create({
-          data: { ...input, slug },
+          data: { ...input, slug, faviconUrl },
         });
 
     // Replace color palette entries if provided

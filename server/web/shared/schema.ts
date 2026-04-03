@@ -23,6 +23,16 @@ export const filterParamsCache = createSearchParamsCache(filterParamsSchema);
 export type FilterSchema = Awaited<ReturnType<typeof filterParamsCache.parse>>;
 
 const portUrlMessage = "Please enter a valid port URL";
+const allowedAdImageMimeTypes = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+  "image/svg+xml",
+];
+const maxAdImageSizeBytes = 8 * 1024 * 1024;
 
 export const repositorySchema = z
   .string()
@@ -35,8 +45,6 @@ export const submitPortSchema = z.object({
   description: z.string().optional(),
   content: z.string().optional(),
   repositoryUrl: repositorySchema,
-  submitterName: z.string().min(1, "Your name is required"),
-  submitterEmail: z.string().email("Please enter a valid email address"),
   submitterNote: z.string().max(200),
   newsletterOptIn: z.boolean().optional().default(true),
   themeId: z.string().min(1, "Theme is required"),
@@ -79,9 +87,27 @@ export const feedbackSchema = z.object({
 });
 
 export const adDetailsSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
   name: z.string().min(1, "Company name is required"),
   description: z.string().min(1, "Description is required").max(160),
   websiteUrl: z.string().url("Please enter a valid website URL"),
+  faviconUrl: z
+    .string()
+    .url("Please enter a valid icon URL")
+    .optional()
+    .or(z.literal("")),
+  faviconFile: z
+    .instanceof(File)
+    .optional()
+    .refine(
+      (file) =>
+        !file || allowedAdImageMimeTypes.includes(file.type.toLowerCase()),
+      "Unsupported image format. Please use PNG, JPG, WebP, GIF, AVIF, or SVG.",
+    )
+    .refine(
+      (file) => !file || file.size <= maxAdImageSizeBytes,
+      "Image must be 8MB or smaller",
+    ),
   buttonLabel: z.string().optional(),
 });
 

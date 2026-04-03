@@ -5,10 +5,12 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { getUrlHostname } from "@primoui/utils";
 import { AdType } from "@prisma/client";
 import { z } from "zod";
+import { env } from "~/env";
 import { adminProcedure } from "~/lib/safe-actions";
-import { uploadFavicon } from "~/lib/media";
+import { normalizeImageUrlToS3, uploadFavicon } from "~/lib/media";
 import { tryCatch } from "~/utils/helpers";
 import { db } from "~/services/db";
+import { stripe } from "~/services/stripe";
 import { adStatus } from "~/utils/ads";
 import {
   notifyAdvertiserOfAdApproved,
@@ -37,13 +39,20 @@ const resolveAdImageUrl = async ({
   destinationUrl: string;
   faviconUrl?: string | null;
 }) => {
-  if (faviconUrl) return faviconUrl;
+  const websiteHost = getUrlHostname(destinationUrl);
+  const providedFaviconUrl = faviconUrl?.trim();
+
+  if (providedFaviconUrl) {
+    const normalized = await normalizeImageUrlToS3({
+      imageUrl: providedFaviconUrl,
+      s3Path: `ads/${websiteHost}/favicon`,
+    });
+
+    return normalized;
+  }
 
   const favicon = await tryCatch(
-    uploadFavicon(
-      getUrlHostname(destinationUrl),
-      `ads/${getUrlHostname(destinationUrl)}`,
-    ),
+    uploadFavicon(websiteHost, `ads/${websiteHost}`),
   );
 
   return favicon.data ?? null;
@@ -53,6 +62,62 @@ export const approveAd = adminProcedure
   .createServerAction()
   .input(adIdSchema)
   .handler(async ({ input: { id } }) => {
+    const existingAd = await db.ad.findUniqueOrThrow({ where: { id } });
+
+    // Already paid ads can go live immediately after approval.
+    if (existingAd.paidAt) {
+      const ad = await db.ad.update({
+        where: { id },
+        data: {
+          status: adStatus.Approved,
+          approvedAt: new Date(),
+          rejectedAt: null,
+          cancelledAt: null,
+        },
+      });
+
+      revalidatePath("/admin/ads");
+      revalidateTag("ads", "max");
+
+      after(async () => {
+        await notifyAdvertiserOfAdLive(ad);
+      });
+
+      return ad;
+    }
+
+    if (!existingAd.priceCents || existingAd.priceCents <= 0) {
+      throw new Error(
+        "Invalid ad price. Please update the ad before approval.",
+      );
+    }
+
+    const checkout = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: existingAd.email,
+      line_items: [
+        {
+          price_data: {
+            product_data: { name: `${existingAd.type} Ad` },
+            unit_amount: existingAd.priceCents,
+            currency: "usd",
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: { adId: existingAd.id },
+      allow_promotion_codes: true,
+      automatic_tax: { enabled: true },
+      tax_id_collection: { enabled: true },
+      invoice_creation: { enabled: true },
+      success_url: `${env.NEXT_PUBLIC_SITE_URL}/advertise?payment=success`,
+      cancel_url: `${env.NEXT_PUBLIC_SITE_URL}/advertise?payment=cancelled`,
+    });
+
+    if (!checkout.url) {
+      throw new Error("Unable to create Stripe payment link.");
+    }
+
     const ad = await db.ad.update({
       where: { id },
       data: {
@@ -60,6 +125,7 @@ export const approveAd = adminProcedure
         approvedAt: new Date(),
         rejectedAt: null,
         cancelledAt: null,
+        sessionId: checkout.id,
       },
     });
 
@@ -67,12 +133,7 @@ export const approveAd = adminProcedure
     revalidateTag("ads", "max");
 
     after(async () => {
-      if (ad.paidAt) {
-        await notifyAdvertiserOfAdLive(ad);
-        return;
-      }
-
-      await notifyAdvertiserOfAdApproved(ad);
+      await notifyAdvertiserOfAdApproved(ad, checkout.url ?? undefined);
     });
 
     return ad;

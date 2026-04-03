@@ -13,6 +13,7 @@ export type AdSpot = {
 
 export const adsConfig = {
   minPageviewThreshold: 100,
+  paymentDeadlineHours: 24,
 
   adSpots: [
     {

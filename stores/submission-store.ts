@@ -11,8 +11,6 @@ type SubmissionState = {
   content: string;
   repositoryUrl: string;
   license: string;
-  submitterName: string;
-  submitterEmail: string;
   submitterNote: string;
   newsletterOptIn: boolean;
 
@@ -25,8 +23,6 @@ type SubmissionState = {
     content?: string;
     repositoryUrl?: string;
     license?: string;
-    submitterName?: string;
-    submitterEmail?: string;
     submitterNote?: string;
     newsletterOptIn?: boolean;
   }) => void;
@@ -44,8 +40,6 @@ const initialState = {
   content: "",
   repositoryUrl: "",
   license: "",
-  submitterName: "",
-  submitterEmail: "",
   submitterNote: "",
   newsletterOptIn: true,
 };

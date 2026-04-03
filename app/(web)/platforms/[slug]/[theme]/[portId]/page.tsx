@@ -169,13 +169,13 @@ export default async function PlatformPortPage(props: PageProps) {
                   label: "Theme",
                   value: port.theme.name,
                   link: `/themes/${port.theme.slug}`,
-                  icon: <Icon name="lucide/badge-check" />,
+                  icon: <Icon name="lucide/hash" />,
                 },
                 {
                   label: "Platform",
                   value: port.platform.name,
                   link: `/platforms/${port.platform.slug}`,
-                  icon: <Icon name="lucide/arrow-right" />,
+                  icon: <Icon name="lucide/globe" />,
                 },
                 {
                   label: "Submitted",
