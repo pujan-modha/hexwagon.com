@@ -9,15 +9,15 @@ Use this guide before adding or changing tracking.
 - PostHog:
   - Base pageview: `$pageview` on route changes.
   - Custom events: all feature events.
-- Plausible:
-  - Base pageview: `pageview` on client-side route transitions.
+- OpenPanel:
+  - Base pageview: auto `screenView` via `OpenPanelComponent`.
   - Custom events: mirrored from `trackRawEvent`.
 
 Primary wiring:
 
 - `app/(web)/providers.tsx`
 - `components/web/posthog-pageview.tsx`
-- `components/web/plausible-pageview.tsx`
+- `app/api/op/[...op]/route.ts`
 - `hooks/use-analytics.ts`
 - `components/web/external-link.tsx`
 
@@ -36,19 +36,18 @@ Primary wiring:
 | Event             | Transport           | Required Props                        | Emitted From                                                                                                   |
 | ----------------- | ------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `$pageview`       | PostHog             | `$current_url`                        | `components/web/posthog-pageview.tsx`                                                                          |
-| `pageview`        | Plausible           | none                                  | `components/web/plausible-pageview.tsx`                                                                        |
-| `theme_viewed`    | PostHog + Plausible | `themeId`, `themeSlug`                | `app/(web)/themes/[slug]/page.tsx`                                                                             |
-| `platform_viewed` | PostHog + Plausible | `platformId`, `platformSlug`          | `app/(web)/platforms/[slug]/page.tsx`                                                                          |
-| `port_viewed`     | PostHog + Plausible | `portId`, `themeSlug`, `platformSlug` | `app/(web)/themes/[slug]/[platform]/[portId]/page.tsx`, `app/(web)/platforms/[slug]/[theme]/[portId]/page.tsx` |
+| `theme_viewed`    | PostHog + OpenPanel | `themeId`, `themeSlug`                | `app/(web)/themes/[slug]/page.tsx`                                                                             |
+| `platform_viewed` | PostHog + OpenPanel | `platformId`, `platformSlug`          | `app/(web)/platforms/[slug]/page.tsx`                                                                          |
+| `port_viewed`     | PostHog + OpenPanel | `portId`, `themeSlug`, `platformSlug` | `app/(web)/themes/[slug]/[platform]/[portId]/page.tsx`, `app/(web)/platforms/[slug]/[theme]/[portId]/page.tsx` |
 
 ### Click Events
 
 | Event              | Transport           | Required Props                                                   | Emitted From                                            |
 | ------------------ | ------------------- | ---------------------------------------------------------------- | ------------------------------------------------------- |
-| `click_website`    | PostHog + Plausible | `entityType`, `entityId`, `entitySlug`, `url`, `source`          | theme/platform sidebar website link + button            |
-| `click_repository` | PostHog + Plausible | `portId`, `themeSlug`, `platformSlug`, `repositoryUrl`, `source` | port sidebar repository button, repository details card |
-| `click_ad`         | PostHog + Plausible | `url`, `type`, `source`                                          | ad card/banner/button                                   |
-| `click_share`      | PostHog + Plausible | `url`, `platform`                                                | share buttons                                           |
+| `click_website`    | PostHog + OpenPanel | `entityType`, `entityId`, `entitySlug`, `url`, `source`          | theme/platform sidebar website link + button            |
+| `click_repository` | PostHog + OpenPanel | `portId`, `themeSlug`, `platformSlug`, `repositoryUrl`, `source` | port sidebar repository button, repository details card |
+| `click_ad`         | PostHog + OpenPanel | `url`, `type`, `source`                                          | ad card/banner/button                                   |
+| `click_share`      | PostHog + OpenPanel | `url`, `platform`                                                | share buttons                                           |
 
 ### Search, Subscription, Commerce
 
@@ -87,7 +86,7 @@ Use `ExternalLink` with:
 
 - UTM appending
 - PostHog capture
-- Plausible custom event mirror
+- OpenPanel custom event mirror
 
 ### For internal links
 

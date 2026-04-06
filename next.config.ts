@@ -44,6 +44,9 @@ const nextConfig: NextConfig = {
   rewrites: async () => {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
     const posthogUrl = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+    const posthogAssetsUrl = posthogUrl
+      ?.replace("://us.i.", "://us-assets.i.")
+      .replace("://eu.i.", "://eu-assets.i.");
 
     const rewrites = [
       // RSS rewrites
@@ -65,16 +68,12 @@ const nextConfig: NextConfig = {
     if (posthogUrl) {
       rewrites.push(
         {
-          source: "/_proxy/posthog/ingest/static/:path*",
-          destination: `${posthogUrl.replace("us", "us-assets")}/static/:path*`,
+          source: "/api/ins/static/:path*",
+          destination: `${posthogAssetsUrl}/static/:path*`,
         },
         {
-          source: "/_proxy/posthog/ingest/:path*",
+          source: "/api/ins/:path*",
           destination: `${posthogUrl}/:path*`,
-        },
-        {
-          source: "/_proxy/posthog/ingest/decide",
-          destination: `${posthogUrl}/decide`,
         },
       );
     }

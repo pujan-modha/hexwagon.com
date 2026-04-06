@@ -1,12 +1,12 @@
-"use server"
+"use server";
 
-import { ThemeMaintainerClaimStatus } from "@prisma/client"
-import { headers } from "next/headers"
-import { z } from "zod"
-import { createServerAction } from "zsa"
-import { auth } from "~/lib/auth"
-import { getIP, isRateLimited } from "~/lib/rate-limiter"
-import { db } from "~/services/db"
+import { ThemeMaintainerClaimStatus } from "@prisma/client";
+import { headers } from "next/headers";
+import { z } from "zod";
+import { createServerAction } from "zsa";
+import { auth } from "~/lib/auth";
+import { getIP, isRateLimited } from "~/lib/rate-limiter";
+import { db } from "~/services/db";
 
 const submitThemeClaimSchema = z.object({
   themeId: z.string(),
@@ -14,36 +14,36 @@ const submitThemeClaimSchema = z.object({
   claimantEmail: z.string().email(),
   claimantUrl: z.string().url().optional().or(z.literal("")),
   details: z.string().min(10).max(2000),
-})
+});
 
 export const submitThemeMaintainerClaim = createServerAction()
   .input(submitThemeClaimSchema)
   .handler(async ({ input }) => {
-    const ip = await getIP()
-    const rateLimitKey = `theme-claim:${ip}`
+    const ip = await getIP();
+    const rateLimitKey = `theme-claim:${ip}`;
 
     if (await isRateLimited(rateLimitKey, "claim")) {
-      throw new Error("Too many requests. Please try again later")
+      throw new Error("Too many requests. Please try again later");
     }
 
-    const session = await auth.api.getSession({ headers: await headers() })
+    const session = await auth.api.getSession({ headers: await headers() });
 
     const theme = await db.theme.findUnique({
       where: { id: input.themeId },
       select: { id: true, slug: true, name: true },
-    })
+    });
 
     if (!theme) {
-      throw new Error("Theme not found")
+      throw new Error("Theme not found");
     }
 
-    return db.$transaction(async tx => {
+    return db.$transaction(async (tx) => {
       const hasMaintainer = await tx.themeMaintainer.count({
         where: { themeId: theme.id },
-      })
+      });
 
       if (hasMaintainer > 0) {
-        throw new Error("This theme already has maintainer(s)")
+        throw new Error("This theme already has maintainer(s)");
       }
 
       const existingClaim = await tx.themeMaintainerClaim.findFirst({
@@ -56,10 +56,10 @@ export const submitThemeMaintainerClaim = createServerAction()
           ],
         },
         select: { id: true },
-      })
+      });
 
       if (existingClaim) {
-        throw new Error("You already have a pending claim for this theme")
+        throw new Error("You already have a pending claim for this theme");
       }
 
       return tx.themeMaintainerClaim.create({
@@ -71,6 +71,6 @@ export const submitThemeMaintainerClaim = createServerAction()
           details: input.details,
           requesterId: session?.user?.id || null,
         },
-      })
-    })
-  })
+      });
+    });
+  });

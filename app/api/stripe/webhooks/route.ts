@@ -50,9 +50,41 @@ const getCheckoutPaymentRefs = async (session: Stripe.Checkout.Session) => {
   return { paymentIntentId, chargeId };
 };
 
-const handlePaidCheckoutPaymentSession = async (
-  session: Stripe.Checkout.Session,
-) => {
+const getInvoicePaymentRefs = async (invoice: Stripe.Invoice) => {
+  const invoiceWithPaymentIntent = invoice as unknown as {
+    payment_intent?: string | Stripe.PaymentIntent | null;
+  };
+
+  const paymentIntentId =
+    typeof invoiceWithPaymentIntent.payment_intent === "string"
+      ? invoiceWithPaymentIntent.payment_intent
+      : null;
+
+  let chargeId: string | null = null;
+
+  if (paymentIntentId) {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    chargeId =
+      typeof paymentIntent.latest_charge === "string"
+        ? paymentIntent.latest_charge
+        : null;
+  }
+
+  return { paymentIntentId, chargeId };
+};
+
+const getInvoiceSubscriptionId = (invoice: Stripe.Invoice) => {
+  const invoiceWithSubscription = invoice as unknown as {
+    subscription?: string | Stripe.Subscription | null;
+  };
+
+  return typeof invoiceWithSubscription.subscription === "string"
+    ? invoiceWithSubscription.subscription
+    : null;
+};
+
+const handleCompletedCheckoutSession = async (session: Stripe.Checkout.Session) => {
   const adPackageDraftId = session.metadata?.adPackageDraftId;
 
   if (adPackageDraftId) {
@@ -65,8 +97,11 @@ const handlePaidCheckoutPaymentSession = async (
     const parsed = adPackageWebhookSchema.parse(draftPayload);
     const { paymentIntentId, chargeId } = await getCheckoutPaymentRefs(session);
 
+    const subscriptionId =
+      typeof session.subscription === "string" ? session.subscription : null;
     const now = new Date();
     const cycleDays = parsed.billingCycle === AdBillingCycle.Monthly ? 30 : 7;
+    const paidAt = session.payment_status === "paid" ? now : null;
 
     let createdAd;
 
@@ -84,7 +119,6 @@ const handlePaidCheckoutPaymentSession = async (
           startsAt: now,
           endsAt: addDays(now, cycleDays),
           priceCents: parsed.totalAmountCents,
-          paidAt: now,
           billingCycle: parsed.billingCycle,
           packageBasePriceCents: parsed.packageBasePriceCents,
           packageDiscountedPriceCents: parsed.packageDiscountedPriceCents,
@@ -93,8 +127,10 @@ const handlePaidCheckoutPaymentSession = async (
           targetingTotalPriceCents: parsed.targetingTotalPriceCents,
           stripeCheckoutSessionId: session.id,
           sessionId: session.id,
+          subscriptionId,
           stripePaymentIntentId: paymentIntentId,
           stripeChargeId: chargeId,
+          paidAt,
           targetThemes: {
             connect: parsed.themeIds.map((id) => ({ id })),
           },
@@ -104,7 +140,10 @@ const handlePaidCheckoutPaymentSession = async (
         },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
         const target = error.meta?.target;
         const targets = Array.isArray(target)
           ? target
@@ -112,7 +151,13 @@ const handlePaidCheckoutPaymentSession = async (
             ? [target]
             : [];
 
-        if (targets.some((entry) => entry.includes("stripeCheckoutSessionId"))) {
+        if (
+          targets.some(
+            (entry) =>
+              entry.includes("stripeCheckoutSessionId") ||
+              entry.includes("subscriptionId"),
+          )
+        ) {
           revalidateTag("ads", "max");
           return;
         }
@@ -129,7 +174,7 @@ const handlePaidCheckoutPaymentSession = async (
 
   const adId = session.metadata?.adId;
 
-  if (adId) {
+  if (adId && session.payment_status === "paid") {
     const { count } = await db.ad.updateMany({
       where: {
         id: adId,
@@ -184,14 +229,20 @@ export const POST = async (req: Request) => {
               break;
             }
 
-            await handlePaidCheckoutPaymentSession(session);
+            await handleCompletedCheckoutSession(session);
 
             break;
           }
 
           case "subscription": {
+            await handleCompletedCheckoutSession(session);
+
+            if (typeof session.subscription !== "string") {
+              break;
+            }
+
             const subscription = await stripe.subscriptions.retrieve(
-              session.subscription as string,
+              session.subscription,
             );
 
             // Handle tool featured listing
@@ -215,9 +266,80 @@ export const POST = async (req: Request) => {
       case "checkout.session.async_payment_succeeded": {
         const session = event.data.object;
 
-        if (session.mode === "payment") {
-          await handlePaidCheckoutPaymentSession(session);
+        if (session.mode === "payment" || session.mode === "subscription") {
+          await handleCompletedCheckoutSession(session);
         }
+
+        break;
+      }
+
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object;
+        const subscriptionId = getInvoiceSubscriptionId(invoice);
+
+        if (!subscriptionId) {
+          break;
+        }
+
+        const ad = await db.ad.findUnique({
+          where: { subscriptionId },
+          select: {
+            id: true,
+            billingCycle: true,
+            endsAt: true,
+            stripePaymentIntentId: true,
+            stripeChargeId: true,
+          },
+        });
+
+        if (!ad) {
+          break;
+        }
+
+        const now = new Date();
+        const { paymentIntentId, chargeId } = await getInvoicePaymentRefs(
+          invoice,
+        );
+
+        const nextEndsAt =
+          invoice.billing_reason === "subscription_cycle"
+            ? addDays(
+                ad.endsAt > now ? ad.endsAt : now,
+                ad.billingCycle === AdBillingCycle.Monthly ? 30 : 7,
+              )
+            : ad.endsAt;
+
+        await db.ad.update({
+          where: { id: ad.id },
+          data: {
+            paidAt: now,
+            endsAt: nextEndsAt,
+            stripePaymentIntentId: paymentIntentId ?? ad.stripePaymentIntentId,
+            stripeChargeId: chargeId ?? ad.stripeChargeId,
+          },
+        });
+
+        revalidateTag("ads", "max");
+
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object;
+        const subscriptionId = getInvoiceSubscriptionId(invoice);
+
+        if (!subscriptionId) {
+          break;
+        }
+
+        await db.ad.updateMany({
+          where: { subscriptionId },
+          data: {
+            paidAt: null,
+          },
+        });
+
+        revalidateTag("ads", "max");
 
         break;
       }
@@ -237,19 +359,18 @@ export const POST = async (req: Request) => {
           revalidateTag("ports", "max");
         }
 
-        // TODO: THIS IS NOT WORKING  because the metadata is set on the checkout session, not the subscription
-        // Handle alternative ads
-        if (metadata?.ads) {
-          // Update the ad for the subscription
-          await db.ad.update({
-            where: { subscriptionId: subscription.id },
-            data: { endsAt: new Date(), themes: { set: [] } },
-          });
+        await db.ad.updateMany({
+          where: { subscriptionId: subscription.id },
+          data: {
+            status: AdStatus.Cancelled,
+            cancelledAt: new Date(),
+            approvedAt: null,
+            paidAt: null,
+            endsAt: new Date(),
+          },
+        });
 
-          // Revalidate the cache
-          revalidateTag("ads", "max");
-          revalidateTag("themes", "max");
-        }
+        revalidateTag("ads", "max");
 
         break;
       }

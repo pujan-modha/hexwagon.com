@@ -137,7 +137,7 @@ export const createStripeAdPackageCheckout = createServerAction()
     const checkoutDraftId = await createAdPackageCheckoutDraft(checkoutPayload);
 
     const checkout = await stripe.checkout.sessions.create({
-      mode: "payment",
+      mode: "subscription",
       line_items: [
         {
           price_data: {
@@ -147,6 +147,10 @@ export const createStripeAdPackageCheckout = createServerAction()
             },
             unit_amount: totalAmountCents,
             currency: "usd",
+            recurring: {
+              interval:
+                draft.billingCycle === AdBillingCycle.Monthly ? "month" : "week",
+            },
           },
           quantity: 1,
         },
@@ -154,9 +158,17 @@ export const createStripeAdPackageCheckout = createServerAction()
       metadata: {
         adPackageDraftId: checkoutDraftId,
       },
+      subscription_data: {
+        metadata: {
+          adPackageDraftId: checkoutDraftId,
+          adPackageBillingCycle: draft.billingCycle,
+        },
+      },
+      customer_email: adDetails.email,
       allow_promotion_codes: true,
-      automatic_tax: { enabled: true },
-      tax_id_collection: { enabled: true },
+      adaptive_pricing: { enabled: true },
+      automatic_tax: { enabled: false },
+      tax_id_collection: { enabled: false },
       success_url: `${env.NEXT_PUBLIC_SITE_URL}/advertise/success?sessionId={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.NEXT_PUBLIC_SITE_URL}/advertise?cancelled=true`,
     });
@@ -183,7 +195,7 @@ export const createStripeThemeAdsCheckout = createServerAction()
       line_items: themes.map(({ name }) => ({
         price_data: {
           product_data: { name },
-          unit_amount: 9900, // $99/month default
+          unit_amount: 9900, // $99/month base price
           currency: "usd",
           recurring: { interval: "month" },
         },
@@ -191,8 +203,9 @@ export const createStripeThemeAdsCheckout = createServerAction()
       })),
       subscription_data: { metadata: { ads: JSON.stringify(adData) } },
       allow_promotion_codes: true,
-      automatic_tax: { enabled: true },
-      tax_id_collection: { enabled: true },
+      adaptive_pricing: { enabled: true },
+      automatic_tax: { enabled: false },
+      tax_id_collection: { enabled: false },
       success_url: `${env.NEXT_PUBLIC_SITE_URL}/advertise/success?sessionId={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.NEXT_PUBLIC_SITE_URL}/advertise/themes?cancelled=true`,
     });

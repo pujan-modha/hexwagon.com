@@ -1,11 +1,37 @@
-import type { Logger } from "inngest/middleware/logger"
-import { env } from "~/env"
-import { getPlausibleApi } from "~/services/plausible"
-import { tryCatch } from "~/utils/helpers"
+import type { Logger } from "inngest/middleware/logger";
+import { env } from "~/env";
+import {
+  OpenPanelInsightsError,
+  fetchOpenPanelInsights,
+} from "~/services/openpanel";
+import { tryCatch } from "~/utils/helpers";
 
-type AnalyticsPageResponse = {
-  results: { metrics: [number, number]; dimensions: [] }[]
-}
+type OpenPanelMetricsResponse = {
+  metrics?: {
+    unique_visitors?: number;
+    total_screen_views?: number;
+  };
+  series?: {
+    date: string;
+    unique_visitors?: number;
+    total_screen_views?: number;
+  }[];
+};
+
+const createPathFilter = (page: string) =>
+  JSON.stringify([
+    {
+      name: "path",
+      operator: "is",
+      value: [page],
+    },
+  ]);
+
+const getMetricsPath = () => `/${env.OPENPANEL_PROJECT_ID}/metrics`;
+
+const isIgnorableInsightsError = (error: unknown) =>
+  error instanceof OpenPanelInsightsError &&
+  [401, 403, 404].includes(error.status);
 
 /**
  * Get the page analytics for a given page and period
@@ -14,31 +40,25 @@ type AnalyticsPageResponse = {
  * @returns The page analytics
  */
 const getPageAnalytics = async (page: string, period = "30d") => {
-  const query = {
-    site_id: env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN,
-    metrics: ["visitors", "pageviews"],
-    date_range: period,
-    filters: [["is", "event:page", [page]]],
-  }
-
   const { data, error } = await tryCatch(
-    getPlausibleApi().post(query).json<AnalyticsPageResponse>(),
-  )
+    fetchOpenPanelInsights<OpenPanelMetricsResponse>(getMetricsPath(), {
+      range: period,
+      filters: createPathFilter(page),
+    }),
+  );
 
   if (error) {
-    console.error("Analytics error:", error)
-    return { visitors: 0, pageviews: 0 }
+    if (!isIgnorableInsightsError(error)) {
+      console.error("Analytics error:", error);
+    }
+    return { visitors: 0, pageviews: 0 };
   }
 
   return {
-    visitors: data.results[0].metrics[0],
-    pageviews: data.results[0].metrics[1],
-  }
-}
-
-type AnalyticsTotalResponse = {
-  results: { metrics: [number]; dimensions: [string] }[]
-}
+    visitors: data.metrics?.unique_visitors ?? 0,
+    pageviews: data.metrics?.total_screen_views ?? 0,
+  };
+};
 
 /**
  * Get the total analytics for a given period
@@ -46,44 +66,44 @@ type AnalyticsTotalResponse = {
  * @returns The total analytics
  */
 export const getTotalAnalytics = async (period = "30d") => {
-  const query = {
-    site_id: env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN,
-    metrics: ["visitors"],
-    date_range: period,
-    dimensions: ["time:day"],
-  }
-
   const { data, error } = await tryCatch(
-    getPlausibleApi().post(query).json<AnalyticsTotalResponse>(),
-  )
+    fetchOpenPanelInsights<OpenPanelMetricsResponse>(getMetricsPath(), {
+      range: period,
+    }),
+  );
 
   if (error) {
-    console.error("Analytics error:", error)
-    return { results: [], totalVisitors: 0, averageVisitors: 0 }
+    if (!isIgnorableInsightsError(error)) {
+      console.error("Analytics error:", error);
+    }
+    return { results: [], totalVisitors: 0, averageVisitors: 0 };
   }
 
-  const totalVisitors = data.results.reduce((acc, curr) => acc + curr.metrics[0], 0)
-  const averageVisitors = totalVisitors / data.results.length
-  const results = data.results.map(({ metrics, dimensions }) => ({
-    date: dimensions[0],
-    visitors: metrics[0],
-  }))
+  const series = data.series ?? [];
+  const totalVisitors =
+    data.metrics?.unique_visitors ??
+    series.reduce((acc, curr) => acc + (curr.unique_visitors ?? 0), 0);
+  const averageVisitors = series.length ? totalVisitors / series.length : 0;
+  const results = series.map(({ date, unique_visitors }) => ({
+    date: date.split("T")[0] ?? date,
+    visitors: unique_visitors ?? 0,
+  }));
 
-  return { results, totalVisitors, averageVisitors }
-}
+  return { results, totalVisitors, averageVisitors };
+};
 
 type FetchAnalyticsInBatchesParams = {
   data: {
-    id: string
-    name: string
-    slug: string
-    pageviews?: number | null
-  }[]
-  pathPrefix: string
-  logger: Logger
-  batchSize?: number
-  onSuccess: (id: string, data: { pageviews: number }) => Promise<void>
-}
+    id: string;
+    name: string;
+    slug: string;
+    pageviews?: number | null;
+  }[];
+  pathPrefix: string;
+  logger: Logger;
+  batchSize?: number;
+  onSuccess: (id: string, data: { pageviews: number }) => Promise<void>;
+};
 
 /**
  * Fetch analytics data in batches
@@ -97,23 +117,25 @@ export const fetchAnalyticsInBatches = async ({
   batchSize = 5,
 }: FetchAnalyticsInBatchesParams) => {
   for (let i = 0; i < data.length; i += batchSize) {
-    const batch = data.slice(i, i + batchSize)
+    const batch = data.slice(i, i + batchSize);
     await Promise.all(
-      batch.map(async entity => {
-        const result = await tryCatch(getPageAnalytics(`${pathPrefix}${entity.slug}`))
+      batch.map(async (entity) => {
+        const result = await tryCatch(
+          getPageAnalytics(`${pathPrefix}${entity.slug}`),
+        );
 
         if (result.error) {
           logger.error(`Failed to fetch analytics data for ${entity.name}`, {
             error: result.error,
             slug: entity.slug,
-          })
-          return null
+          });
+          return null;
         }
 
         await onSuccess(entity.id, {
           pageviews: result.data.pageviews ?? entity.pageviews ?? 0,
-        })
+        });
       }),
-    )
+    );
   }
-}
+};

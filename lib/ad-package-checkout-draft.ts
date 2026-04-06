@@ -36,15 +36,18 @@ export const createAdPackageCheckoutDraft = async (
 ) => {
   const draftId = randomUUID();
 
-  await redis.set(getDraftKey(draftId), JSON.stringify(payload), {
-    ex: CHECKOUT_DRAFT_TTL_SECONDS,
-  });
+  await redis.set(
+    getDraftKey(draftId),
+    JSON.stringify(payload),
+    "EX",
+    CHECKOUT_DRAFT_TTL_SECONDS,
+  );
 
   return draftId;
 };
 
 export const getAdPackageCheckoutDraft = async (draftId: string) => {
-  const value = await redis.get<string>(getDraftKey(draftId));
+  const value = await redis.get(getDraftKey(draftId));
 
   if (!value) {
     return null;
