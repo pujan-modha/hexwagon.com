@@ -173,6 +173,10 @@ export const DashboardTable = ({
           <Link href="/submit">Submit a port</Link>
         </Button>
 
+        <Button size="md" variant="secondary" prefix={<Icon name="lucide/badge-check" />} asChild>
+          <Link href="/dashboard/ads">Manage ads</Link>
+        </Button>
+
         {showMaintainerConsoleButton ? (
           <Button
             size="md"

@@ -4,6 +4,7 @@ import { Suspense } from "react"
 import { CatalogueGrid } from "~/components/catalogue/catalogue-grid"
 import { CatalogueListHeader } from "~/components/catalogue/catalogue-list-header"
 import { ThemeCard, ThemeCardSkeleton } from "~/components/catalogue/theme-card"
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
 import { CatalogueSearchControls } from "~/components/web/catalogue-search-controls"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
@@ -77,16 +78,29 @@ export default async function ThemesPage(props: PageProps) {
       <Suspense
         fallback={
           <CatalogueGrid>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <ThemeCardSkeleton key={i} />
-            ))}
+            {Array.from({ length: 8 }).flatMap((_, i) => {
+              const cards = [<ThemeCardSkeleton key={`theme-skeleton-${i}`} />]
+
+              if (i === 1) {
+                cards.push(<AdCardSkeleton key="themes-listing-ad-skeleton" />)
+              }
+
+              return cards
+            })}
           </CatalogueGrid>
         }
       >
         <CatalogueGrid>
-          {themes.map(theme => (
-            <ThemeCard key={theme.id} theme={theme} showCount />
-          ))}
+          {themes.flatMap((theme, index) => {
+            const cards = [<ThemeCard key={theme.id} theme={theme} showCount />]
+
+            if (index === 1) {
+              cards.push(<AdCard key="themes-listing-ad" slot="Listing" />)
+            }
+
+            return cards
+          })}
+          {themes.length === 1 ? <AdCard slot="Listing" /> : null}
         </CatalogueGrid>
       </Suspense>
     </>

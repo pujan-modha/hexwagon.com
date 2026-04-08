@@ -113,6 +113,7 @@ export default async function ThemePlatformPage(props: PageProps) {
               themeSlug={theme.slug}
               platformSlug={platformEntity.slug}
               showListingAd
+              adContext={{ themeId: theme.id, platformId: platformEntity.id }}
             />
           </Suspense>
         </Section.Content>

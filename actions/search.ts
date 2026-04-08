@@ -209,8 +209,6 @@ export const searchItems = createServerAction()
     const [portsResult, themesResult, platformsResult] = await Promise.allSettled([
       shouldSearchPorts
         ? getMeiliIndex("ports").search<PortSearchResult>(query, {
-            rankingScoreThreshold: 0.5,
-            hybrid: { embedder: "openAi", semanticRatio: 0.5 },
             attributesToRetrieve: [
               "id",
               "slug",
@@ -226,16 +224,12 @@ export const searchItems = createServerAction()
 
       shouldSearchThemes
         ? getMeiliIndex("themes").search<ThemeSearchResult>(query, {
-            rankingScoreThreshold: 0.5,
-            hybrid: { embedder: "openAi", semanticRatio: 0.5 },
             attributesToRetrieve: ["slug", "name", "faviconUrl", "isVerified"],
           })
         : Promise.resolve(emptyThemes),
 
       shouldSearchPlatforms
         ? getMeiliIndex("platforms").search<PlatformSearchResult>(query, {
-            rankingScoreThreshold: 0.6,
-            hybrid: { embedder: "openAi", semanticRatio: 0.5 },
             attributesToRetrieve: ["slug", "name", "faviconUrl", "isVerified"],
           })
         : Promise.resolve(emptyPlatforms),

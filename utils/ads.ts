@@ -17,6 +17,7 @@ export const defaultMaxAdDiscountPercentage = 30
 
 export const adStatus = {
   Pending: "Pending",
+  PendingEdit: "PendingEdit",
   Approved: "Approved",
   Rejected: "Rejected",
   Cancelled: "Cancelled",

@@ -1,134 +1,124 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { type SearchParams, createLoader, parseAsString } from "nuqs/server";
-import { cache } from "react";
-import { AdDetailsForm } from "~/app/(web)/advertise/success/form";
-import { Note } from "~/components/common/note";
-import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro";
-import { Section } from "~/components/web/ui/section";
-import { metadataConfig } from "~/config/metadata";
-import { verifyAdPackageDraftToken } from "~/lib/ad-package-draft-token";
-import { adOnePayload } from "~/server/web/ads/payloads";
-import { getAdPackagePricing } from "~/server/web/ads/queries";
-import { db } from "~/services/db";
-import { stripe } from "~/services/stripe";
-import { tryCatch } from "~/utils/helpers";
+import type { Prisma } from "@prisma/client"
+import type { Metadata } from "next"
+import { headers } from "next/headers"
+import Link from "next/link"
+import { notFound } from "next/navigation"
+import { type SearchParams, createLoader, parseAsString } from "nuqs/server"
+import { cache } from "react"
+import { CheckoutStatusPoller } from "~/app/(web)/advertise/success/checkout-status-poller"
+import { AdDetailsForm } from "~/app/(web)/advertise/success/form"
+import { Button } from "~/components/common/button"
+import { Note } from "~/components/common/note"
+import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
+import { Section } from "~/components/web/ui/section"
+import { metadataConfig } from "~/config/metadata"
+import { getAdPackageCheckoutDraft } from "~/lib/ad-package-checkout-draft"
+import { verifyAdPackageDraftToken } from "~/lib/ad-package-draft-token"
+import { auth } from "~/lib/auth"
+import { getAdPackagePricing } from "~/server/web/ads/queries"
+import { db } from "~/services/db"
 
 type PageProps = {
-  searchParams: Promise<SearchParams>;
-};
+  searchParams: Promise<SearchParams>
+}
 
-type BillingCycle = "Weekly" | "Monthly";
+type BillingCycle = "Weekly" | "Monthly"
 
-const getCheckoutSession = cache(async (sessionId: string) => {
-  const { data, error } = await tryCatch(
-    stripe.checkout.sessions.retrieve(sessionId),
-  );
+type SuccessAd = {
+  id: string
+  name: string
+  email: string
+}
 
-  if (error || data.status !== "complete") {
-    return null;
+const normalizeEmail = (email: string) => email.trim().toLowerCase()
+
+const getDashboardLoginHref = (email: string | null) => {
+  const params = new URLSearchParams({ next: "/dashboard" })
+
+  if (email) {
+    params.set("email", email)
   }
 
-  return data;
-});
+  return `/auth/login?${params.toString()}`
+}
 
 const getPageState = cache(async ({ searchParams }: PageProps) => {
   const searchParamsLoader = createLoader({
-    sessionId: parseAsString.withDefault(""),
+    checkoutReferenceId: parseAsString.withDefault(""),
     draft: parseAsString.withDefault(""),
-  });
-  const { sessionId, draft } = await searchParamsLoader(searchParams);
+  })
+  const { checkoutReferenceId, draft } = await searchParamsLoader(searchParams)
 
   if (draft) {
-    const parsedDraft = verifyAdPackageDraftToken(draft);
+    const parsedDraft = verifyAdPackageDraftToken(draft)
 
     if (!parsedDraft) {
-      return null;
+      return null
     }
 
-    const billingCycle: BillingCycle =
-      parsedDraft.billingCycle === "Monthly" ? "Monthly" : "Weekly";
+    const billingCycle: BillingCycle = parsedDraft.billingCycle === "Monthly" ? "Monthly" : "Weekly"
     const themeIds = Array.isArray(parsedDraft.themeIds)
-      ? parsedDraft.themeIds.filter(
-          (themeId): themeId is string => typeof themeId === "string",
-        )
-      : [];
+      ? parsedDraft.themeIds.filter((themeId): themeId is string => typeof themeId === "string")
+      : []
     const platformIds = Array.isArray(parsedDraft.platformIds)
       ? parsedDraft.platformIds.filter(
           (platformId): platformId is string => typeof platformId === "string",
         )
-      : [];
+      : []
 
-    const appPricing = await getAdPackagePricing();
-    const isMonthly = billingCycle === "Monthly";
-
-    // Base price
-    const basePriceCents = isMonthly
-      ? appPricing.monthly.basePriceCents
-      : appPricing.weekly.basePriceCents;
-
-    // Selected discounted package cost
-    const packageCostCents = isMonthly
-      ? appPricing.monthly.discountedPriceCents
-      : appPricing.weekly.discountedPriceCents;
-
-    // Target fee
-    const targetsCount = themeIds.length + platformIds.length;
-    const targetFeeCents =
-      targetsCount *
-      (isMonthly
-        ? appPricing.monthly.targetUnitPriceCents
-        : appPricing.weekly.targetUnitPriceCents);
-
-    const totalCostCents = packageCostCents + targetFeeCents;
-    const fullOriginalCostCents = basePriceCents + targetFeeCents;
+    const appPricing = await getAdPackagePricing()
 
     return {
       mode: "draft" as const,
       draftToken: draft,
-      sessionId: null as string | null,
-      existingAd: null as Awaited<ReturnType<typeof db.ad.findFirst>>,
-      pricingSummary: {
-        billingCycle,
-        targetCount: targetsCount,
-        packageCostCents,
-        targetFeeCents,
-        totalCostCents,
-        fullOriginalCostCents,
-      },
-    };
+      billingCycle,
+      packagePricing: appPricing,
+      initialThemeIds: themeIds,
+      initialPlatformIds: platformIds,
+    }
   }
 
-  if (!sessionId) {
-    return null;
-  }
-
-  const session = await getCheckoutSession(sessionId);
-
-  if (!session) {
-    return null;
+  if (!checkoutReferenceId) {
+    return null
   }
 
   const existingAd = await db.ad.findFirst({
-    where: { sessionId: session.id },
-    select: adOnePayload,
-  });
+    where: {
+      billingCheckoutReferenceId: checkoutReferenceId,
+    } as Prisma.AdWhereInput,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  })
+
+  if (!existingAd) {
+    const checkoutDraft = await getAdPackageCheckoutDraft(checkoutReferenceId)
+
+    return {
+      mode: "pending" as const,
+      draftToken: null,
+      checkoutReferenceId,
+      checkoutEmail: checkoutDraft?.adDetails.email ?? null,
+    }
+  }
 
   return {
-    mode: "session" as const,
+    mode: "complete" as const,
     draftToken: null,
-    sessionId: session.id,
-    existingAd,
-  };
-});
+    checkoutReferenceId,
+    existingAd: existingAd as SuccessAd,
+  }
+})
 
 const getMetadata = async () => {
   return {
     title: "Ad Campaign",
     description:
       "Set up your campaign details, complete payment, and we will review your ad before it goes live.",
-  };
-};
+  }
+}
 
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
   return {
@@ -138,17 +128,20 @@ export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
       canonical: "/advertise/success",
     },
     openGraph: { ...metadataConfig.openGraph, url: "/advertise/success" },
-  };
-};
+  }
+}
 
 export default async function SuccessPage({ searchParams }: PageProps) {
-  const state = await getPageState({ searchParams });
+  const state = await getPageState({ searchParams })
+  const session = await auth.api.getSession({ headers: await headers() })
 
   if (!state) {
-    return notFound();
+    return notFound()
   }
 
-  const metadata = await getMetadata();
+  const sessionEmail = session?.user.email ? normalizeEmail(session.user.email) : null
+
+  const metadata = await getMetadata()
 
   return (
     <>
@@ -162,31 +155,67 @@ export default async function SuccessPage({ searchParams }: PageProps) {
           {state.mode === "draft" ? (
             <AdDetailsForm
               draftToken={state.draftToken}
-              pricingSummary={state.pricingSummary}
+              initialEmail={sessionEmail ?? undefined}
+              isEmailLocked={Boolean(sessionEmail)}
+              billingCycle={state.billingCycle}
+              packagePricing={state.packagePricing}
+              initialThemeIds={state.initialThemeIds}
+              initialPlatformIds={state.initialPlatformIds}
               className="w-full max-w-5xl mx-auto"
             />
+          ) : state.mode === "pending" ? (
+            <div className="space-y-4">
+              <CheckoutStatusPoller checkoutReferenceId={state.checkoutReferenceId} />
+
+              <div className="max-w-2xl mx-auto rounded-md border p-6 space-y-3">
+                <h3 className="text-base font-semibold">Track this campaign in your dashboard</h3>
+                <p className="text-sm text-muted-foreground">
+                  {state.checkoutEmail
+                    ? `Use ${state.checkoutEmail} to sign in, then you can monitor this ad from your dashboard.`
+                    : "Sign in with the same email used at checkout, then you can monitor this ad from your dashboard."}
+                </p>
+                <Button asChild size="md">
+                  <Link href={getDashboardLoginHref(state.checkoutEmail)}>
+                    Sign in to track ads
+                  </Link>
+                </Button>
+              </div>
+            </div>
           ) : (
             <div className="max-w-2xl mx-auto rounded-md border p-6 space-y-4">
               <h2 className="text-xl font-semibold">Payment received</h2>
               <p className="text-sm text-muted-foreground">
-                Your campaign is now pending review in the admin dashboard. Once
-                approved, it will go live automatically.
+                Your campaign is now pending review in the admin dashboard. Once approved, it will
+                go live automatically.
               </p>
-              <Note>
-                If the ad is rejected, a full refund is issued automatically.
-              </Note>
+              <Note>If the ad is rejected, a full refund is issued automatically.</Note>
               {state.existingAd && (
                 <p className="text-sm text-muted-foreground">
-                  Campaign:{" "}
-                  <span className="text-foreground">
-                    {state.existingAd.name}
-                  </span>
+                  Campaign: <span className="text-foreground">{state.existingAd.name}</span>
                 </p>
+              )}
+
+              {sessionEmail === normalizeEmail(state.existingAd.email) ? (
+                <Button asChild>
+                  <Link href="/dashboard">View your ads in dashboard</Link>
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Sign in with {state.existingAd.email} to track this campaign from your
+                    dashboard.
+                  </p>
+                  <Button asChild>
+                    <Link href={getDashboardLoginHref(state.existingAd.email)}>
+                      Sign in to track ads
+                    </Link>
+                  </Button>
+                </div>
               )}
             </div>
           )}
         </Section.Content>
       </Section>
     </>
-  );
+  )
 }

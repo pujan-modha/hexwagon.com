@@ -1,6 +1,7 @@
 import { type Ad, type Port, PortStatus } from "@prisma/client"
 import { config } from "~/config"
 import EmailAdApproved from "~/emails/ad-approved"
+import EmailAdChangesRequested from "~/emails/ad-changes-requested"
 import EmailAdLive from "~/emails/ad-live"
 import EmailAdRejected from "~/emails/ad-rejected"
 import EmailAdSubmitted from "~/emails/ad-submitted"
@@ -242,5 +243,19 @@ export const notifyAdvertiserOfAdRejected = async (ad: AdWithContact) => {
     to,
     subject,
     react: EmailAdRejected({ to, ad }),
+  })
+}
+
+/**
+ * Notify the advertiser that changes are requested on an ad
+ */
+export const notifyAdvertiserOfAdChangesRequested = async (ad: AdWithContact) => {
+  const to = ad.email
+  const subject = `Action needed: update your ad for ${ad.name}`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailAdChangesRequested({ to, ad }),
   })
 }

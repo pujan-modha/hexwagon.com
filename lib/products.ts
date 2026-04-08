@@ -1,6 +1,5 @@
 import { addDays, differenceInMonths } from "date-fns"
 import plur from "plur"
-import type Stripe from "stripe"
 import { config } from "~/config"
 
 const SYMBOLS = {
@@ -11,6 +10,36 @@ const SYMBOLS = {
 
 type SymbolType = keyof typeof SYMBOLS
 
+type ProductPrice = {
+  id: string
+  unit_amount?: number | null
+  recurring?: {
+    interval?: string | null
+  } | null
+  type?: string | null
+}
+
+type ProductCoupon = {
+  applies_to?: {
+    products: string[]
+  } | null
+}
+
+type Product = {
+  id: string
+  name: string
+  default_price?: ProductPrice | string | null
+  marketing_features: Array<{
+    name?: string | null
+  }>
+}
+
+type PriceClient = {
+  prices: {
+    list: (input: { product: string; active: boolean }) => Promise<{ data: ProductPrice[] }>
+  }
+}
+
 export const getQueueLength = (queueLength: number) => {
   const queueDays = Math.ceil((queueLength / config.submissions.postingRate) * 7)
   const queueMonths = Math.max(differenceInMonths(addDays(new Date(), queueDays), new Date()), 1)
@@ -18,13 +47,13 @@ export const getQueueLength = (queueLength: number) => {
   return `${queueMonths}+ ${plur("month", queueMonths)}`
 }
 
-const getFeatureType = (featureName?: string) => {
+const getFeatureType = (featureName?: string | null) => {
   return Object.keys(SYMBOLS).find(key => featureName?.startsWith(SYMBOLS[key as SymbolType])) as
     | SymbolType
     | undefined
 }
 
-const removeSymbol = (featureName?: string, type?: SymbolType) => {
+const removeSymbol = (featureName?: string | null, type?: SymbolType) => {
   return type ? featureName?.replace(SYMBOLS[type], "") : featureName
 }
 
@@ -36,11 +65,11 @@ const removeSymbol = (featureName?: string, type?: SymbolType) => {
  * @returns The products for pricing.
  */
 export const getProducts = (
-  products: Stripe.Product[],
-  coupon: Stripe.Coupon | undefined,
+  products: Product[],
+  coupon: ProductCoupon | undefined,
   isPublished: boolean,
 ) => {
-  const getPriceAmount = (price?: Stripe.Price | string | null) => {
+  const getPriceAmount = (price?: ProductPrice | string | null) => {
     return typeof price === "object" && price !== null ? (price.unit_amount ?? 0) : 0
   }
 
@@ -74,8 +103,8 @@ export const getProducts = (
  */
 const isProductFeatured = (
   index: number,
-  products: Stripe.Product[],
-  coupon?: Stripe.Coupon,
+  products: Product[],
+  coupon?: ProductCoupon,
   isDiscounted = true,
 ) => {
   if (!coupon) return index === products.length - 1
@@ -91,7 +120,7 @@ const isProductFeatured = (
  * @param coupon - The coupon to check against.
  * @returns Whether the product is eligible for the discount.
  */
-const isProductDiscounted = (productId: string, coupon?: Stripe.Coupon) => {
+const isProductDiscounted = (productId: string, coupon?: ProductCoupon) => {
   return !coupon?.applies_to || coupon.applies_to.products.includes(productId)
 }
 
@@ -102,7 +131,7 @@ const isProductDiscounted = (productId: string, coupon?: Stripe.Coupon) => {
  * @param coupon - The coupon to check against.
  * @returns The index of the last discounted product, or -1 if none are discounted.
  */
-const getLastDiscountedProductIndex = (products: Stripe.Product[], coupon?: Stripe.Coupon) => {
+const getLastDiscountedProductIndex = (products: Product[], coupon?: ProductCoupon) => {
   return products.reduce((lastId, p, id) => (isProductDiscounted(p.id, coupon) ? id : lastId), -1)
 }
 
@@ -114,11 +143,7 @@ const getLastDiscountedProductIndex = (products: Stripe.Product[], coupon?: Stri
  * @param queueLength - The length of the queue.
  * @returns The features of the product.
  */
-export const getProductFeatures = (
-  product: Stripe.Product,
-  isPublished: boolean,
-  queueLength: number,
-) => {
+export const getProductFeatures = (product: Product, isPublished: boolean, queueLength: number) => {
   const features = product.marketing_features.filter(
     feature => !isPublished || !feature.name?.includes("processing time"),
   )
@@ -144,19 +169,19 @@ export const getProductFeatures = (
  *
  * @param products - The list of products to prepare.
  * @param coupon - The coupon being applied, if any.
- * @param stripe - The Stripe instance to use for fetching prices.
+ * @param billingClient - The billing client to use for fetching prices.
  * @returns A promise that resolves to an array of products with their prices and discount status.
  */
 export const prepareProductsWithPrices = async (
-  products: Stripe.Product[],
-  coupon?: Stripe.Coupon,
-  stripe?: Stripe,
+  products: Product[],
+  coupon?: ProductCoupon,
+  billingClient?: PriceClient,
 ) => {
-  if (!stripe) throw new Error("Stripe instance is required")
+  if (!billingClient) throw new Error("Billing client is required")
 
   return Promise.all(
     products.map(async (product, index) => {
-      const prices = await stripe.prices.list({ product: product.id, active: true })
+      const prices = await billingClient.prices.list({ product: product.id, active: true })
       const isDiscounted = isProductDiscounted(product.id, coupon)
 
       return {

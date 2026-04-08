@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { type ComponentProps, useState } from "react"
+import { type ComponentProps, useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -21,6 +21,7 @@ export const LoginForm = ({ ...props }: LoginFormProps) => {
   const pathname = usePathname()
   const [isPending, setIsPending] = useState(false)
   const callbackURL = searchParams.get("next") || pathname
+  const prefilledEmail = (searchParams.get("email") || "").trim().toLowerCase()
 
   const schema = z.object({
     email: z.string().email(),
@@ -28,8 +29,19 @@ export const LoginForm = ({ ...props }: LoginFormProps) => {
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "" },
+    defaultValues: { email: prefilledEmail },
   })
+
+  useEffect(() => {
+    if (!prefilledEmail) {
+      return
+    }
+
+    form.setValue("email", prefilledEmail, {
+      shouldDirty: false,
+      shouldValidate: true,
+    })
+  }, [form, prefilledEmail])
 
   const handleSignIn = ({ email }: z.infer<typeof schema>) => {
     signIn.magicLink({

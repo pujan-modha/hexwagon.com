@@ -44,8 +44,6 @@ export const searchPlatforms = async (search: FilterSchema, where?: Prisma.Platf
       getMeiliIndex("platforms").search<{ id: string }>(q, {
         limit: meiliLimit,
         offset: meiliOffset,
-        rankingScoreThreshold: 0.5,
-        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
         attributesToRetrieve: ["id"],
       }),
     )

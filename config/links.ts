@@ -3,6 +3,7 @@ import { siteConfig } from "~/config/site"
 export const linksConfig = {
   author: "https://pujan.pm",
   twitter: "https://x.com/pujan_modha",
+  discord: "https://discord.gg/hexwagon",
   reddit: "https://www.reddit.com/r/hexwagon/",
   builtWith: "https://dirstarter.com",
   analytics: "https://go.hexwagon.com/analytics",

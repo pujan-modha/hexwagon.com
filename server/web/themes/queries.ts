@@ -45,8 +45,6 @@ export const searchThemes = async (search: FilterSchema, where?: Prisma.ThemeWhe
       getMeiliIndex("themes").search<{ id: string }>(q, {
         limit: meiliLimit,
         offset: meiliOffset,
-        rankingScoreThreshold: 0.5,
-        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
         attributesToRetrieve: ["id"],
       }),
     )
@@ -140,7 +138,6 @@ export const findRelatedThemeIds = async ({ id, ...params }: SearchSimilarDocume
       limit: 6,
       embedder: "openAi",
       attributesToRetrieve: ["id"],
-      rankingScoreThreshold: 0.6,
       ...params,
     }),
   )

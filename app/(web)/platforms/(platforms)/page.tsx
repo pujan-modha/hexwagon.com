@@ -4,6 +4,7 @@ import { Suspense } from "react"
 import { CatalogueGrid } from "~/components/catalogue/catalogue-grid"
 import { CatalogueListHeader } from "~/components/catalogue/catalogue-list-header"
 import { PlatformCard, PlatformCardSkeleton } from "~/components/catalogue/platform-card"
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
 import { CatalogueSearchControls } from "~/components/web/catalogue-search-controls"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
@@ -77,16 +78,29 @@ export default async function PlatformsPage(props: PageProps) {
       <Suspense
         fallback={
           <CatalogueGrid>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <PlatformCardSkeleton key={i} />
-            ))}
+            {Array.from({ length: 8 }).flatMap((_, i) => {
+              const cards = [<PlatformCardSkeleton key={`platform-skeleton-${i}`} />]
+
+              if (i === 1) {
+                cards.push(<AdCardSkeleton key="platforms-listing-ad-skeleton" />)
+              }
+
+              return cards
+            })}
           </CatalogueGrid>
         }
       >
         <CatalogueGrid>
-          {platforms.map(platform => (
-            <PlatformCard key={platform.id} platform={platform} showCount />
-          ))}
+          {platforms.flatMap((platform, index) => {
+            const cards = [<PlatformCard key={platform.id} platform={platform} showCount />]
+
+            if (index === 1) {
+              cards.push(<AdCard key="platforms-listing-ad" slot="Listing" />)
+            }
+
+            return cards
+          })}
+          {platforms.length === 1 ? <AdCard slot="Listing" /> : null}
         </CatalogueGrid>
       </Suspense>
     </>

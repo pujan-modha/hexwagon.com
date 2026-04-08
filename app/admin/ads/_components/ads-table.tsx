@@ -1,28 +1,26 @@
-"use client";
+"use client"
 
-import { useMemo } from "react";
-import { DataTable } from "~/components/data-table/data-table";
-import { DataTableHeader } from "~/components/data-table/data-table-header";
-import { DataTableToolbar } from "~/components/data-table/data-table-toolbar";
-import { DataTableViewOptions } from "~/components/data-table/data-table-view-options";
-import { useDataTable } from "~/hooks/use-data-table";
-import type { AdAdminMany } from "~/server/admin/ads/payloads";
-import type { DataTableFilterField } from "~/types";
-import { getColumns } from "./ads-table-columns";
+import { useMemo } from "react"
+import { DataTable } from "~/components/data-table/data-table"
+import { DataTableHeader } from "~/components/data-table/data-table-header"
+import { DataTableToolbar } from "~/components/data-table/data-table-toolbar"
+import { DataTableViewOptions } from "~/components/data-table/data-table-view-options"
+import { useDataTable } from "~/hooks/use-data-table"
+import type { AdAdminMany } from "~/server/admin/ads/payloads"
+import type { DataTableFilterField } from "~/types"
+import { getColumns } from "./ads-table-columns"
 
 type AdsTableProps = {
-  ads: AdAdminMany[];
-};
+  ads: AdAdminMany[]
+}
 
 export const AdsTable = ({ ads }: AdsTableProps) => {
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(), [])
 
-  const typeOptions = Array.from(new Set(ads.map((ad) => ad.type))).map(
-    (type) => ({
-      label: type,
-      value: type,
-    }),
-  );
+  const typeOptions = Array.from(new Set(ads.map(ad => ad.type))).map(type => ({
+    label: type,
+    value: type,
+  }))
 
   const filterFields: DataTableFilterField<any>[] = [
     {
@@ -33,12 +31,13 @@ export const AdsTable = ({ ads }: AdsTableProps) => {
     {
       id: "status",
       label: "Status",
-      options: ["Pending", "Approved", "Rejected", "Cancelled"].map(
-        (status) => ({
-          label: status,
-          value: status,
-        }),
-      ),
+      options: [
+        { label: "Pending", value: "Pending" },
+        { label: "Pending edits", value: "PendingEdit" },
+        { label: "Approved", value: "Approved" },
+        { label: "Rejected", value: "Rejected" },
+        { label: "Cancelled", value: "Cancelled" },
+      ],
     },
     {
       id: "type",
@@ -61,7 +60,7 @@ export const AdsTable = ({ ads }: AdsTableProps) => {
         { label: "Inactive", value: "Inactive" },
       ],
     },
-  ];
+  ]
 
   const { table } = useDataTable({
     data: ads,
@@ -75,8 +74,8 @@ export const AdsTable = ({ ads }: AdsTableProps) => {
       sorting: [{ id: "startsAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (row) => row.id,
-  });
+    getRowId: row => row.id,
+  })
 
   return (
     <DataTable
@@ -89,5 +88,5 @@ export const AdsTable = ({ ads }: AdsTableProps) => {
         </DataTableToolbar>
       </DataTableHeader>
     </DataTable>
-  );
-};
+  )
+}

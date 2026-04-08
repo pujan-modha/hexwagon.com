@@ -1,5 +1,5 @@
-import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
+import { createEnv } from "@t3-oss/env-nextjs"
+import { z } from "zod"
 
 export const env = createEnv({
   shared: {
@@ -7,7 +7,7 @@ export const env = createEnv({
     VERCEL_URL: z
       .string()
       .optional()
-      .transform((v) => (v ? `https://${v}` : undefined)),
+      .transform(v => (v ? `https://${v}` : undefined)),
   },
 
   /**
@@ -15,12 +15,8 @@ export const env = createEnv({
    * built with invalid env vars.
    */
   server: {
-    NODE_ENV: z
-      .enum(["development", "test", "production"])
-      .default("development"),
-    VERCEL_ENV: z
-      .enum(["development", "preview", "production"])
-      .default("development"),
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    VERCEL_ENV: z.enum(["development", "preview", "production"]).default("development"),
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.string().min(1).url(),
     AUTH_GOOGLE_ID: z.string().min(1),
@@ -43,8 +39,12 @@ export const env = createEnv({
     S3_ACCESS_KEY: z.string().min(1),
     S3_SECRET_ACCESS_KEY: z.string().min(1),
     S3_PUBLIC_URL: z.string().optional(),
-    STRIPE_SECRET_KEY: z.string().min(1),
-    STRIPE_WEBHOOK_SECRET: z.string().min(1),
+    PAYPAL_CLIENT_ID: z.string().min(1),
+    PAYPAL_CLIENT_SECRET: z.string().min(1),
+    PAYPAL_WEBHOOK_ID: z.string().min(1),
+    PAYPAL_ENVIRONMENT: z.enum(["sandbox", "live"]).default("sandbox"),
+    PAYPAL_WEEKLY_PLAN_ID: z.string().min(1),
+    PAYPAL_MONTHLY_PLAN_ID: z.string().min(1),
     INNGEST_SIGNING_KEY: z.string().optional(),
     INNGEST_EVENT_KEY: z.string().optional(),
     BEEHIIV_API_KEY: z.string().min(1),
@@ -85,9 +85,8 @@ export const env = createEnv({
    * `SOME_VAR: z.string()` and `SOME_VAR=''` will throw an error.
    */
   emptyStringAsUndefined: true,
-});
+})
 
 export const isProd =
-  process.env.NODE_ENV === "production" ||
-  process.env.VERCEL_ENV === "production";
-export const isDev = !isProd;
+  process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production"
+export const isDev = !isProd

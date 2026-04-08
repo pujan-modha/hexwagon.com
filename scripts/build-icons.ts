@@ -30,10 +30,25 @@ async function generateIconFiles() {
 
   const iconNames = files.map(file => iconName(file))
 
+  const latestInputMtime = await Promise.all(
+    files.map(file => fsExtra.stat(path.join(inputDir, file)).then(stat => stat.mtimeMs)),
+  ).then(times => Math.max(...times))
+
+  const spriteMtime = await fsExtra
+    .stat(spriteFilepath)
+    .then(stat => stat.mtimeMs)
+    .catch(() => 0)
+  const typesMtime = await fsExtra
+    .stat(typeOutputFilepath)
+    .then(stat => stat.mtimeMs)
+    .catch(() => 0)
+  const latestOutputMtime = Math.min(spriteMtime || 0, typesMtime || 0)
+
   const spriteUpToDate = iconNames.every(name => currentSprite.includes(`id=${name}`))
   const typesUpToDate = iconNames.every(name => currentTypes.includes(`"${name}"`))
+  const contentUpToDate = latestOutputMtime >= latestInputMtime
 
-  if (spriteUpToDate && typesUpToDate) {
+  if (spriteUpToDate && typesUpToDate && contentUpToDate) {
     logVerbose("Icons are up to date")
     return
   }
