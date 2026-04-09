@@ -1,5 +1,5 @@
-import { withContentCollections } from "@content-collections/next"
-import type { NextConfig } from "next"
+import { withContentCollections } from "@content-collections/next";
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
@@ -42,23 +42,13 @@ const nextConfig: NextConfig = {
   },
 
   rewrites: async () => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-    const posthogUrl = process.env.NEXT_PUBLIC_POSTHOG_HOST
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const posthogUrl = process.env.NEXT_PUBLIC_POSTHOG_HOST;
     const posthogAssetsUrl = posthogUrl
       ?.replace("://us.i.", "://us-assets.i.")
-      .replace("://eu.i.", "://eu-assets.i.")
+      .replace("://eu.i.", "://eu-assets.i.");
 
     const rewrites = [
-      // Legal pages rewrites
-      {
-        source: "/privacy-policy",
-        destination: "/privacy-policy.html",
-      },
-      {
-        source: "/terms-of-service",
-        destination: "/terms-of-service.html",
-      },
-
       // RSS rewrites
       {
         source: "/rss.xml",
@@ -72,7 +62,7 @@ const nextConfig: NextConfig = {
         source: "/platforms/rss.xml",
         destination: `${siteUrl}/rss/platforms.xml`,
       },
-    ]
+    ];
 
     // Add PostHog proxy rewrites only if the host is configured
     if (posthogUrl) {
@@ -85,11 +75,11 @@ const nextConfig: NextConfig = {
           source: "/api/ins/:path*",
           destination: `${posthogUrl}/:path*`,
         },
-      )
+      );
     }
 
-    return rewrites
+    return rewrites;
   },
-}
+};
 
-export default withContentCollections(nextConfig)
+export default withContentCollections(nextConfig);
