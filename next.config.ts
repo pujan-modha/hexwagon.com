@@ -49,6 +49,16 @@ const nextConfig: NextConfig = {
       .replace("://eu.i.", "://eu-assets.i.")
 
     const rewrites = [
+      // Legal pages rewrites
+      {
+        source: "/privacy-policy",
+        destination: "/privacy-policy.html",
+      },
+      {
+        source: "/terms-of-service",
+        destination: "/terms-of-service.html",
+      },
+
       // RSS rewrites
       {
         source: "/rss.xml",
