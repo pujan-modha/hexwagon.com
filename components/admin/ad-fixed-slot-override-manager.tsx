@@ -1,31 +1,31 @@
-"use client";
+"use client"
 
-import type { AdSlot } from "@prisma/client";
-import { toast } from "sonner";
-import { useServerAction } from "zsa-react";
-import { Button } from "~/components/common/button";
-import { Note } from "~/components/common/note";
+import type { AdSlot } from "@prisma/client"
+import { toast } from "sonner"
+import { useServerAction } from "zsa-react"
+import { Button } from "~/components/common/button"
+import { Note } from "~/components/common/note"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/common/select";
-import { setAdFixedSlotOverride } from "~/server/admin/ads/actions";
+} from "~/components/common/select"
+import { setAdFixedSlotOverride } from "~/server/admin/ads/actions"
 
 type FixedSlotCandidate = {
-  id: string;
-  name: string;
-  websiteUrl: string;
-};
+  id: string
+  name: string
+  websiteUrl: string
+}
 
 type AdFixedSlotOverrideManagerProps = {
-  overrides: Record<AdSlot, { adId: string | null; adName: string | null }>;
-  candidates: FixedSlotCandidate[];
-};
+  overrides: Record<AdSlot, { adId: string | null; adName: string | null }>
+  candidates: FixedSlotCandidate[]
+}
 
-const slotOrder: AdSlot[] = ["Banner", "Listing", "Sidebar", "Footer"];
+const slotOrder: AdSlot[] = ["Banner", "Listing", "Sidebar", "Footer"]
 
 export const AdFixedSlotOverrideManager = ({
   overrides,
@@ -34,23 +34,20 @@ export const AdFixedSlotOverrideManager = ({
   const { execute, isPending } = useServerAction(setAdFixedSlotOverride, {
     onSuccess: () => toast.success("Fixed slot override updated."),
     onError: ({ err }) => toast.error(err.message),
-  });
+  })
 
   return (
     <div className="rounded-sm border border-border">
       <div className="flex items-start justify-between gap-4 border-b p-5">
         <div className="space-y-1">
           <p className="text-sm font-medium">Fixed Slot Overrides</p>
-          <Note>
-            Pin a paid approved ad to a slot. Pinned ads always win until
-            removed.
-          </Note>
+          <Note>Pin a paid approved ad to a slot. Pinned ads always win until removed.</Note>
         </div>
       </div>
 
       <div className="grid gap-4 px-5 py-4">
-        {slotOrder.map((slot) => {
-          const current = overrides[slot];
+        {slotOrder.map(slot => {
+          const current = overrides[slot]
 
           return (
             <div
@@ -61,11 +58,11 @@ export const AdFixedSlotOverrideManager = ({
 
               <Select
                 value={current.adId ?? "none"}
-                onValueChange={(value) => {
+                onValueChange={value => {
                   execute({
                     slot,
                     adId: value === "none" ? null : value,
-                  });
+                  })
                 }}
                 disabled={isPending}
               >
@@ -75,7 +72,7 @@ export const AdFixedSlotOverrideManager = ({
 
                 <SelectContent>
                   <SelectItem value="none">No fixed ad</SelectItem>
-                  {candidates.map((ad) => (
+                  {candidates.map(ad => (
                     <SelectItem key={ad.id} value={ad.id}>
                       {ad.name}
                     </SelectItem>
@@ -98,9 +95,9 @@ export const AdFixedSlotOverrideManager = ({
                 </p>
               )}
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
-};
+  )
+}

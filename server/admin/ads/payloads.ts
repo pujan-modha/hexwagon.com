@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client"
 
 export const adAdminPayload = Prisma.validator<Prisma.AdSelect>()({
   id: true,
@@ -21,19 +21,20 @@ export const adAdminPayload = Prisma.validator<Prisma.AdSelect>()({
   customHtml: true,
   customCss: true,
   customJs: true,
-  sessionId: true,
-  stripeCheckoutSessionId: true,
-  stripePaymentIntentId: true,
-  stripeChargeId: true,
-  subscriptionId: true,
+  billingProvider: true,
+  billingCheckoutReferenceId: true,
+  billingSubscriptionId: true,
+  billingLastPaymentId: true,
   billingCycle: true,
   packageBasePriceCents: true,
   packageDiscountedPriceCents: true,
   targetingUnitPriceCents: true,
   targetingTargetCount: true,
   targetingTotalPriceCents: true,
+  clickCount: true,
+  lastClickedAt: true,
   refundAmountCents: true,
-  stripeRefundId: true,
+  billingRefundId: true,
   refundedAt: true,
   targetThemes: {
     select: {
@@ -51,8 +52,8 @@ export const adAdminPayload = Prisma.validator<Prisma.AdSelect>()({
   },
   createdAt: true,
   updatedAt: true,
-});
+})
 
 export type AdAdminMany = Prisma.AdGetPayload<{
-  select: typeof adAdminPayload;
-}>;
+  select: typeof adAdminPayload
+}>

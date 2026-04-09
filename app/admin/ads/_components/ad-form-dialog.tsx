@@ -1,22 +1,19 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { getRandomString } from "@primoui/utils";
-import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
-import { useServerAction } from "zsa-react";
-import { uploadImageToS3 } from "~/actions/media";
-import {
-  searchPlatformsAction,
-  searchThemesAction,
-} from "~/actions/widget-search";
-import { Badge } from "~/components/common/badge";
-import { Button } from "~/components/common/button";
-import { Card, CardDescription, CardHeader } from "~/components/common/card";
-import { Checkbox } from "~/components/common/checkbox";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { getRandomString } from "@primoui/utils"
+import { addDays, differenceInCalendarDays, parseISO } from "date-fns"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useForm, useWatch } from "react-hook-form"
+import { toast } from "sonner"
+import { z } from "zod"
+import { useServerAction } from "zsa-react"
+import { uploadImageToS3 } from "~/actions/media"
+import { searchPlatformsAction, searchThemesAction } from "~/actions/widget-search"
+import { Badge } from "~/components/common/badge"
+import { Button } from "~/components/common/button"
+import { Card, CardDescription, CardHeader } from "~/components/common/card"
+import { Checkbox } from "~/components/common/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -24,42 +21,38 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/common/dialog";
-import { H4 } from "~/components/common/heading";
-import { Input } from "~/components/common/input";
-import { Label } from "~/components/common/label";
+} from "~/components/common/dialog"
+import { H4 } from "~/components/common/heading"
+import { Input } from "~/components/common/input"
+import { Label } from "~/components/common/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/common/select";
-import { TextArea } from "~/components/common/textarea";
-import {
-  type AdPreviewAd,
-  AdPreviewBanner,
-  AdPreviewCard,
-} from "~/components/web/ads/ad-preview";
-import { Favicon } from "~/components/web/ui/favicon";
-import { createAd, updateAd } from "~/server/admin/ads/actions";
-import type { AdAdminMany } from "~/server/admin/ads/payloads";
-import { adStatus } from "~/utils/ads";
+} from "~/components/common/select"
+import { TextArea } from "~/components/common/textarea"
+import { type AdPreviewAd, AdPreviewBanner, AdPreviewCard } from "~/components/web/ads/ad-preview"
+import { Favicon } from "~/components/web/ui/favicon"
+import { createAd, updateAd } from "~/server/admin/ads/actions"
+import type { AdAdminMany } from "~/server/admin/ads/payloads"
+import { adStatus } from "~/utils/ads"
 
 const IMAGE_ACCEPT =
-  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg";
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/svg+xml,.svg"
 
 type AdFormDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  ad?: AdAdminMany;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  ad?: AdAdminMany
+}
 
 type TargetOption = {
-  id: string;
-  label: string;
-  logoUrl?: string | null;
-};
+  id: string
+  label: string
+  logoUrl?: string | null
+}
 
 const formSchema = z
   .object({
@@ -68,22 +61,18 @@ const formSchema = z
     name: z.string().min(1, "Ad name is required.").max(255),
     description: z.string().max(500).optional().or(z.literal("")),
     destinationUrl: z.string().url("Must be a valid URL.").max(2048),
-    faviconUrl: z
-      .string()
-      .url("Must be a valid image URL.")
-      .max(2048)
-      .optional()
-      .or(z.literal("")),
+    faviconUrl: z.string().url("Must be a valid image URL.").max(2048).optional().or(z.literal("")),
     startsAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be a valid date."),
     endsAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be a valid date."),
     priceUsd: z
       .string()
       .min(1, "Required.")
-      .refine((value) => !Number.isNaN(Number(value)) && Number(value) >= 0, {
+      .refine(value => !Number.isNaN(Number(value)) && Number(value) >= 0, {
         message: "Must be zero or more.",
       }),
     status: z.enum([
       adStatus.Pending,
+      adStatus.PendingEdit,
       adStatus.Approved,
       adStatus.Rejected,
       adStatus.Cancelled,
@@ -99,43 +88,40 @@ const formSchema = z
     customJs: z.string().optional().or(z.literal("")),
     isActive: z.boolean(),
   })
-  .refine((value) => new Date(value.endsAt) >= new Date(value.startsAt), {
+  .refine(value => new Date(value.endsAt) >= new Date(value.startsAt), {
     message: "End date must be on or after start date.",
     path: ["endsAt"],
-  });
+  })
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>
 
-const toDateInput = (date: Date) => date.toISOString().split("T")[0] ?? "";
+const toDateInput = (date: Date) => date.toISOString().split("T")[0] ?? ""
 
-const centsToUsd = (cents?: number | null) => ((cents ?? 0) / 100).toFixed(2);
+const centsToUsd = (cents?: number | null) => ((cents ?? 0) / 100).toFixed(2)
 
-const usdToCents = (usd: string) => Math.round(Number(usd) * 100);
+const usdToCents = (usd: string) => Math.round(Number(usd) * 100)
 
 const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
-  const isEdit = ad !== undefined;
+  const isEdit = ad !== undefined
   const isAdminManagedAd =
-    !ad?.stripeCheckoutSessionId &&
-    !ad?.stripePaymentIntentId &&
-    !ad?.subscriptionId;
+    !ad?.billingProvider &&
+    !ad?.billingCheckoutReferenceId &&
+    !ad?.billingLastPaymentId &&
+    !ad?.billingSubscriptionId
 
-  const defaultThemeTargets: TargetOption[] = (ad?.targetThemes ?? []).map(
-    (theme) => ({
-      id: theme.id,
-      label: theme.name,
-      logoUrl: theme.faviconUrl,
-    }),
-  );
+  const defaultThemeTargets: TargetOption[] = (ad?.targetThemes ?? []).map(theme => ({
+    id: theme.id,
+    label: theme.name,
+    logoUrl: theme.faviconUrl,
+  }))
 
-  const defaultPlatformTargets: TargetOption[] = (
-    ad?.targetPlatforms ?? []
-  ).map((platform) => ({
+  const defaultPlatformTargets: TargetOption[] = (ad?.targetPlatforms ?? []).map(platform => ({
     id: platform.id,
     label: platform.name,
     logoUrl: platform.faviconUrl,
-  }));
+  }))
 
-  const defaultSpot = (ad?.type ?? "All") as FormValues["spot"];
+  const defaultSpot = (ad?.type ?? "All") as FormValues["spot"]
 
   const defaultValues: FormValues = isEdit
     ? {
@@ -152,8 +138,8 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
         markAsPaid: ad.paidAt !== null,
         autoPrice: false,
         buttonLabel: ad.buttonLabel ?? "",
-        themeIds: defaultThemeTargets.map((theme) => theme.id),
-        platformIds: defaultPlatformTargets.map((platform) => platform.id),
+        themeIds: defaultThemeTargets.map(theme => theme.id),
+        platformIds: defaultPlatformTargets.map(platform => platform.id),
         useCustomCode: Boolean(ad.customHtml || ad.customCss || ad.customJs),
         customHtml: ad.customHtml ?? "",
         customCss: ad.customCss ?? "",
@@ -181,205 +167,194 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
         customCss: "",
         customJs: "",
         isActive: true,
-      };
+      }
 
-  const [themeQuery, setThemeQuery] = useState("");
-  const [platformQuery, setPlatformQuery] = useState("");
-  const [themeResults, setThemeResults] = useState<TargetOption[]>([]);
-  const [platformResults, setPlatformResults] = useState<TargetOption[]>([]);
-  const [selectedThemes, setSelectedThemes] =
-    useState<TargetOption[]>(defaultThemeTargets);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<TargetOption[]>(
-    defaultPlatformTargets,
-  );
-  const [isThemesLoading, setIsThemesLoading] = useState(false);
-  const [isPlatformsLoading, setIsPlatformsLoading] = useState(false);
+  const [themeQuery, setThemeQuery] = useState("")
+  const [platformQuery, setPlatformQuery] = useState("")
+  const [themeResults, setThemeResults] = useState<TargetOption[]>([])
+  const [platformResults, setPlatformResults] = useState<TargetOption[]>([])
+  const [selectedThemes, setSelectedThemes] = useState<TargetOption[]>(defaultThemeTargets)
+  const [selectedPlatforms, setSelectedPlatforms] = useState<TargetOption[]>(defaultPlatformTargets)
+  const [isThemesLoading, setIsThemesLoading] = useState(false)
+  const [isPlatformsLoading, setIsPlatformsLoading] = useState(false)
 
-  const themeSearchRequestRef = useRef(0);
-  const platformSearchRequestRef = useRef(0);
+  const themeSearchRequestRef = useRef(0)
+  const platformSearchRequestRef = useRef(0)
 
-  const { register, handleSubmit, setValue, control, reset } =
-    useForm<FormValues>({
-      resolver: zodResolver(formSchema),
-      defaultValues,
-    });
+  const { register, handleSubmit, setValue, control, reset } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues,
+  })
 
   useEffect(() => {
-    reset(defaultValues);
-    setSelectedThemes(defaultThemeTargets);
-    setSelectedPlatforms(defaultPlatformTargets);
-    setThemeQuery("");
-    setPlatformQuery("");
-    setThemeResults([]);
-    setPlatformResults([]);
-  }, [ad?.id, open, reset]);
+    reset(defaultValues)
+    setSelectedThemes(defaultThemeTargets)
+    setSelectedPlatforms(defaultPlatformTargets)
+    setThemeQuery("")
+    setPlatformQuery("")
+    setThemeResults([])
+    setPlatformResults([])
+  }, [ad?.id, open, reset])
 
   useEffect(() => {
     setValue(
       "themeIds",
-      selectedThemes.map((theme) => theme.id),
+      selectedThemes.map(theme => theme.id),
       {
         shouldValidate: true,
       },
-    );
-  }, [selectedThemes, setValue]);
+    )
+  }, [selectedThemes, setValue])
 
   useEffect(() => {
     setValue(
       "platformIds",
-      selectedPlatforms.map((platform) => platform.id),
+      selectedPlatforms.map(platform => platform.id),
       {
         shouldValidate: true,
       },
-    );
-  }, [selectedPlatforms, setValue]);
+    )
+  }, [selectedPlatforms, setValue])
 
   const handleThemeSearch = async (value: string) => {
-    setThemeQuery(value);
-    const query = value.trim();
+    setThemeQuery(value)
+    const query = value.trim()
 
     if (query.length < 2) {
-      setThemeResults([]);
-      setIsThemesLoading(false);
-      return;
+      setThemeResults([])
+      setIsThemesLoading(false)
+      return
     }
 
-    const requestId = ++themeSearchRequestRef.current;
-    setIsThemesLoading(true);
+    const requestId = ++themeSearchRequestRef.current
+    setIsThemesLoading(true)
 
-    const [results, error] = await searchThemesAction({ query });
+    const [results, error] = await searchThemesAction({ query })
 
     if (requestId !== themeSearchRequestRef.current) {
-      return;
+      return
     }
 
     if (error) {
-      setThemeResults([]);
-      setIsThemesLoading(false);
-      return;
+      setThemeResults([])
+      setIsThemesLoading(false)
+      return
     }
 
     setThemeResults(
-      (results ?? []).map((theme) => ({
+      (results ?? []).map(theme => ({
         id: theme.id,
         label: theme.name,
         logoUrl: theme.faviconUrl,
       })),
-    );
-    setIsThemesLoading(false);
-  };
+    )
+    setIsThemesLoading(false)
+  }
 
   const handlePlatformSearch = async (value: string) => {
-    setPlatformQuery(value);
-    const query = value.trim();
+    setPlatformQuery(value)
+    const query = value.trim()
 
     if (query.length < 2) {
-      setPlatformResults([]);
-      setIsPlatformsLoading(false);
-      return;
+      setPlatformResults([])
+      setIsPlatformsLoading(false)
+      return
     }
 
-    const requestId = ++platformSearchRequestRef.current;
-    setIsPlatformsLoading(true);
+    const requestId = ++platformSearchRequestRef.current
+    setIsPlatformsLoading(true)
 
-    const [results, error] = await searchPlatformsAction({ query });
+    const [results, error] = await searchPlatformsAction({ query })
 
     if (requestId !== platformSearchRequestRef.current) {
-      return;
+      return
     }
 
     if (error) {
-      setPlatformResults([]);
-      setIsPlatformsLoading(false);
-      return;
+      setPlatformResults([])
+      setIsPlatformsLoading(false)
+      return
     }
 
     setPlatformResults(
-      (results ?? []).map((platform) => ({
+      (results ?? []).map(platform => ({
         id: platform.id,
         label: platform.name,
         logoUrl: platform.faviconUrl,
       })),
-    );
-    setIsPlatformsLoading(false);
-  };
+    )
+    setIsPlatformsLoading(false)
+  }
 
   const toggleTarget = (
     item: TargetOption,
     selected: TargetOption[],
     setSelected: (items: TargetOption[]) => void,
   ) => {
-    const isSelected = selected.some((entry) => entry.id === item.id);
+    const isSelected = selected.some(entry => entry.id === item.id)
 
     if (isSelected) {
-      setSelected(selected.filter((entry) => entry.id !== item.id));
-      return;
+      setSelected(selected.filter(entry => entry.id !== item.id))
+      return
     }
 
-    setSelected([...selected, item]);
-  };
+    setSelected([...selected, item])
+  }
 
-  const watchedValues = useWatch({ control }) as Partial<FormValues>;
-  const watchedSpot = watchedValues.spot ?? defaultValues.spot;
-  const watchedStart = watchedValues.startsAt ?? defaultValues.startsAt;
-  const watchedEnd = watchedValues.endsAt ?? defaultValues.endsAt;
+  const watchedValues = useWatch({ control }) as Partial<FormValues>
+  const watchedSpot = watchedValues.spot ?? defaultValues.spot
+  const watchedStart = watchedValues.startsAt ?? defaultValues.startsAt
+  const watchedEnd = watchedValues.endsAt ?? defaultValues.endsAt
 
   const days = useMemo(() => {
-    const startDate = parseISO(watchedStart);
-    const endDate = parseISO(watchedEnd);
+    const startDate = parseISO(watchedStart)
+    const endDate = parseISO(watchedEnd)
 
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()))
-      return null;
-    if (endDate < startDate) return null;
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return null
+    if (endDate < startDate) return null
 
-    return differenceInCalendarDays(endDate, startDate) + 1;
-  }, [watchedStart, watchedEnd]);
+    return differenceInCalendarDays(endDate, startDate) + 1
+  }, [watchedStart, watchedEnd])
 
-  const { execute: createAction, isPending: createPending } = useServerAction(
-    createAd,
-    {
-      onSuccess: () => {
-        toast.success("Ad created.");
-        onOpenChange(false);
-      },
-      onError: ({ err }) => toast.error(err.message),
+  const { execute: createAction, isPending: createPending } = useServerAction(createAd, {
+    onSuccess: () => {
+      toast.success("Ad created.")
+      onOpenChange(false)
     },
-  );
+    onError: ({ err }) => toast.error(err.message),
+  })
 
-  const { execute: updateAction, isPending: updatePending } = useServerAction(
-    updateAd,
-    {
-      onSuccess: () => {
-        toast.success("Ad updated.");
-        onOpenChange(false);
-      },
-      onError: ({ err }) => toast.error(err.message),
+  const { execute: updateAction, isPending: updatePending } = useServerAction(updateAd, {
+    onSuccess: () => {
+      toast.success("Ad updated.")
+      onOpenChange(false)
     },
-  );
+    onError: ({ err }) => toast.error(err.message),
+  })
 
-  const isPending = createPending || updatePending;
+  const isPending = createPending || updatePending
 
-  const { execute: uploadImageAction, isPending: isUploadingImage } =
-    useServerAction(uploadImageToS3, {
+  const { execute: uploadImageAction, isPending: isUploadingImage } = useServerAction(
+    uploadImageToS3,
+    {
       onSuccess: ({ data }) => {
-        toast.success("Image uploaded successfully.");
-        setValue("faviconUrl", data, { shouldValidate: true });
+        toast.success("Image uploaded successfully.")
+        setValue("faviconUrl", data, { shouldValidate: true })
       },
       onError: ({ err }) => toast.error(err.message),
-    });
+    },
+  )
 
   const previewAd: AdPreviewAd = {
     type: watchedSpot,
     websiteUrl: watchedValues.destinationUrl || "https://example.com",
     name: watchedValues.name || "Ad preview",
-    description:
-      watchedValues.description || "Campaign description will appear here.",
+    description: watchedValues.description || "Campaign description will appear here.",
     buttonLabel: watchedValues.buttonLabel || null,
     faviconUrl: watchedValues.faviconUrl ?? defaultValues.faviconUrl ?? null,
-  };
+  }
 
-  const PreviewComponent =
-    watchedSpot === "Banner" ? AdPreviewBanner : AdPreviewCard;
+  const PreviewComponent = watchedSpot === "Banner" ? AdPreviewBanner : AdPreviewCard
   const previewPlacement =
     watchedSpot === "All"
       ? "All placements"
@@ -389,10 +364,10 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
           ? "Sidebar placement"
           : watchedSpot === "Footer"
             ? "Footer placement"
-            : "Listing placement";
+            : "Listing placement"
 
   const onSubmit = (values: FormValues) => {
-    const nextStatus = values.isActive ? adStatus.Approved : adStatus.Cancelled;
+    const nextStatus = values.isActive ? adStatus.Approved : adStatus.Cancelled
 
     const payload = {
       spot: isEdit ? values.spot : "All",
@@ -409,27 +384,18 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
       buttonLabel: values.buttonLabel !== "" ? values.buttonLabel : undefined,
       themeIds: values.themeIds,
       platformIds: values.platformIds,
-      customHtml:
-        values.useCustomCode && values.customHtml !== ""
-          ? values.customHtml
-          : undefined,
-      customCss:
-        values.useCustomCode && values.customCss !== ""
-          ? values.customCss
-          : undefined,
-      customJs:
-        values.useCustomCode && values.customJs !== ""
-          ? values.customJs
-          : undefined,
-    };
-
-    if (isEdit) {
-      updateAction({ adId: ad.id, ...payload });
-      return;
+      customHtml: values.useCustomCode && values.customHtml !== "" ? values.customHtml : undefined,
+      customCss: values.useCustomCode && values.customCss !== "" ? values.customCss : undefined,
+      customJs: values.useCustomCode && values.customJs !== "" ? values.customJs : undefined,
     }
 
-    createAction(payload);
-  };
+    if (isEdit) {
+      updateAction({ adId: ad.id, ...payload })
+      return
+    }
+
+    createAction(payload)
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -463,7 +429,7 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
                 <Checkbox
                   id="isActive"
                   checked={watchedValues.isActive ?? defaultValues.isActive}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setValue("isActive", checked === true, {
                       shouldValidate: true,
                     })
@@ -472,8 +438,7 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
                 <Label htmlFor="isActive">Active in ad rotation</Label>
               </div>
               <p className="text-xs text-muted-foreground">
-                Turn this off to keep the ad saved but excluded from public
-                placements.
+                Turn this off to keep the ad saved but excluded from public placements.
               </p>
 
               {isEdit && !isAdminManagedAd && (
@@ -481,7 +446,7 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={watchedValues.status ?? defaultValues.status}
-                    onValueChange={(value) =>
+                    onValueChange={value =>
                       setValue("status", value as FormValues["status"], {
                         shouldValidate: true,
                       })
@@ -491,9 +456,9 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(adStatus).map((status) => (
+                      {Object.values(adStatus).map(status => (
                         <SelectItem key={status} value={status}>
-                          {status}
+                          {status === adStatus.PendingEdit ? "Pending edits" : status}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -538,9 +503,7 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
                   onQueryChange={handleThemeSearch}
                   options={themeResults}
                   selectedItems={selectedThemes}
-                  onToggle={(item) =>
-                    toggleTarget(item, selectedThemes, setSelectedThemes)
-                  }
+                  onToggle={item => toggleTarget(item, selectedThemes, setSelectedThemes)}
                   isLoading={isThemesLoading}
                   emptyMessage="No themes found."
                 />
@@ -551,9 +514,7 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
                   onQueryChange={handlePlatformSearch}
                   options={platformResults}
                   selectedItems={selectedPlatforms}
-                  onToggle={(item) =>
-                    toggleTarget(item, selectedPlatforms, setSelectedPlatforms)
-                  }
+                  onToggle={item => toggleTarget(item, selectedPlatforms, setSelectedPlatforms)}
                   isLoading={isPlatformsLoading}
                   emptyMessage="No platforms found."
                 />
@@ -567,11 +528,7 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="Ad name"
-                    {...register("name")}
-                  />
+                  <Input id="name" placeholder="Ad name" {...register("name")} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -618,35 +575,29 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
                   type="file"
                   hover
                   accept={IMAGE_ACCEPT}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (!file) return;
+                  onChange={event => {
+                    const file = event.target.files?.[0]
+                    if (!file) return
 
                     uploadImageAction({
                       file,
                       path: `ads/${getRandomString(12)}/favicon-upload`,
-                    });
+                    })
 
-                    event.currentTarget.value = "";
+                    event.currentTarget.value = ""
                   }}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Leave blank to use the website favicon. If none exists, the ad
-                  will render without an image.
+                  Leave blank to use the website favicon. If none exists, the ad will render without
+                  an image.
                 </p>
                 {isUploadingImage && (
-                  <p className="text-xs text-muted-foreground">
-                    Uploading image...
-                  </p>
+                  <p className="text-xs text-muted-foreground">Uploading image...</p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="buttonLabel">Button Label</Label>
-                <Input
-                  id="buttonLabel"
-                  placeholder="Learn more"
-                  {...register("buttonLabel")}
-                />
+                <Input id="buttonLabel" placeholder="Learn more" {...register("buttonLabel")} />
               </div>
             </div>
 
@@ -655,9 +606,7 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
                 <Checkbox
                   id="useCustomCode"
                   checked={watchedValues.useCustomCode}
-                  onCheckedChange={(checked) =>
-                    setValue("useCustomCode", checked === true)
-                  }
+                  onCheckedChange={checked => setValue("useCustomCode", checked === true)}
                 />
                 <Label htmlFor="useCustomCode">Use custom HTML/CSS/JS</Label>
               </div>
@@ -708,9 +657,7 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
 
               <div
                 className={
-                  watchedSpot === "Sidebar" || watchedSpot === "Footer"
-                    ? "max-w-sm"
-                    : "w-full"
+                  watchedSpot === "Sidebar" || watchedSpot === "Footer" ? "max-w-sm" : "w-full"
                 }
               >
                 <PreviewComponent ad={previewAd} interactive={false} />
@@ -720,17 +667,13 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Duration</span>
                   <span className="font-medium tabular-nums">
-                    {days
-                      ? `${days} day${days === 1 ? "" : "s"}`
-                      : "Select dates"}
+                    {days ? `${days} day${days === 1 ? "" : "s"}` : "Select dates"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Visibility</span>
                   <span className="font-medium tabular-nums">
-                    {(watchedValues.isActive ?? defaultValues.isActive)
-                      ? "Active"
-                      : "Inactive"}
+                    {(watchedValues.isActive ?? defaultValues.isActive) ? "Active" : "Inactive"}
                   </span>
                 </div>
               </div>
@@ -739,11 +682,7 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
         </div>
 
         <DialogFooter>
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
           <Button type="submit" form="ad-form" isPending={isPending}>
@@ -752,19 +691,19 @@ const AdFormDialog = ({ open, onOpenChange, ad }: AdFormDialogProps) => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
 type TargetSearchSelectProps = {
-  title: string;
-  query: string;
-  onQueryChange: (value: string) => void;
-  options: TargetOption[];
-  selectedItems: TargetOption[];
-  onToggle: (item: TargetOption) => void;
-  isLoading: boolean;
-  emptyMessage: string;
-};
+  title: string
+  query: string
+  onQueryChange: (value: string) => void
+  options: TargetOption[]
+  selectedItems: TargetOption[]
+  onToggle: (item: TargetOption) => void
+  isLoading: boolean
+  emptyMessage: string
+}
 
 const TargetSearchSelect = ({
   title,
@@ -776,11 +715,9 @@ const TargetSearchSelect = ({
   isLoading,
   emptyMessage,
 }: TargetSearchSelectProps) => {
-  const normalizedQuery = query.trim();
-  const selectedIds = selectedItems.map((item) => item.id);
-  const unselectedOptions = options.filter(
-    (option) => !selectedIds.includes(option.id),
-  );
+  const normalizedQuery = query.trim()
+  const selectedIds = selectedItems.map(item => item.id)
+  const unselectedOptions = options.filter(option => !selectedIds.includes(option.id))
 
   return (
     <div className="rounded-lg border bg-background overflow-hidden">
@@ -791,14 +728,14 @@ const TargetSearchSelect = ({
 
         <Input
           value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
+          onChange={event => onQueryChange(event.target.value)}
           placeholder={`Search ${title.toLowerCase()}...`}
           className="h-9"
         />
       </div>
 
       <div className="max-h-56 overflow-y-auto flex flex-col">
-        {selectedItems.map((option) => (
+        {selectedItems.map(option => (
           <button
             type="button"
             key={`selected-${option.id}`}
@@ -806,15 +743,8 @@ const TargetSearchSelect = ({
             className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left border-b bg-primary/5 hover:bg-destructive/10"
           >
             <span className="flex min-w-0 items-center gap-2">
-              <Favicon
-                src={option.logoUrl ?? null}
-                title={option.label}
-                plain
-                className="size-5"
-              />
-              <span className="truncate text-sm font-medium text-foreground">
-                {option.label}
-              </span>
+              <Favicon src={option.logoUrl ?? null} title={option.label} plain className="size-5" />
+              <span className="truncate text-sm font-medium text-foreground">{option.label}</span>
             </span>
 
             <span className="text-xs text-muted-foreground">Remove</span>
@@ -828,22 +758,16 @@ const TargetSearchSelect = ({
         )}
 
         {normalizedQuery.length >= 2 && isLoading && (
-          <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-            Searching...
-          </p>
+          <p className="px-3 py-6 text-center text-xs text-muted-foreground">Searching...</p>
+        )}
+
+        {normalizedQuery.length >= 2 && !isLoading && unselectedOptions.length === 0 && (
+          <p className="px-3 py-6 text-center text-xs text-muted-foreground">{emptyMessage}</p>
         )}
 
         {normalizedQuery.length >= 2 &&
           !isLoading &&
-          unselectedOptions.length === 0 && (
-            <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-              {emptyMessage}
-            </p>
-          )}
-
-        {normalizedQuery.length >= 2 &&
-          !isLoading &&
-          unselectedOptions.map((option) => (
+          unselectedOptions.map(option => (
             <button
               type="button"
               key={`option-${option.id}`}
@@ -857,9 +781,7 @@ const TargetSearchSelect = ({
                   plain
                   className="size-5"
                 />
-                <span className="truncate text-sm text-foreground">
-                  {option.label}
-                </span>
+                <span className="truncate text-sm text-foreground">{option.label}</span>
               </span>
 
               <span className="text-xs text-muted-foreground">Add</span>
@@ -867,7 +789,7 @@ const TargetSearchSelect = ({
           ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export { AdFormDialog };
+export { AdFormDialog }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "~/components/common/button"
+import type { ButtonProps } from "~/components/common/button"
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,10 @@ type RejectDialogProps = {
   description: string
   onReject: (reason: string) => void | Promise<void>
   pending?: boolean
+  reasonLabel?: string
+  reasonPlaceholder?: string
+  confirmLabel?: string
+  confirmVariant?: ButtonProps["variant"]
 }
 
 export const RejectDialog = ({
@@ -29,6 +34,10 @@ export const RejectDialog = ({
   description,
   onReject,
   pending,
+  reasonLabel = "Reason",
+  reasonPlaceholder = "Explain why the booking is being rejected...",
+  confirmLabel = "Reject ad",
+  confirmVariant = "destructive",
 }: RejectDialogProps) => {
   const [reason, setReason] = useState("")
 
@@ -45,12 +54,12 @@ export const RejectDialog = ({
         </DialogHeader>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="rejection-reason">Reason</Label>
+          <Label htmlFor="rejection-reason">{reasonLabel}</Label>
           <TextArea
             id="rejection-reason"
             value={reason}
             onChange={event => setReason(event.target.value)}
-            placeholder="Explain why the booking is being rejected..."
+            placeholder={reasonPlaceholder}
             className="min-h-28"
           />
         </div>
@@ -61,7 +70,7 @@ export const RejectDialog = ({
           </Button>
 
           <Button
-            variant="destructive"
+            variant={confirmVariant}
             disabled={!reason.trim() || pending}
             isPending={pending}
             onClick={async () => {
@@ -69,7 +78,7 @@ export const RejectDialog = ({
               onOpenChange(false)
             }}
           >
-            Reject ad
+            {confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

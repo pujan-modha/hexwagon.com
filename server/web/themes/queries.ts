@@ -13,15 +13,18 @@ const getThemeOrderBy = (sort: string): Prisma.ThemeFindManyArgs["orderBy"] => {
   if (sort && sort !== "default" && sort.includes(".")) {
     const [sortBy, sortOrder] = sort.split(".") as [string, Prisma.SortOrder]
 
-    if (
-      (sortOrder === "asc" || sortOrder === "desc") &&
-      ["name", "pageviews", "createdAt", "updatedAt", "order"].includes(sortBy)
-    ) {
-      return { [sortBy]: sortOrder } as Prisma.ThemeFindManyArgs["orderBy"]
+    if (sortOrder === "asc" || sortOrder === "desc") {
+      if (sortBy === "likes") {
+        return { likes: { _count: sortOrder } }
+      }
+
+      if (["name", "createdAt", "updatedAt", "order"].includes(sortBy)) {
+        return { [sortBy]: sortOrder } as Prisma.ThemeFindManyArgs["orderBy"]
+      }
     }
   }
 
-  return { pageviews: "desc" }
+  return [{ likes: { _count: "desc" } }, { order: "asc" }, { name: "asc" }]
 }
 
 export const searchThemes = async (search: FilterSchema, where?: Prisma.ThemeWhereInput) => {
@@ -45,8 +48,6 @@ export const searchThemes = async (search: FilterSchema, where?: Prisma.ThemeWhe
       getMeiliIndex("themes").search<{ id: string }>(q, {
         limit: meiliLimit,
         offset: meiliOffset,
-        rankingScoreThreshold: 0.5,
-        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
         attributesToRetrieve: ["id"],
       }),
     )
@@ -140,7 +141,6 @@ export const findRelatedThemeIds = async ({ id, ...params }: SearchSimilarDocume
       limit: 6,
       embedder: "openAi",
       attributesToRetrieve: ["id"],
-      rankingScoreThreshold: 0.6,
       ...params,
     }),
   )

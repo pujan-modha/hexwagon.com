@@ -1,7 +1,10 @@
 import Image from "next/image"
 import type { ComponentProps } from "react"
+import { Button } from "~/components/common/button"
 import { Card } from "~/components/common/card"
+import { Icon } from "~/components/common/icon"
 import { Link } from "~/components/common/link"
+import { ExternalLink } from "~/components/web/external-link"
 import { VerifiedBadge } from "~/components/web/verified-badge"
 import type { PortOne } from "~/server/web/ports/payloads"
 
@@ -35,6 +38,27 @@ const PortDetail = ({ port, canonicalUrl, likeButton, reportButton }: PortDetail
           </div>
 
           {port.description && <p className="mt-2 text-muted-foreground">{port.description}</p>}
+
+          {port.repositoryUrl && (
+            <Button
+              size="md"
+              variant="fancy"
+              suffix={<Icon name="lucide/arrow-up-right" />}
+              className="mt-3"
+              asChild
+            >
+              <ExternalLink
+                href={port.repositoryUrl}
+                eventName="click_repository"
+                eventProps={{
+                  url: port.repositoryUrl,
+                  source: "detail_button",
+                }}
+              >
+                Open Port Link
+              </ExternalLink>
+            </Button>
+          )}
         </div>
       </div>
 

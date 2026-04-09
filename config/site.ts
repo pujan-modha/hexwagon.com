@@ -1,4 +1,4 @@
-import { env } from "~/env"
+import { env } from "~/env";
 
 export const siteConfig = {
   name: "HexWagon",
@@ -12,4 +12,4 @@ export const siteConfig = {
   alphabet: "abcdefghijklmnopqrstuvwxyz",
 
   affiliateUrl: "https://go.hexwagon.com",
-}
+};

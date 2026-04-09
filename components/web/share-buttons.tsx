@@ -15,7 +15,7 @@ type Platform =
   | "Bluesky"
   | "Mastodon"
   | "Facebook"
-  | "LinkedIn"
+  | "Discord"
   | "HackerNews"
   | "Reddit"
   | "WhatsApp"
@@ -47,21 +47,21 @@ const shareOptions: ShareOption[] = [
     url: url => `https://www.facebook.com/sharer/sharer.php?u=${url}`,
     icon: <Icon name="tabler/brand-facebook" />,
   },
-  {
-    platform: "LinkedIn",
-    url: (url, title) => `https://linkedin.com/sharing/share-offsite?url=${url}&text=${title}`,
-    icon: <Icon name="tabler/brand-linkedin" />,
-  },
+  // {
+  //   platform: "Discord",
+  //   url: () => config.links.discord,
+  //   icon: <Icon name="custom/brand-discord" />,
+  // },
   {
     platform: "HackerNews",
     url: (url, title) => `https://news.ycombinator.com/submitlink?u=${url}&t=${title}`,
     icon: <Icon name="tabler/brand-ycombinator" />,
   },
-  {
-    platform: "Reddit",
-    url: (url, title) => `https://reddit.com/submit?url=${url}&title=${title}`,
-    icon: <Icon name="tabler/brand-reddit" />,
-  },
+  // {
+  //   platform: "Reddit",
+  //   url: (url, title) => `https://reddit.com/submit?url=${url}&title=${title}`,
+  //   icon: <Icon name="tabler/brand-reddit" />,
+  // },
   {
     platform: "WhatsApp",
     url: (url, title) => `https://api.whatsapp.com/send?text=${title}+${url}`,

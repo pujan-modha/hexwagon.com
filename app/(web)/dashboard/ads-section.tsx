@@ -1,89 +1,93 @@
-import { AdStatus } from "@prisma/client";
-import { Badge } from "~/components/common/badge";
-import { Button } from "~/components/common/button";
-import { Card } from "~/components/common/card";
-import { Link } from "~/components/common/link";
-import { Note } from "~/components/common/note";
-import type { UserDashboardAd } from "~/server/web/ads/queries";
+import { AdStatus } from "@prisma/client"
+import { AdEditDialog } from "~/app/(web)/dashboard/ad-edit-dialog"
+import { Badge } from "~/components/common/badge"
+import { Button } from "~/components/common/button"
+import { Card } from "~/components/common/card"
+import { Link } from "~/components/common/link"
+import { Note } from "~/components/common/note"
+import type { UserDashboardAd } from "~/server/web/ads/queries"
 
 type DashboardAdsSectionProps = {
-  ads: UserDashboardAd[];
-};
+  ads: UserDashboardAd[]
+}
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
-});
+})
 
 const usdFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
-});
+})
 
-const formatDateValue = (value: Date | null) =>
-  value ? dateFormatter.format(value) : "-";
+const formatDateValue = (value: Date | null) => (value ? dateFormatter.format(value) : "-")
 const formatMoneyFromCents = (value: number | null) =>
-  value === null ? "-" : usdFormatter.format(value / 100);
+  value === null ? "-" : usdFormatter.format(value / 100)
 
 const getReviewStatus = (ad: UserDashboardAd, now: Date) => {
   if (ad.status === AdStatus.Rejected) {
-    return { label: "Rejected", variant: "danger" as const };
+    return { label: "Rejected", variant: "danger" as const }
   }
 
   if (ad.status === AdStatus.Cancelled) {
-    return { label: "Cancelled", variant: "soft" as const };
+    return { label: "Cancelled", variant: "soft" as const }
   }
 
   if (!ad.paidAt) {
-    return { label: "Payment pending", variant: "warning" as const };
+    return { label: "Payment pending", variant: "warning" as const }
+  }
+
+  if (ad.status === AdStatus.PendingEdit) {
+    return { label: "Changes requested", variant: "warning" as const }
   }
 
   if (ad.status === AdStatus.Pending) {
-    return { label: "Under review", variant: "info" as const };
+    return { label: "Under review", variant: "info" as const }
   }
 
   if (ad.status === AdStatus.Approved && ad.startsAt > now) {
-    return { label: "Approved (scheduled)", variant: "success" as const };
+    return { label: "Approved (scheduled)", variant: "success" as const }
   }
 
   if (ad.status === AdStatus.Approved && ad.endsAt <= now) {
-    return { label: "Completed", variant: "soft" as const };
+    return { label: "Completed", variant: "soft" as const }
   }
 
-  return { label: "Live", variant: "success" as const };
-};
+  return { label: "Live", variant: "success" as const }
+}
 
 const getPaymentStatus = (ad: UserDashboardAd) => {
   if (ad.refundedAt) {
-    return { label: "Refunded", variant: "soft" as const };
+    return { label: "Refunded", variant: "soft" as const }
   }
 
   if (ad.paidAt) {
     return {
       label: `Paid on ${formatDateValue(ad.paidAt)}`,
       variant: "success" as const,
-    };
+    }
   }
 
-  if (ad.stripeCheckoutSessionId) {
-    return { label: "Checkout started", variant: "warning" as const };
+  if (ad.billingCheckoutReferenceId || ad.billingProvider) {
+    return { label: "Checkout started", variant: "warning" as const }
   }
 
-  return { label: "Unpaid", variant: "warning" as const };
-};
+  return { label: "Unpaid", variant: "warning" as const }
+}
 
 const summarizeTargets = (items: Array<{ name: string }>) => {
   if (!items.length) {
-    return "All";
+    return "All"
   }
 
-  const names = items.slice(0, 3).map((item) => item.name);
+  const names = items.slice(0, 3).map(item => item.name)
 
   if (items.length <= 3) {
-    return names.join(", ");
+    return names.join(", ")
   }
 
-  return `${names.join(", ")} +${items.length - 3} more`;
-};
+  return `${names.join(", ")} +${items.length - 3} more`
+}
 
 export const DashboardAdsSection = ({ ads }: DashboardAdsSectionProps) => {
   return (
@@ -103,18 +107,17 @@ export const DashboardAdsSection = ({ ads }: DashboardAdsSectionProps) => {
 
       {ads.length > 0 ? (
         <div className="grid gap-3">
-          {ads.map((ad) => {
-            const now = new Date();
-            const reviewStatus = getReviewStatus(ad, now);
-            const paymentStatus = getPaymentStatus(ad);
+          {ads.map(ad => {
+            const now = new Date()
+            const reviewStatus = getReviewStatus(ad, now)
+            const paymentStatus = getPaymentStatus(ad)
+            const canEdit = ad.status !== AdStatus.Rejected
 
             return (
               <Card key={ad.id} className="gap-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="space-y-1">
-                    <h3 className="text-base font-semibold leading-tight">
-                      {ad.name}
-                    </h3>
+                    <h3 className="text-base font-semibold leading-tight">{ad.name}</h3>
                     <a
                       href={ad.websiteUrl}
                       target="_blank"
@@ -126,26 +129,17 @@ export const DashboardAdsSection = ({ ads }: DashboardAdsSectionProps) => {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={reviewStatus.variant}>
-                      {reviewStatus.label}
-                    </Badge>
-                    <Badge variant={paymentStatus.variant}>
-                      {paymentStatus.label}
-                    </Badge>
+                    <Badge variant={reviewStatus.variant}>{reviewStatus.label}</Badge>
+                    <Badge variant={paymentStatus.variant}>{paymentStatus.label}</Badge>
                   </div>
                 </div>
 
                 <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-3">
                   <p>
-                    <span className="font-medium text-foreground">
-                      Placement:
-                    </span>{" "}
-                    {ad.type}
+                    <span className="font-medium text-foreground">Placement:</span> {ad.type}
                   </p>
                   <p>
-                    <span className="font-medium text-foreground">
-                      Billing:
-                    </span>{" "}
+                    <span className="font-medium text-foreground">Billing:</span>{" "}
                     {ad.billingCycle ?? "-"}
                   </p>
                   <p>
@@ -153,20 +147,15 @@ export const DashboardAdsSection = ({ ads }: DashboardAdsSectionProps) => {
                     {formatMoneyFromCents(ad.priceCents)}
                   </p>
                   <p>
-                    <span className="font-medium text-foreground">
-                      Schedule:
-                    </span>{" "}
-                    {formatDateValue(ad.startsAt)} -{" "}
-                    {formatDateValue(ad.endsAt)}
+                    <span className="font-medium text-foreground">Schedule:</span>{" "}
+                    {formatDateValue(ad.startsAt)} - {formatDateValue(ad.endsAt)}
                   </p>
                   <p>
                     <span className="font-medium text-foreground">Themes:</span>{" "}
                     {summarizeTargets(ad.targetThemes)}
                   </p>
                   <p>
-                    <span className="font-medium text-foreground">
-                      Platforms:
-                    </span>{" "}
+                    <span className="font-medium text-foreground">Platforms:</span>{" "}
                     {summarizeTargets(ad.targetPlatforms)}
                   </p>
                 </div>
@@ -176,23 +165,34 @@ export const DashboardAdsSection = ({ ads }: DashboardAdsSectionProps) => {
                   <p>Last updated: {formatDateValue(ad.updatedAt)}</p>
                 </div>
 
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+                  <p className="text-xs text-muted-foreground">
+                    {ad.status === AdStatus.PendingEdit
+                      ? "Update your ad based on the requested changes and submit it again."
+                      : ad.status === AdStatus.Rejected
+                        ? "This campaign has been rejected and can no longer be edited."
+                        : "Edit your ad any time and submit the updated version for admin review."}
+                  </p>
+
+                  {canEdit ? <AdEditDialog ad={ad} /> : null}
+                </div>
+
                 {ad.adminNote ? (
                   <Note className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs">
                     Admin note: {ad.adminNote}
                   </Note>
                 ) : null}
               </Card>
-            );
+            )
           })}
         </div>
       ) : (
         <Card>
           <p className="text-sm text-muted-foreground">
-            No ads yet. Create your first campaign to start promoting your
-            project.
+            No ads yet. Create your first campaign to start promoting your project.
           </p>
         </Card>
       )}
     </section>
-  );
-};
+  )
+}

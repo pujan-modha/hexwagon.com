@@ -1,7 +1,6 @@
 "use client"
 
 import { type HotkeyItem, useDebouncedState, useHotkeys } from "@mantine/hooks"
-import { getUrlHostname } from "@primoui/utils"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { posthog } from "posthog-js"
@@ -64,6 +63,14 @@ type CommandSection = {
     path: string
     shortcut?: boolean
   }[]
+}
+
+const formatPortsCount = (count?: number) => {
+  if (count === undefined) {
+    return null
+  }
+
+  return `${count.toLocaleString()} port${count === 1 ? "" : "s"}`
 }
 
 export const Search = () => {
@@ -252,13 +259,16 @@ export const Search = () => {
             const q = encodeURIComponent(name || slug)
             return `/themes?q=${q}`
           }}
-          renderItemDisplay={({ name, repositoryUrl, websiteUrl }) => {
-            const url = repositoryUrl || websiteUrl
+          renderItemDisplay={({ name, theme, platform, themeSlug, platformSlug }) => {
+            const themeLabel = theme ?? themeSlug ?? "Theme"
+            const platformLabel = platform ?? platformSlug ?? "Platform"
 
             return (
               <>
                 <span className="flex-1 truncate">{name}</span>
-                <span className="opacity-50">{url ? getUrlHostname(url) : ""}</span>
+                <span className="truncate text-xs text-muted-foreground/70">
+                  {themeLabel} / {platformLabel}
+                </span>
               </>
             )
           }}
@@ -269,10 +279,13 @@ export const Search = () => {
           items={themes}
           onItemSelect={navigateTo}
           getHref={({ slug }) => `${isAdminPath ? "/admin" : ""}/themes/${slug}`}
-          renderItemDisplay={({ name, faviconUrl }) => (
+          renderItemDisplay={({ name, faviconUrl, portsCount }) => (
             <>
               {faviconUrl && <Image src={faviconUrl} alt="" width={16} height={16} />}
               <span className="flex-1 truncate">{name}</span>
+              {formatPortsCount(portsCount) ? (
+                <span className="text-xs text-muted-foreground/70">{formatPortsCount(portsCount)}</span>
+              ) : null}
             </>
           )}
         />
@@ -282,7 +295,14 @@ export const Search = () => {
           items={platforms}
           onItemSelect={navigateTo}
           getHref={({ slug }) => (isAdminPath ? `/admin/platforms/${slug}` : `/platforms/${slug}`)}
-          renderItemDisplay={({ name }) => name}
+          renderItemDisplay={({ name, portsCount }) => (
+            <>
+              <span className="flex-1 truncate">{name}</span>
+              {formatPortsCount(portsCount) ? (
+                <span className="text-xs text-muted-foreground/70">{formatPortsCount(portsCount)}</span>
+              ) : null}
+            </>
+          )}
         />
       </CommandList>
 

@@ -9,7 +9,7 @@ type VerifiedBadgeProps = Omit<ComponentProps<typeof Icon>, "name"> & {
 
 export const VerifiedBadge = ({ className, size = "md", ...props }: VerifiedBadgeProps) => {
   return (
-    <Tooltip tooltip="Verified">
+    <Tooltip tooltip="Official">
       <Icon
         name="verified-badge"
         className={cx(

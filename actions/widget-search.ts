@@ -20,8 +20,6 @@ export const searchThemesAction = createServerAction()
         isVerified?: boolean
       }>(query, {
         limit: SEARCH_LIMIT,
-        rankingScoreThreshold: 0.5,
-        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
         attributesToRetrieve: ["id", "name", "slug", "faviconUrl", "isVerified"],
       }),
     )
@@ -69,8 +67,6 @@ export const searchPlatformsAction = createServerAction()
         isVerified?: boolean
       }>(query, {
         limit: SEARCH_LIMIT,
-        rankingScoreThreshold: 0.5,
-        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
         attributesToRetrieve: ["id", "name", "slug", "faviconUrl", "isVerified"],
       }),
     )

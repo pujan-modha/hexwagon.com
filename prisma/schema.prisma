@@ -26,6 +26,7 @@ enum AdType {
 
 enum AdStatus {
   Pending
+  PendingEdit
   Approved
   Rejected
   Cancelled
@@ -34,6 +35,11 @@ enum AdStatus {
 enum AdBillingCycle {
   Weekly
   Monthly
+}
+
+enum BillingProvider {
+  Stripe
+  PayPal
 }
 
 enum AdSlot {
@@ -191,11 +197,10 @@ model Ad {
   customHtml     String?  @db.Text
   customCss      String?  @db.Text
   customJs       String?  @db.Text
-  sessionId      String?
-  stripeCheckoutSessionId String?  @unique
-  stripePaymentIntentId   String?
-  stripeChargeId          String?
-  subscriptionId String?  @unique
+  billingProvider        BillingProvider?
+  billingCheckoutReferenceId String?
+  billingSubscriptionId  String? @unique
+  billingLastPaymentId   String?
   billingCycle   AdBillingCycle?
   packageBasePriceCents       Int?
   packageDiscountedPriceCents Int?
@@ -203,8 +208,10 @@ model Ad {
   targetingTargetCount        Int   @default(0)
   targetingTotalPriceCents    Int?
   refundAmountCents Int?
-  stripeRefundId    String?
+  billingRefundId   String?
   refundedAt        DateTime?
+  clickCount       Int      @default(0)
+  lastClickedAt    DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -217,6 +224,19 @@ model Ad {
   // Indexes
   @@index([status, paidAt, startsAt, endsAt])
   @@index([billingCycle])
+  @@index([billingProvider, billingSubscriptionId])
+  @@index([billingCheckoutReferenceId])
+  @@index([billingLastPaymentId])
+}
+
+model BillingWebhookEvent {
+  id         String          @id @default(cuid())
+  provider   BillingProvider
+  eventId    String          @unique
+  eventType  String
+  createdAt  DateTime        @default(now())
+
+  @@index([provider, createdAt])
 }
 
 model AdSpotPricing {

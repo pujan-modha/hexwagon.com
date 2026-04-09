@@ -1,69 +1,70 @@
-import { getSessionCookie } from "better-auth/cookies";
-import { headers } from "next/headers";
-import Script from "next/script";
-import { type PropsWithChildren, Suspense } from "react";
-import type { Graph } from "schema-dts";
-import Providers from "~/app/(web)/providers";
-import { AdBanner } from "~/components/web/ads/ad-banner";
-import { Bottom } from "~/components/web/bottom";
-import { FeedbackWidget } from "~/components/web/feedback-widget";
-import { Footer } from "~/components/web/footer";
-import { Header, HeaderBackdrop } from "~/components/web/header";
-import { Container } from "~/components/web/ui/container";
-import { config } from "~/config";
-import { env } from "~/env";
-import { getServerSession } from "~/lib/auth";
+import { getSessionCookie } from "better-auth/cookies"
+import { headers } from "next/headers"
+import Script from "next/script"
+import { type PropsWithChildren, Suspense } from "react"
+import type { Graph } from "schema-dts"
+import Providers from "~/app/(web)/providers"
+import { AdBanner } from "~/components/web/ads/ad-banner"
+import { AdFloatingFooter } from "~/components/web/ads/ad-floating-footer"
+import { Bottom } from "~/components/web/bottom"
+import { FeedbackWidget } from "~/components/web/feedback-widget"
+import { Footer } from "~/components/web/footer"
+import { Header, HeaderBackdrop } from "~/components/web/header"
+import { Container } from "~/components/web/ui/container"
+import { config } from "~/config"
+import { env } from "~/env"
+import { getServerSession } from "~/lib/auth"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export default async function RootLayout({ children }: PropsWithChildren) {
-  const url = config.site.url;
+  const url = config.site.url
   const jsonLd: Graph = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Organization",
         "@id": `${url}/#/schema/organization/1`,
-        "name": config.site.name,
-        "url": `${url}/`,
-        "sameAs": [config.links.twitter],
-        "logo": {
+        name: config.site.name,
+        url: `${url}/`,
+        sameAs: [config.links.twitter],
+        logo: {
           "@type": "ImageObject",
           "@id": `${url}/#/schema/image/1`,
-          "url": `${url}/favicon.png`,
-          "width": "480",
-          "height": "480",
-          "caption": `${config.site.name} Logo`,
+          url: `${url}/favicon.png`,
+          width: "480",
+          height: "480",
+          caption: `${config.site.name} Logo`,
         },
       },
       {
         "@type": "Person",
         "@id": `${url}/#/schema/person/1`,
-        "name": "Pujan Modha",
-        "sameAs": [config.links.author],
+        name: "Pujan Modha",
+        sameAs: [config.links.author],
       },
       {
         "@type": "WebSite",
-        "url": config.site.url,
-        "name": config.site.name,
-        "description": config.site.description,
-        "inLanguage": "en-US",
-        "potentialAction": {
+        url: config.site.url,
+        name: config.site.name,
+        description: config.site.description,
+        inLanguage: "en-US",
+        potentialAction: {
           "@type": "SearchAction",
-          "target": {
+          target: {
             "@type": "EntryPoint",
-            "urlTemplate": `${url}/?q={search_term_string}`,
+            urlTemplate: `${url}/?q={search_term_string}`,
           },
           "query-input": "required name=search_term_string",
         } as any,
-        "isPartOf": { "@id": `${url}#/schema/website/1` },
-        "about": { "@id": `${url}#/schema/organization/1` },
+        isPartOf: { "@id": `${url}#/schema/website/1` },
+        about: { "@id": `${url}#/schema/organization/1` },
       },
     ],
-  };
+  }
 
-  const hasSessionCookie = getSessionCookie(new Headers(await headers()));
-  const session = hasSessionCookie ? await getServerSession() : null;
+  const hasSessionCookie = getSessionCookie(new Headers(await headers()))
+  const session = hasSessionCookie ? await getServerSession() : null
 
   return (
     <Providers openPanelClientId={env.OPENPANEL_CLIENT_ID}>
@@ -85,6 +86,9 @@ export default async function RootLayout({ children }: PropsWithChildren) {
       </div>
 
       <Bottom />
+      <Suspense>
+        <AdFloatingFooter />
+      </Suspense>
       <FeedbackWidget />
 
       {/* JSON-LD */}
@@ -93,5 +97,5 @@ export default async function RootLayout({ children }: PropsWithChildren) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
     </Providers>
-  );
+  )
 }

@@ -19,19 +19,23 @@ const getPortOrderBy = (sort: string): Prisma.PortFindManyArgs["orderBy"] => {
   if (sort && sort !== "default" && sort.includes(".")) {
     const [sortBy, sortOrder] = sort.split(".") as [string, Prisma.SortOrder]
 
-    if (
-      (sortOrder === "asc" || sortOrder === "desc") &&
-      [
-        "name",
-        "score",
-        "pageviews",
-        "updatedAt",
-        "createdAt",
-        "publishedAt",
-        "isFeatured",
-      ].includes(sortBy)
-    ) {
-      return { [sortBy]: sortOrder } as Prisma.PortFindManyArgs["orderBy"]
+    if (sortOrder === "asc" || sortOrder === "desc") {
+      if (sortBy === "likes") {
+        return { likes: { _count: sortOrder } }
+      }
+
+      if (
+        [
+          "name",
+          "score",
+          "updatedAt",
+          "createdAt",
+          "publishedAt",
+          "isFeatured",
+        ].includes(sortBy)
+      ) {
+        return { [sortBy]: sortOrder } as Prisma.PortFindManyArgs["orderBy"]
+      }
     }
   }
 
@@ -80,8 +84,6 @@ export const searchPorts = async (search: FilterSchema, where?: Prisma.PortWhere
       getMeiliIndex("ports").search<{ id: string }>(q, {
         limit: meiliLimit,
         offset: meiliOffset,
-        rankingScoreThreshold: 0.5,
-        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
         attributesToRetrieve: ["id"],
         filter: meiliFilters,
       }),
@@ -199,8 +201,6 @@ export const findPortsByThemeAndPlatform = async (
     const { data, error } = await tryCatch(
       getMeiliIndex("ports").search<{ id: string }>(q, {
         limit: meiliLimit,
-        rankingScoreThreshold: 0.5,
-        hybrid: { embedder: "openAi", semanticRatio: 0.5 },
         attributesToRetrieve: ["id"],
         filter: ["status = 'Published'"],
       }),
@@ -262,7 +262,6 @@ export const findRelatedPortIds = async ({ id, ...params }: SearchSimilarDocumen
       limit: 3,
       embedder: "openAi",
       attributesToRetrieve: ["id"],
-      rankingScoreThreshold: 0.7,
       filter: ["status = 'Published'"],
       ...params,
     }),

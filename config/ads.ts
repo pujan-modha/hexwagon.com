@@ -1,25 +1,25 @@
-import { siteConfig } from "~/config/site";
-import type { AdOne } from "~/server/web/ads/payloads";
+import { siteConfig } from "~/config/site"
+import type { AdOne } from "~/server/web/ads/payloads"
 
-export type AdSpotType = "Banner" | "Listing" | "Sidebar" | "Footer";
+export type AdSpotType = "Banner" | "Listing" | "Sidebar" | "Footer"
 
 export type AdSpot = {
-  label: string;
-  type: AdSpotType;
-  description: string;
-  price: number;
-  preview?: string;
-};
+  label: string
+  type: AdSpotType
+  description: string
+  price: number
+  preview?: string
+}
 
-export type AdPackageCycle = "Weekly" | "Monthly";
+export type AdPackageCycle = "Weekly" | "Monthly"
 
 export type AdPackageCyclePricing = {
-  basePrice: number;
-  discountedPrice: number;
-  targetUnitPrice: number;
-};
+  basePrice: number
+  discountedPrice: number
+  targetUnitPrice: number
+}
 
-export type AdPackagePricing = Record<AdPackageCycle, AdPackageCyclePricing>;
+export type AdPackagePricing = Record<AdPackageCycle, AdPackageCyclePricing>
 
 export const adsConfig = {
   minPageviewThreshold: 100,
@@ -27,8 +27,7 @@ export const adsConfig = {
 
   package: {
     label: "Universal Reach",
-    description:
-      "One package that rotates across all ad placements with optional targeting boost.",
+    description: "One package that rotates across all ad placements with optional targeting boost.",
     pricing: {
       Weekly: {
         basePrice: 149,
@@ -68,7 +67,7 @@ export const adsConfig = {
     {
       label: "Footer Ad",
       type: "Footer",
-      description: "Visible in the site footer",
+      description: "Visible as a floating card at bottom-right",
       price: 15,
       preview: "https://share.cleanshot.com/7CFqSw0b",
     },
@@ -78,8 +77,8 @@ export const adsConfig = {
     id: "default-ad",
     type: "All",
     websiteUrl: "/advertise",
-    name: "Your Ad here",
-    description: "Reach out to our audience of developers.",
+    name: "Advertise with us",
+    description: "Reach out to our community of developers and designers.",
     buttonLabel: "Learn More",
     faviconUrl: "/favicon.svg",
   } satisfies AdOne,
@@ -105,7 +104,7 @@ export const adsConfig = {
     {
       question: "What are the 4 ad placements?",
       answer:
-        "Top banner, listing card, sidebar card, and footer card. Your creative can appear in any slot.",
+        "Top banner, listing card, sidebar card, and a floating card at bottom-right. Your creative can appear in any slot.",
     },
     {
       question: "What does targeting add-on do?",
@@ -119,8 +118,7 @@ export const adsConfig = {
     },
     {
       question: "Do I get a refund if rejected?",
-      answer:
-        "Yes. Rejected paid campaigns are automatically refunded in full.",
+      answer: "Yes. Rejected paid campaigns are automatically refunded in full.",
     },
   ],
-};
+}

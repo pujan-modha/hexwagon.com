@@ -27,7 +27,12 @@ const AdButton = async ({ children, className, type, suffix, ...props }: AdButto
       <ExternalLink
         href={ad.websiteUrl}
         eventName="click_ad"
-        eventProps={{ url: ad.websiteUrl, type: ad.type, source: "button" }}
+        eventProps={{
+          adId: ad.id,
+          url: ad.websiteUrl,
+          type: ad.type,
+          source: "button",
+        }}
       >
         {ad.buttonLabel ?? `Visit ${ad.name}`}
       </ExternalLink>
