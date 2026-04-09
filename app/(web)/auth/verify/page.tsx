@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Image from "next/image"
 import type { SearchParams } from "nuqs/server"
 import { Link } from "~/components/common/link"
 import { Stack } from "~/components/common/stack"
@@ -58,7 +57,7 @@ export default async function VerifyPage({ searchParams }: PageProps) {
             title={`Open ${provider}`}
             className="size-14 flex justify-center items-center border bg-border/[0.05] rounded-xl hover:border-ring hover:bg-ring/[0.15]"
           >
-            <Image src={icon} alt={`Open ${provider}`} width="30" height="30" />
+            <img src={icon} alt={`Open ${provider}`} width={30} height={30} />
           </ExternalLink>
         ))}
       </Stack>

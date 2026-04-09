@@ -18,9 +18,12 @@ type PortSearchResult = {
   id: string
   slug: string
   name: string
+  status?: PortStatus
   websiteUrl?: string | null
   repositoryUrl?: string | null
+  theme?: string
   themeSlug?: string
+  platform?: string
   platformSlug?: string
 }
 
@@ -29,6 +32,7 @@ type ThemeSearchResult = {
   name: string
   faviconUrl?: string
   isVerified?: boolean
+  portsCount?: number
 }
 
 type PlatformSearchResult = {
@@ -36,6 +40,7 @@ type PlatformSearchResult = {
   name: string
   faviconUrl?: string
   isVerified?: boolean
+  portsCount?: number
 }
 
 type SearchResultPayload<T> = {
@@ -90,8 +95,8 @@ const fallbackSearchPorts = async (
       take: FALLBACK_LIMIT,
       orderBy: [{ isFeatured: "desc" }, { score: "desc" }],
       include: {
-        theme: { select: { slug: true } },
-        platform: { select: { slug: true } },
+        theme: { select: { slug: true, name: true } },
+        platform: { select: { slug: true, name: true } },
       },
     }),
 
@@ -104,7 +109,9 @@ const fallbackSearchPorts = async (
       slug: port.slug,
       name: port.name ?? port.slug,
       repositoryUrl: port.repositoryUrl,
+      theme: port.theme.name,
       themeSlug: port.theme.slug,
+      platform: port.platform.name,
       platformSlug: port.platform.slug,
     })),
     estimatedTotalHits: totalCount,
@@ -127,13 +134,18 @@ const fallbackSearchThemes = async (
     db.theme.findMany({
       where,
       take: FALLBACK_LIMIT,
-      orderBy: { pageviews: "desc" },
+      orderBy: { likes: { _count: "desc" } },
       select: {
         slug: true,
         name: true,
         faviconUrl: true,
         _count: {
           select: {
+            ports: {
+              where: {
+                status: PortStatus.Published,
+              },
+            },
             maintainers: true,
           },
         },
@@ -149,6 +161,7 @@ const fallbackSearchThemes = async (
       name: theme.name,
       faviconUrl: theme.faviconUrl ?? undefined,
       isVerified: theme._count.maintainers > 0,
+      portsCount: theme._count.ports,
     })),
     estimatedTotalHits: totalCount,
     processingTimeMs: Math.round(performance.now() - start),
@@ -170,12 +183,21 @@ const fallbackSearchPlatforms = async (
     db.platform.findMany({
       where,
       take: FALLBACK_LIMIT,
-      orderBy: { pageviews: "desc" },
+      orderBy: { likes: { _count: "desc" } },
       select: {
         slug: true,
         name: true,
         faviconUrl: true,
         isFeatured: true,
+        _count: {
+          select: {
+            ports: {
+              where: {
+                status: PortStatus.Published,
+              },
+            },
+          },
+        },
       },
     }),
 
@@ -188,10 +210,123 @@ const fallbackSearchPlatforms = async (
       name: platform.name,
       faviconUrl: platform.faviconUrl ?? undefined,
       isVerified: platform.isFeatured,
+      portsCount: platform._count.ports,
     })),
     estimatedTotalHits: totalCount,
     processingTimeMs: Math.round(performance.now() - start),
   }
+}
+
+const enrichPortHits = async (hits: PortSearchResult[]) => {
+  const ids = Array.from(new Set(hits.map(hit => hit.id).filter(Boolean)))
+
+  if (!ids.length) {
+    return []
+  }
+
+  const ports = await db.port.findMany({
+    where: {
+      id: { in: ids },
+      status: PortStatus.Published,
+    },
+    select: {
+      id: true,
+      theme: { select: { name: true, slug: true } },
+      platform: { select: { name: true, slug: true } },
+    },
+  })
+
+  const detailsById = new Map(
+    ports.map(port => [
+      port.id,
+      {
+        theme: port.theme.name,
+        themeSlug: port.theme.slug,
+        platform: port.platform.name,
+        platformSlug: port.platform.slug,
+      },
+    ]),
+  )
+
+  return hits.flatMap(hit => {
+    const details = detailsById.get(hit.id)
+
+    if (!details) {
+      return []
+    }
+
+    return [
+      {
+        ...hit,
+        theme: hit.theme ?? details.theme,
+        themeSlug: hit.themeSlug ?? details.themeSlug,
+        platform: hit.platform ?? details.platform,
+        platformSlug: hit.platformSlug ?? details.platformSlug,
+      },
+    ]
+  })
+}
+
+const enrichThemeHits = async (hits: ThemeSearchResult[]) => {
+  const slugsNeedingCounts = hits.filter(hit => hit.portsCount === undefined).map(hit => hit.slug)
+
+  if (!slugsNeedingCounts.length) {
+    return hits
+  }
+
+  const themes = await db.theme.findMany({
+    where: { slug: { in: slugsNeedingCounts } },
+    select: {
+      slug: true,
+      _count: {
+        select: {
+          ports: {
+            where: {
+              status: PortStatus.Published,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  const countsBySlug = new Map(themes.map(theme => [theme.slug, theme._count.ports]))
+
+  return hits.map(hit => ({
+    ...hit,
+    portsCount: hit.portsCount ?? countsBySlug.get(hit.slug) ?? 0,
+  }))
+}
+
+const enrichPlatformHits = async (hits: PlatformSearchResult[]) => {
+  const slugsNeedingCounts = hits.filter(hit => hit.portsCount === undefined).map(hit => hit.slug)
+
+  if (!slugsNeedingCounts.length) {
+    return hits
+  }
+
+  const platforms = await db.platform.findMany({
+    where: { slug: { in: slugsNeedingCounts } },
+    select: {
+      slug: true,
+      _count: {
+        select: {
+          ports: {
+            where: {
+              status: PortStatus.Published,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  const countsBySlug = new Map(platforms.map(platform => [platform.slug, platform._count.ports]))
+
+  return hits.map(hit => ({
+    ...hit,
+    portsCount: hit.portsCount ?? countsBySlug.get(hit.slug) ?? 0,
+  }))
 }
 
 export const searchItems = createServerAction()
@@ -213,24 +348,26 @@ export const searchItems = createServerAction()
               "id",
               "slug",
               "name",
+              "status",
               "websiteUrl",
               "repositoryUrl",
+              "theme",
               "themeSlug",
+              "platform",
               "platformSlug",
             ],
-            filter: ["status = 'Published'"],
           })
         : Promise.resolve(emptyPorts),
 
       shouldSearchThemes
         ? getMeiliIndex("themes").search<ThemeSearchResult>(query, {
-            attributesToRetrieve: ["slug", "name", "faviconUrl", "isVerified"],
+            attributesToRetrieve: ["slug", "name", "faviconUrl", "isVerified", "portsCount"],
           })
         : Promise.resolve(emptyThemes),
 
       shouldSearchPlatforms
         ? getMeiliIndex("platforms").search<PlatformSearchResult>(query, {
-            attributesToRetrieve: ["slug", "name", "faviconUrl", "isVerified"],
+            attributesToRetrieve: ["slug", "name", "faviconUrl", "isVerified", "portsCount"],
           })
         : Promise.resolve(emptyPlatforms),
     ])
@@ -313,10 +450,29 @@ export const searchItems = createServerAction()
       })
     }
 
+    const finalPorts = fallbackPorts ?? ports
+    const finalThemes = fallbackThemes ?? themes
+    const finalPlatforms = fallbackPlatforms ?? platforms
+
+    const [enrichedPortHits, enrichedThemeHits, enrichedPlatformHits] = await Promise.all([
+      enrichPortHits(finalPorts.hits),
+      enrichThemeHits(finalThemes.hits),
+      enrichPlatformHits(finalPlatforms.hits),
+    ])
+
     return {
-      ports: fallbackPorts ?? ports,
-      themes: fallbackThemes ?? themes,
-      platforms: fallbackPlatforms ?? platforms,
+      ports: {
+        ...finalPorts,
+        hits: enrichedPortHits,
+      },
+      themes: {
+        ...finalThemes,
+        hits: enrichedThemeHits,
+      },
+      platforms: {
+        ...finalPlatforms,
+        hits: enrichedPlatformHits,
+      },
       telemetry,
     }
   })

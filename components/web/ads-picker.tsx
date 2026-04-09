@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import posthog from "posthog-js"
 import { type ComponentProps, useState } from "react"
 import { toast } from "sonner"
@@ -244,7 +245,7 @@ export const AdsPicker = ({ className, packagePricing, ...props }: AdsPickerProp
                 className="w-full"
                 suffix={<Icon name="lucide/arrow-up-right" />}
               >
-                <a href={`mailto:${config.site.email}`}>Contact us</a>
+                <Link href={`mailto:${config.site.email}`}>Contact us</Link>
               </Button>
             </div>
           </article>

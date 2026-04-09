@@ -29,6 +29,13 @@ export const metadata: Metadata = {
 const THEME_RESULTS_LIMIT = 6
 const PLATFORM_RESULTS_LIMIT = 6
 const PORT_RESULTS_LIMIT = 12
+const SECONDARY_PREVIEW_LIMIT = 3
+
+const SEARCH_SECTION_IDS = {
+  ports: "search-ports",
+  themes: "search-themes",
+  platforms: "search-platforms",
+} as const
 
 const readParam = (value: string | string[] | undefined) =>
   Array.isArray(value) ? (value[0] ?? "") : (value ?? "")
@@ -178,6 +185,10 @@ export default async function SearchPage(props: PageProps) {
   ])
 
   const resultCount = themeResults.totalCount + platformResults.totalCount + portResults.totalCount
+  const visibleThemePreview = themeResults.themes.slice(0, SECONDARY_PREVIEW_LIMIT)
+  const hiddenThemeResults = themeResults.themes.slice(SECONDARY_PREVIEW_LIMIT)
+  const visiblePlatformPreview = platformResults.platforms.slice(0, SECONDARY_PREVIEW_LIMIT)
+  const hiddenPlatformResults = platformResults.platforms.slice(SECONDARY_PREVIEW_LIMIT)
 
   return (
     <>
@@ -223,50 +234,18 @@ export default async function SearchPage(props: PageProps) {
         <EmptySearchState />
       ) : (
         <div className="flex flex-col gap-12">
-          <SearchResultSection
-            title="Themes"
-            description={
-              selectedPlatform
-                ? `Themes relevant to ${selectedPlatform.name}.`
-                : "Matching themes from your search."
-            }
-            count={themeResults.totalCount}
-          >
-            {themeResults.themes.length ? (
-              <CatalogueGrid>
-                {themeResults.themes.map(theme => (
-                  <ThemeCard key={theme.id} theme={theme} showCount />
-                ))}
-              </CatalogueGrid>
-            ) : (
-              <EmptySectionMessage message="No themes match this search yet." />
-            )}
-          </SearchResultSection>
+          <SearchResultJumpNav
+            portsCount={portResults.totalCount}
+            themesCount={themeResults.totalCount}
+            platformsCount={platformResults.totalCount}
+          />
 
           <SearchResultSection
-            title="Platforms"
-            description={
-              selectedTheme
-                ? `Platforms relevant to ${selectedTheme.name}.`
-                : "Matching platforms from your search."
-            }
-            count={platformResults.totalCount}
-          >
-            {platformResults.platforms.length ? (
-              <CatalogueGrid>
-                {platformResults.platforms.map(platform => (
-                  <PlatformCard key={platform.id} platform={platform} showCount />
-                ))}
-              </CatalogueGrid>
-            ) : (
-              <EmptySectionMessage message="No platforms match this search yet." />
-            )}
-          </SearchResultSection>
-
-          <SearchResultSection
+            id={SEARCH_SECTION_IDS.ports}
             title="Ports"
             description="Ports filtered by your selected theme/platform and any remaining text query."
             count={portResults.totalCount}
+            visibleCount={portResults.ports.length}
           >
             {portResults.ports.length ? (
               <CatalogueGrid className="xl:grid-cols-3">
@@ -278,31 +257,161 @@ export default async function SearchPage(props: PageProps) {
               <EmptySectionMessage message="No ports match this search yet." />
             )}
           </SearchResultSection>
+
+          <SearchResultSection
+            id={SEARCH_SECTION_IDS.themes}
+            title="Themes"
+            description={
+              selectedPlatform
+                ? `Themes relevant to ${selectedPlatform.name}.`
+                : "Matching themes from your search."
+            }
+            count={themeResults.totalCount}
+            visibleCount={themeResults.themes.length}
+          >
+            {themeResults.themes.length ? (
+              <div className="flex flex-col gap-4">
+                <CatalogueGrid>
+                  {visibleThemePreview.map(theme => (
+                    <ThemeCard key={theme.id} theme={theme} showCount />
+                  ))}
+                </CatalogueGrid>
+
+                {hiddenThemeResults.length ? (
+                  <details className="rounded-2xl border border-border bg-muted/10 p-4">
+                    <summary className="cursor-pointer text-sm font-medium text-foreground">
+                      Show {hiddenThemeResults.length.toLocaleString()} more theme
+                      {hiddenThemeResults.length === 1 ? "" : "s"}
+                    </summary>
+                    <div className="mt-4">
+                      <CatalogueGrid>
+                        {hiddenThemeResults.map(theme => (
+                          <ThemeCard key={theme.id} theme={theme} showCount />
+                        ))}
+                      </CatalogueGrid>
+                    </div>
+                  </details>
+                ) : null}
+              </div>
+            ) : (
+              <EmptySectionMessage message="No themes match this search yet." />
+            )}
+          </SearchResultSection>
+
+          <SearchResultSection
+            id={SEARCH_SECTION_IDS.platforms}
+            title="Platforms"
+            description={
+              selectedTheme
+                ? `Platforms relevant to ${selectedTheme.name}.`
+                : "Matching platforms from your search."
+            }
+            count={platformResults.totalCount}
+            visibleCount={platformResults.platforms.length}
+          >
+            {platformResults.platforms.length ? (
+              <div className="flex flex-col gap-4">
+                <CatalogueGrid>
+                  {visiblePlatformPreview.map(platform => (
+                    <PlatformCard key={platform.id} platform={platform} showCount />
+                  ))}
+                </CatalogueGrid>
+
+                {hiddenPlatformResults.length ? (
+                  <details className="rounded-2xl border border-border bg-muted/10 p-4">
+                    <summary className="cursor-pointer text-sm font-medium text-foreground">
+                      Show {hiddenPlatformResults.length.toLocaleString()} more platform
+                      {hiddenPlatformResults.length === 1 ? "" : "s"}
+                    </summary>
+                    <div className="mt-4">
+                      <CatalogueGrid>
+                        {hiddenPlatformResults.map(platform => (
+                          <PlatformCard key={platform.id} platform={platform} showCount />
+                        ))}
+                      </CatalogueGrid>
+                    </div>
+                  </details>
+                ) : null}
+              </div>
+            ) : (
+              <EmptySectionMessage message="No platforms match this search yet." />
+            )}
+          </SearchResultSection>
         </div>
       )}
     </>
   )
 }
 
+const SearchResultJumpNav = ({
+  portsCount,
+  themesCount,
+  platformsCount,
+}: {
+  portsCount: number
+  themesCount: number
+  platformsCount: number
+}) => {
+  const navItems = [
+    { href: `#${SEARCH_SECTION_IDS.ports}`, label: "Ports", count: portsCount },
+    { href: `#${SEARCH_SECTION_IDS.themes}`, label: "Themes", count: themesCount },
+    { href: `#${SEARCH_SECTION_IDS.platforms}`, label: "Platforms", count: platformsCount },
+  ]
+
+  return (
+    <nav
+      className="sticky top-16 z-20 -mt-4 rounded-xl border border-border bg-background/95 p-2 backdrop-blur"
+      aria-label="Jump to result type"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        {navItems.map(item => (
+          <a
+            key={item.label}
+            href={item.href}
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted/60"
+          >
+            <span>{item.label}</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {item.count.toLocaleString()}
+            </span>
+          </a>
+        ))}
+      </div>
+    </nav>
+  )
+}
+
 const SearchResultSection = ({
+  id,
   title,
   description,
   count,
+  visibleCount,
   children,
 }: {
+  id: string
   title: string
   description: string
   count: number
+  visibleCount: number
   children: ReactNode
 }) => {
+  const isTruncated = count > visibleCount
+
   return (
-    <section className="flex flex-col gap-6">
+    <section id={id} className="scroll-mt-28 flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h2>
           <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs font-medium text-muted-foreground">
             {count.toLocaleString()}
           </span>
+
+          {isTruncated ? (
+            <span className="text-xs text-muted-foreground">
+              Showing {visibleCount.toLocaleString()} of {count.toLocaleString()}
+            </span>
+          ) : null}
         </div>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>

@@ -2,7 +2,7 @@ export const searchPagePath = "/search"
 
 export const searchPageSortOptions = [
   { value: "default", label: "Best match" },
-  { value: "pageviews.desc", label: "Most viewed" },
+  { value: "likes.desc", label: "Most liked" },
   { value: "name.asc", label: "Name A-Z" },
   { value: "name.desc", label: "Name Z-A" },
   { value: "createdAt.desc", label: "Newest" },

@@ -165,7 +165,7 @@ const FeaturedPlatforms = async () => {
 
 const TrendingPorts = async () => {
   const ports = await findPorts({
-    orderBy: [{ pageviews: "desc" }, { score: "desc" }],
+    orderBy: [{ likes: { _count: "desc" } }, { score: "desc" }],
     take: 4,
   })
 

@@ -9,7 +9,7 @@ type FaviconProps = ComponentProps<"div"> & {
 }
 
 const Favicon = ({ className, src, title, plain, ...props }: FaviconProps) => {
-  if (!src) return null
+  if (!src?.trim()) return null
 
   return (
     <div
@@ -32,7 +32,7 @@ type FaviconImageProps = Omit<ComponentProps<typeof Image>, "src" | "alt"> & {
 }
 
 const FaviconImage = ({ className, src, title, ...props }: FaviconImageProps) => {
-  if (!src) return null
+  if (!src?.trim()) return null
 
   return (
     <Image

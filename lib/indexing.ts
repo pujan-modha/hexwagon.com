@@ -71,6 +71,11 @@ export const indexThemes = async ({
       pageviews: true,
       _count: {
         select: {
+          ports: {
+            where: {
+              status: PortStatus.Published,
+            },
+          },
           maintainers: true,
         },
       },
@@ -89,6 +94,7 @@ export const indexThemes = async ({
       faviconUrl: theme.faviconUrl,
       pageviews: theme.pageviews,
       isVerified: theme._count.maintainers > 0,
+      portsCount: theme._count.ports,
     })),
   )
 }
@@ -103,7 +109,28 @@ export const indexPlatforms = async ({
 }: {
   where?: Prisma.PlatformWhereInput
 }) => {
-  const platforms = await db.platform.findMany({ where })
+  const platforms = await db.platform.findMany({
+    where,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      websiteUrl: true,
+      faviconUrl: true,
+      pageviews: true,
+      isFeatured: true,
+      _count: {
+        select: {
+          ports: {
+            where: {
+              status: PortStatus.Published,
+            },
+          },
+        },
+      },
+    },
+  })
 
   if (!platforms.length) return
 
@@ -117,6 +144,7 @@ export const indexPlatforms = async ({
       faviconUrl: platform.faviconUrl,
       pageviews: platform.pageviews,
       isVerified: platform.isFeatured,
+      portsCount: platform._count.ports,
     })),
   )
 }

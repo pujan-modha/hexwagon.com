@@ -23,7 +23,7 @@ type PageProps = {
 const portSortOptions = [
   { value: "default", label: "Best match" },
   { value: "score.desc", label: "Top rated" },
-  { value: "pageviews.desc", label: "Most viewed" },
+  { value: "likes.desc", label: "Most liked" },
   { value: "updatedAt.desc", label: "Recently updated" },
   { value: "name.asc", label: "Name A-Z" },
 ]

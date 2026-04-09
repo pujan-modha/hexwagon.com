@@ -19,19 +19,23 @@ const getPortOrderBy = (sort: string): Prisma.PortFindManyArgs["orderBy"] => {
   if (sort && sort !== "default" && sort.includes(".")) {
     const [sortBy, sortOrder] = sort.split(".") as [string, Prisma.SortOrder]
 
-    if (
-      (sortOrder === "asc" || sortOrder === "desc") &&
-      [
-        "name",
-        "score",
-        "pageviews",
-        "updatedAt",
-        "createdAt",
-        "publishedAt",
-        "isFeatured",
-      ].includes(sortBy)
-    ) {
-      return { [sortBy]: sortOrder } as Prisma.PortFindManyArgs["orderBy"]
+    if (sortOrder === "asc" || sortOrder === "desc") {
+      if (sortBy === "likes") {
+        return { likes: { _count: sortOrder } }
+      }
+
+      if (
+        [
+          "name",
+          "score",
+          "updatedAt",
+          "createdAt",
+          "publishedAt",
+          "isFeatured",
+        ].includes(sortBy)
+      ) {
+        return { [sortBy]: sortOrder } as Prisma.PortFindManyArgs["orderBy"]
+      }
     }
   }
 

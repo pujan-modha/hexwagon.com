@@ -31,15 +31,18 @@ const getThemeOrderBy = (sort: string): Prisma.ThemeFindManyArgs["orderBy"] => {
   if (sort && sort !== "default" && sort.includes(".")) {
     const [sortBy, sortOrder] = sort.split(".") as [string, Prisma.SortOrder]
 
-    if (
-      (sortOrder === "asc" || sortOrder === "desc") &&
-      ["name", "pageviews", "createdAt", "updatedAt", "order"].includes(sortBy)
-    ) {
-      return { [sortBy]: sortOrder } as Prisma.ThemeFindManyArgs["orderBy"]
+    if (sortOrder === "asc" || sortOrder === "desc") {
+      if (sortBy === "likes") {
+        return { likes: { _count: sortOrder } }
+      }
+
+      if (["name", "createdAt", "updatedAt", "order"].includes(sortBy)) {
+        return { [sortBy]: sortOrder } as Prisma.ThemeFindManyArgs["orderBy"]
+      }
     }
   }
 
-  return [{ order: "asc" }, { name: "asc" }]
+  return [{ likes: { _count: "desc" } }, { order: "asc" }, { name: "asc" }]
 }
 
 const getPlatform = cache(async ({ params }: PageProps) => {
