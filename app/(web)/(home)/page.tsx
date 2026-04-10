@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CountBadge, CountBadgeSkeleton } from "~/app/(web)/(home)/count-badge"
@@ -14,12 +15,20 @@ import { HeroSearch } from "~/components/web/hero-search"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { WebGLShader } from "~/components/web/ui/web-gl-shader"
 import { config } from "~/config"
+import { metadataConfig } from "~/config/metadata"
 import { findFeaturedPlatforms } from "~/server/web/platforms/queries"
 import { findPorts } from "~/server/web/ports/queries"
 import { findFeaturedThemes } from "~/server/web/themes/queries"
 
 type PageProps = {
   searchParams: Promise<SearchParams>
+}
+
+export const metadata: Metadata = {
+  title: "Theme Ports Directory for VS Code, Ghostty, Neovim, Zed, and More | HexWagon",
+  description: config.site.description,
+  openGraph: { ...metadataConfig.openGraph, url: "/" },
+  alternates: { ...metadataConfig.alternates, canonical: "/" },
 }
 
 export default function Home(props: PageProps) {

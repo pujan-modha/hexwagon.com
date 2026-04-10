@@ -221,3 +221,46 @@ export const findTheme = async ({ ...args }: Prisma.ThemeFindFirstArgs = {}) => 
     select: themeOnePayload,
   })
 }
+
+export const findThemesByLetter = async ({
+  letter,
+  take,
+  skip = 0,
+}: {
+  letter: string
+  take: number
+  skip?: number
+}) => {
+  "use cache"
+
+  cacheTag("themes")
+  cacheLife("max")
+
+  const normalizedLetter = letter.toLowerCase()
+  const isSymbolsLetter = normalizedLetter === "&"
+
+  const where: Prisma.ThemeWhereInput = isSymbolsLetter
+    ? {
+        NOT: {
+          OR: "abcdefghijklmnopqrstuvwxyz".split("").map(character => ({
+            name: { startsWith: character, mode: "insensitive" },
+          })),
+        },
+      }
+    : {
+        name: { startsWith: normalizedLetter, mode: "insensitive" },
+      }
+
+  const [themes, totalCount] = await db.$transaction([
+    db.theme.findMany({
+      where,
+      orderBy: { name: "asc" },
+      take,
+      skip,
+      select: themeManyPayload,
+    }),
+    db.theme.count({ where }),
+  ])
+
+  return { themes, totalCount }
+}

@@ -53,7 +53,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
           "@type": "SearchAction",
           target: {
             "@type": "EntryPoint",
-            urlTemplate: `${url}/?q={search_term_string}`,
+            urlTemplate: `${url}/search?q={search_term_string}`,
           },
           "query-input": "required name=search_term_string",
         } as any,

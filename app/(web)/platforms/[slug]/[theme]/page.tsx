@@ -8,12 +8,11 @@ import { CatalogueSearchControls } from "~/components/web/catalogue-search-contr
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Section } from "~/components/web/ui/section"
 import { metadataConfig } from "~/config/metadata"
+import { buildRobots } from "~/lib/seo"
 import { findPlatform } from "~/server/web/platforms/queries"
-import {
-  findPortsByThemeAndPlatform,
-  findThemePlatformRouteParams,
-} from "~/server/web/ports/queries"
+import { findPortsByThemeAndPlatform } from "~/server/web/ports/queries"
 import { findTheme } from "~/server/web/themes/queries"
+import { findThemePlatformRouteParams } from "~/server/web/ports/queries"
 
 type PageProps = {
   params: Promise<{ slug: string; theme: string }>
@@ -34,14 +33,14 @@ export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
     findPlatform({ where: { slug } }),
     findTheme({ where: { slug: theme } }),
   ])
-
   const url = `/themes/${theme}/${slug}`
 
   return {
-    title: `${themeEntity?.name ?? theme} ports for ${platform?.name ?? slug}`,
-    description: `Browse ${themeEntity?.name ?? theme} theme ports for ${platform?.name ?? slug}.`,
+    title: `${themeEntity?.name ?? theme} for ${platform?.name ?? slug}`,
+    description: `Duplicate access path for ${themeEntity?.name ?? theme} on ${platform?.name ?? slug}.`,
     alternates: { ...metadataConfig.alternates, canonical: url },
     openGraph: { ...metadataConfig.openGraph, url },
+    robots: buildRobots({ index: false, follow: true }),
   }
 }
 
@@ -70,11 +69,7 @@ export default async function PlatformThemePage(props: PageProps) {
     notFound()
   }
 
-  // URL validation: ensure theme+platform combo exists
-  const ports = await findPortsByThemeAndPlatform(theme, slug, {
-    q,
-    sort,
-  })
+  const ports = await findPortsByThemeAndPlatform(theme, slug, { q, sort })
 
   return (
     <>

@@ -60,6 +60,11 @@ export function PlatformForm({
     defaultValues: {
       name: platform?.name ?? "",
       slug: platform?.slug ?? "",
+      seoTitle: platform?.seoTitle ?? "",
+      seoDescription: platform?.seoDescription ?? "",
+      seoIntro: platform?.seoIntro ?? "",
+      seoFaqs: platform?.seoFaqs ?? "",
+      searchAliases: platform?.searchAliases ?? "",
       description: platform?.description ?? "",
       websiteUrl: platform?.websiteUrl ?? "",
       faviconUrl: platform?.faviconUrl ?? "",

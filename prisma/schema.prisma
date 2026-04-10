@@ -284,6 +284,12 @@ model Theme {
   name          String   @db.Citext
   slug          String   @unique
   description   String?
+  seoTitle      String?
+  seoDescription String? @db.Text
+  seoIntro      String?  @db.Text
+  seoFaqs       String?  @db.Text
+  searchAliases String?  @db.Text
+  seoPlatformOverrides String? @db.Text
   websiteUrl    String?
   repositoryUrl String?
   faviconUrl    String?
@@ -320,6 +326,11 @@ model Platform {
   name                String   @db.Citext
   slug                String   @unique
   description         String?  @db.Text
+  seoTitle            String?
+  seoDescription      String?  @db.Text
+  seoIntro            String?  @db.Text
+  seoFaqs             String?  @db.Text
+  searchAliases       String?  @db.Text
   websiteUrl          String?
   faviconUrl          String?
   installInstructions String?  @db.Text
@@ -346,6 +357,10 @@ model Port {
   slug          String     @unique
   name          String?    @db.Citext
   description   String?
+  seoTitle      String?
+  seoDescription String?   @db.Text
+  seoFaqs       String?    @db.Text
+  searchAliases String?    @db.Text
   content       String?    @db.Text
   repositoryUrl String?
   screenshotUrl String?

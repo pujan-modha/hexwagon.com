@@ -22,9 +22,15 @@ import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { EntitySidebarCard } from "~/components/web/ui/entity-sidebar-card"
 import { Section } from "~/components/web/ui/section"
 import { VerifiedBadge } from "~/components/web/verified-badge"
+import { config } from "~/config"
 import { metadataConfig } from "~/config/metadata"
 import { auth } from "~/lib/auth"
-import { findPlatforms, searchPlatforms } from "~/server/web/platforms/queries"
+import { buildKeywords, buildRobots, hasSeoQueryState, parseSearchAliases } from "~/lib/seo"
+import {
+  findFeaturedPlatforms,
+  findPlatforms,
+  searchPlatforms,
+} from "~/server/web/platforms/queries"
 import { findTheme } from "~/server/web/themes/queries"
 import { findThemeSlugs } from "~/server/web/themes/queries"
 
@@ -69,13 +75,33 @@ export const generateStaticParams = async () => {
 
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
   const theme = await getTheme(props)
+  const search = await props.searchParams
   const url = `/themes/${theme.slug}`
 
   return {
-    title: theme.name,
-    description: theme.description ?? `Browse ${theme.name} theme ports across all platforms.`,
+    title:
+      theme.seoTitle ??
+      `${theme.name} Theme Ports Across VS Code, Ghostty, and More | ${config.site.name}`,
+    description:
+      theme.seoDescription ??
+      theme.description ??
+      `Browse ${theme.name} theme ports across all platforms.`,
+    keywords: buildKeywords(parseSearchAliases(theme.searchAliases), [
+      theme.name,
+      `${theme.name} theme`,
+      `${theme.name} ports`,
+    ]),
+    robots: buildRobots({ index: !hasSeoQueryState(search), follow: true }),
     alternates: { ...metadataConfig.alternates, canonical: url },
-    openGraph: { ...metadataConfig.openGraph, url },
+    openGraph: {
+      ...metadataConfig.openGraph,
+      url,
+      title: theme.seoTitle ?? theme.name,
+      description:
+        theme.seoDescription ??
+        theme.description ??
+        `Browse ${theme.name} theme ports across all platforms.`,
+    },
   }
 }
 
@@ -116,6 +142,20 @@ export default async function ThemePage(props: PageProps) {
         where: platformsWhere,
         orderBy: getPlatformOrderBy(sort),
       })
+  const featuredPlatformSuggestions = q
+    ? []
+    : await findFeaturedPlatforms({
+        where: {
+          id: {
+            notIn: platforms.map(platformItem => platformItem.id),
+          },
+        },
+        take: 6,
+      })
+  const linkedPlatforms = [...platforms, ...featuredPlatformSuggestions].filter(
+    (platformItem, index, allPlatforms) =>
+      allPlatforms.findIndex(candidate => candidate.id === platformItem.id) === index,
+  )
 
   const paletteCount = new Set(theme.colors.map(color => color.paletteName || "Default")).size
   const isMaintainer =
@@ -123,15 +163,20 @@ export default async function ThemePage(props: PageProps) {
     theme.maintainers.some(maintainer => maintainer.userId === session?.user.id)
 
   const tabs = [
-    {
-      value: "platforms",
-      label: `Platforms (${theme._count.ports})`,
-      content: (
-        <Suspense fallback={<div>Loading...</div>}>
-          <ThemePlatformsTab platforms={platforms} themeSlug={theme.slug} query={q} sort={sort} />
-        </Suspense>
-      ),
-    },
+        {
+          value: "platforms",
+          label: `Platforms (${theme._count.ports})`,
+          content: (
+            <Suspense fallback={<div>Loading...</div>}>
+              <ThemePlatformsTab
+                platforms={linkedPlatforms}
+                themeSlug={theme.slug}
+                query={q}
+                sort={sort}
+              />
+            </Suspense>
+          ),
+        },
     {
       value: "colors",
       label: `Color Palettes (${paletteCount})`,

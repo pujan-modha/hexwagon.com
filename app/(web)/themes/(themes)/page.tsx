@@ -9,18 +9,21 @@ import { CatalogueSearchControls } from "~/components/web/catalogue-search-contr
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { metadataConfig } from "~/config/metadata"
+import { buildRobots, hasSeoQueryState } from "~/lib/seo"
 import { searchThemes } from "~/server/web/themes/queries"
 
 type PageProps = {
   searchParams: Promise<SearchParams>
 }
 
-export const metadata: Metadata = {
-  title: "Theme Ports",
-  description: "Browse all color themes and their ports across platforms.",
+export const generateMetadata = async ({ searchParams }: PageProps): Promise<Metadata> => ({
+  title: "Theme Directory",
+  description:
+    "Browse popular theme families like Dracula, Poimandres, Catppuccin, Tokyo Night, and more across platforms.",
   openGraph: { ...metadataConfig.openGraph, url: "/themes" },
   alternates: { ...metadataConfig.alternates, canonical: "/themes" },
-}
+  robots: buildRobots({ index: !hasSeoQueryState(await searchParams), follow: true }),
+})
 
 const THEMES_PER_PAGE = 35
 
@@ -72,7 +75,6 @@ export default async function ThemesPage(props: PageProps) {
         placeholder="Search themes..."
         sortOptions={themeSortOptions}
       />
-
       {/* <CatalogueListHeader title="All Themes" count={totalCount} /> */}
 
       <Suspense

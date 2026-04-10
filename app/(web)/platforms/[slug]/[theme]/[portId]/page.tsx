@@ -14,8 +14,10 @@ import { CommentThread } from "~/components/web/comments/comment-thread"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { EntitySidebarCard } from "~/components/web/ui/entity-sidebar-card"
 import { Section } from "~/components/web/ui/section"
+import { config } from "~/config"
 import { metadataConfig } from "~/config/metadata"
 import { canonicalPortHref } from "~/lib/catalogue"
+import { buildKeywords, buildRobots, parseSearchAliases } from "~/lib/seo"
 import { findCommentsByPort } from "~/server/web/comments/queries"
 import { findPlatform } from "~/server/web/platforms/queries"
 import { findPort } from "~/server/web/ports/queries"
@@ -46,13 +48,20 @@ export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
   const url = canonicalPortHref(port.theme.slug, port.platform.slug, port.id)
 
   return {
-    title: port.name ?? `${port.theme.name} for ${port.platform.name}`,
-    description: port.description ?? undefined,
+    title:
+      port.seoTitle ??
+      port.name ??
+      `${port.theme.name} for ${port.platform.name} | ${config.site.name}`,
+    description: port.seoDescription ?? port.description ?? undefined,
+    keywords: buildKeywords(parseSearchAliases(port.searchAliases), [
+      `${port.theme.name} for ${port.platform.name}`,
+    ]),
     alternates: {
       ...metadataConfig.alternates,
       canonical: url,
     },
     openGraph: { ...metadataConfig.openGraph, url },
+    robots: buildRobots({ index: false, follow: true }),
   }
 }
 

@@ -186,3 +186,46 @@ export const findFeaturedPlatforms = async ({
     ...args,
   })
 }
+
+export const findPlatformsByLetter = async ({
+  letter,
+  take,
+  skip = 0,
+}: {
+  letter: string
+  take: number
+  skip?: number
+}) => {
+  "use cache"
+
+  cacheTag("platforms")
+  cacheLife("max")
+
+  const normalizedLetter = letter.toLowerCase()
+  const isSymbolsLetter = normalizedLetter === "&"
+
+  const where: Prisma.PlatformWhereInput = isSymbolsLetter
+    ? {
+        NOT: {
+          OR: "abcdefghijklmnopqrstuvwxyz".split("").map(character => ({
+            name: { startsWith: character, mode: "insensitive" },
+          })),
+        },
+      }
+    : {
+        name: { startsWith: normalizedLetter, mode: "insensitive" },
+      }
+
+  const [platforms, totalCount] = await db.$transaction([
+    db.platform.findMany({
+      where,
+      orderBy: { name: "asc" },
+      take,
+      skip,
+      select: platformManyPayload,
+    }),
+    db.platform.count({ where }),
+  ])
+
+  return { platforms, totalCount }
+}

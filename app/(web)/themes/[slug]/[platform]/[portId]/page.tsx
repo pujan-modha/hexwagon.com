@@ -14,7 +14,16 @@ import { CommentThread } from "~/components/web/comments/comment-thread"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { EntitySidebarCard } from "~/components/web/ui/entity-sidebar-card"
 import { Section } from "~/components/web/ui/section"
+import { config } from "~/config"
 import { metadataConfig } from "~/config/metadata"
+import {
+  buildCombinationFaqs,
+  buildFaqJsonLd,
+  buildKeywords,
+  mergeFaqs,
+  parseSeoFaqs,
+  parseSearchAliases,
+} from "~/lib/seo"
 import { findCommentsByPort } from "~/server/web/comments/queries"
 import { findPlatform } from "~/server/web/platforms/queries"
 import { findPort } from "~/server/web/ports/queries"
@@ -45,10 +54,22 @@ export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
   const url = `/themes/${port.theme.slug}/${port.platform.slug}/${port.id}`
 
   return {
-    title: port.name ?? `${port.theme.name} for ${port.platform.name}`,
-    description: port.description ?? undefined,
+    title:
+      port.seoTitle ??
+      port.name ??
+      `${port.theme.name} for ${port.platform.name} | ${config.site.name}`,
+    description: port.seoDescription ?? port.description ?? undefined,
+    keywords: buildKeywords(parseSearchAliases(port.searchAliases), [
+      `${port.theme.name} for ${port.platform.name}`,
+      `${port.theme.name} ${port.platform.name} theme`,
+    ]),
     alternates: { ...metadataConfig.alternates, canonical: url },
-    openGraph: { ...metadataConfig.openGraph, url },
+    openGraph: {
+      ...metadataConfig.openGraph,
+      url,
+      title: port.seoTitle ?? port.name ?? `${port.theme.name} for ${port.platform.name}`,
+      description: port.seoDescription ?? port.description ?? undefined,
+    },
   }
 }
 
@@ -72,6 +93,27 @@ export default async function ThemePortPage(props: PageProps) {
 
   const comments = await findCommentsByPort(port.id)
   const jsonLd: ImageObject[] = []
+  const faqs = mergeFaqs(
+    parseSeoFaqs(port.seoFaqs),
+    buildCombinationFaqs({
+      themeName: port.theme.name,
+      platformName: port.platform.name,
+      hasPorts: true,
+      portCount: 1,
+    }),
+  )
+  const softwareJsonLd = {
+    "@context": "https://schema.org",
+    "@type": port.repositoryUrl ? "SoftwareSourceCode" : "CreativeWork",
+    name: port.name ?? `${port.theme.name} for ${port.platform.name}`,
+    description: port.seoDescription ?? port.description ?? undefined,
+    url: `${config.site.url}/themes/${slug}/${platform}/${port.id}`,
+    codeRepository: port.repositoryUrl ?? undefined,
+    image: port.screenshotUrl ?? port.faviconUrl ?? undefined,
+    keywords: buildKeywords(parseSearchAliases(port.searchAliases), [
+      `${port.theme.name} for ${port.platform.name}`,
+    ]),
+  }
 
   if (port.screenshotUrl) {
     jsonLd.push({
@@ -199,6 +241,14 @@ export default async function ThemePortPage(props: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildFaqJsonLd(faqs)) }}
       />
     </>
   )

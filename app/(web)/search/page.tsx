@@ -10,6 +10,7 @@ import { EntitySearchForm } from "~/components/web/entity-search-form"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { metadataConfig } from "~/config/metadata"
+import { buildRobots } from "~/lib/seo"
 import { searchPageSortOptions } from "~/lib/search-page"
 import { findPlatforms, searchPlatforms } from "~/server/web/platforms/queries"
 import { searchPorts } from "~/server/web/ports/queries"
@@ -20,10 +21,11 @@ type PageProps = {
 }
 
 export const metadata: Metadata = {
-  title: "Search",
+  title: "Search Themes and Platforms",
   description: "Search themes, platforms, and ports from one place.",
   openGraph: { ...metadataConfig.openGraph, url: "/search" },
   alternates: { ...metadataConfig.alternates, canonical: "/search" },
+  robots: buildRobots({ index: false, follow: true }),
 }
 
 const THEME_RESULTS_LIMIT = 6
@@ -75,8 +77,9 @@ const buildPortTextQuery = ({
 
 export default async function SearchPage(props: PageProps) {
   const search = await props.searchParams
-  const themeQuery = normalize(readParam(search.themeQuery))
-  const platformQuery = normalize(readParam(search.platformQuery))
+  const genericQuery = normalize(readParam(search.q))
+  const themeQuery = normalize(readParam(search.themeQuery)) || genericQuery
+  const platformQuery = normalize(readParam(search.platformQuery)) || genericQuery
   const selectedThemeSlug = normalize(readParam(search.theme))
   const selectedPlatformSlug = normalize(readParam(search.platform))
   const requestedSort = normalize(readParam(search.sort)) || "default"
@@ -100,7 +103,7 @@ export default async function SearchPage(props: PageProps) {
   ])
 
   const hasCriteria = Boolean(
-    themeQuery || platformQuery || selectedTheme?.slug || selectedPlatform?.slug,
+    genericQuery || themeQuery || platformQuery || selectedTheme?.slug || selectedPlatform?.slug,
   )
 
   const themeWhere = selectedPlatform?.slug
@@ -126,8 +129,8 @@ export default async function SearchPage(props: PageProps) {
     : undefined
 
   const portTextQuery = buildPortTextQuery({
-    themeQuery,
-    platformQuery,
+    themeQuery: genericQuery || themeQuery,
+    platformQuery: genericQuery || platformQuery,
     selectedThemeName: selectedTheme?.name,
     selectedPlatformName: selectedPlatform?.name,
   })
@@ -206,7 +209,7 @@ export default async function SearchPage(props: PageProps) {
       <EntitySearchForm
         variant="page"
         initialThemeQuery={themeQuery}
-        initialPlatformQuery={platformQuery}
+        initialPlatformQuery={platformQuery === themeQuery && genericQuery ? "" : platformQuery}
         initialThemeSelection={
           selectedTheme
             ? {

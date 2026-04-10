@@ -91,6 +91,10 @@ export function PortForm({
     defaultValues: {
       name: port?.name ?? "",
       slug: port?.slug ?? "",
+      seoTitle: port?.seoTitle ?? "",
+      seoDescription: port?.seoDescription ?? "",
+      seoFaqs: port?.seoFaqs ?? "",
+      searchAliases: port?.searchAliases ?? "",
       description: port?.description ?? "",
       content: port?.content ?? "",
       repositoryUrl: port?.repositoryUrl ?? "",

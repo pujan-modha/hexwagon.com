@@ -6,6 +6,7 @@ import { ExternalLink } from "~/components/web/external-link"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { config } from "~/config"
 import { metadataConfig } from "~/config/metadata"
+import { buildRobots } from "~/lib/seo"
 
 type PageProps = {
   searchParams: Promise<SearchParams>
@@ -14,8 +15,9 @@ type PageProps = {
 export const metadata: Metadata = {
   title: "Check your inbox",
   description: `Check your inbox to sign in to ${config.site.name}.`,
-  openGraph: { ...metadataConfig.openGraph, url: "/check-inbox" },
-  alternates: { ...metadataConfig.alternates, canonical: "/check-inbox" },
+  openGraph: { ...metadataConfig.openGraph, url: "/auth/verify" },
+  alternates: { ...metadataConfig.alternates, canonical: "/auth/verify" },
+  robots: buildRobots({ index: false, follow: true }),
 }
 
 export default async function VerifyPage({ searchParams }: PageProps) {

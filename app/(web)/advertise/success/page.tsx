@@ -12,6 +12,7 @@ import { Note } from "~/components/common/note"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { Section } from "~/components/web/ui/section"
 import { metadataConfig } from "~/config/metadata"
+import { buildRobots } from "~/lib/seo"
 import { getAdPackageCheckoutDraft } from "~/lib/ad-package-checkout-draft"
 import { verifyAdPackageDraftToken } from "~/lib/ad-package-draft-token"
 import { auth } from "~/lib/auth"
@@ -122,12 +123,13 @@ const getMetadata = async () => {
 
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
   return {
-    ...getMetadata(),
+    ...(await getMetadata()),
     alternates: {
       ...metadataConfig.alternates,
       canonical: "/advertise/success",
     },
     openGraph: { ...metadataConfig.openGraph, url: "/advertise/success" },
+    robots: buildRobots({ index: false, follow: true }),
   }
 }
 

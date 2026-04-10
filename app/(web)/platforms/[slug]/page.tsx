@@ -17,10 +17,12 @@ import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { EntitySidebarCard } from "~/components/web/ui/entity-sidebar-card"
 import { Section } from "~/components/web/ui/section"
+import { config } from "~/config"
 import { metadataConfig } from "~/config/metadata"
+import { buildKeywords, buildRobots, hasSeoQueryState, parseSearchAliases } from "~/lib/seo"
 import { findPlatform } from "~/server/web/platforms/queries"
 import { findPlatformSlugs } from "~/server/web/platforms/queries"
-import { findThemes, searchThemes } from "~/server/web/themes/queries"
+import { findFeaturedThemes, findThemes, searchThemes } from "~/server/web/themes/queries"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -63,13 +65,28 @@ export const generateStaticParams = async () => {
 
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
   const platform = await getPlatform(props)
+  const search = await props.searchParams
   const url = `/platforms/${platform.slug}`
 
   return {
-    title: platform.name,
-    description: platform.description ?? `Browse ${platform.name} theme ports.`,
+    title:
+      platform.seoTitle ?? `Best ${platform.name} Themes and Theme Ports | ${config.site.name}`,
+    description:
+      platform.seoDescription ?? platform.description ?? `Browse ${platform.name} theme ports.`,
+    keywords: buildKeywords(parseSearchAliases(platform.searchAliases), [
+      platform.name,
+      `${platform.name} themes`,
+      `best ${platform.name} themes`,
+    ]),
+    robots: buildRobots({ index: !hasSeoQueryState(search), follow: true }),
     alternates: { ...metadataConfig.alternates, canonical: url },
-    openGraph: { ...metadataConfig.openGraph, url },
+    openGraph: {
+      ...metadataConfig.openGraph,
+      url,
+      title: platform.seoTitle ?? platform.name,
+      description:
+        platform.seoDescription ?? platform.description ?? `Browse ${platform.name} theme ports.`,
+    },
   }
 }
 
@@ -109,17 +126,36 @@ export default async function PlatformPage(props: PageProps) {
         where: themesWhere,
         orderBy: getThemeOrderBy(sort),
       })
+  const featuredThemeSuggestions = q
+    ? []
+    : await findFeaturedThemes({
+        where: {
+          id: {
+            notIn: themes.map(themeItem => themeItem.id),
+          },
+        },
+        take: 6,
+      })
+  const linkedThemes = [...themes, ...featuredThemeSuggestions].filter(
+    (themeItem, index, allThemes) =>
+      allThemes.findIndex(candidate => candidate.id === themeItem.id) === index,
+  )
 
   const tabs = [
-    {
-      value: "themes",
-      label: `Themes (${platform._count.ports})`,
-      content: (
-        <Suspense fallback={<div>Loading...</div>}>
-          <PlatformThemesTab themes={themes} platformSlug={platform.slug} query={q} sort={sort} />
-        </Suspense>
-      ),
-    },
+        {
+          value: "themes",
+          label: `Themes (${platform._count.ports})`,
+          content: (
+            <Suspense fallback={<div>Loading...</div>}>
+              <PlatformThemesTab
+                themes={linkedThemes}
+                platformSlug={platform.slug}
+                query={q}
+                sort={sort}
+              />
+            </Suspense>
+          ),
+        },
     {
       value: "instructions",
       label: "Install Instructions",

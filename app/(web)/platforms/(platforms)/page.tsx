@@ -9,18 +9,21 @@ import { CatalogueSearchControls } from "~/components/web/catalogue-search-contr
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { metadataConfig } from "~/config/metadata"
+import { buildRobots, hasSeoQueryState } from "~/lib/seo"
 import { searchPlatforms } from "~/server/web/platforms/queries"
 
 type PageProps = {
   searchParams: Promise<SearchParams>
 }
 
-export const metadata: Metadata = {
+export const generateMetadata = async ({ searchParams }: PageProps): Promise<Metadata> => ({
   title: "Platforms",
-  description: "Browse all platforms and their available theme ports.",
+  description:
+    "Browse coding platforms and applications like VS Code, Ghostty, Neovim, and Zed with their available theme ports.",
   openGraph: { ...metadataConfig.openGraph, url: "/platforms" },
   alternates: { ...metadataConfig.alternates, canonical: "/platforms" },
-}
+  robots: buildRobots({ index: !hasSeoQueryState(await searchParams), follow: true }),
+})
 
 const PLATFORMS_PER_PAGE = 35
 
@@ -72,7 +75,6 @@ export default async function PlatformsPage(props: PageProps) {
         placeholder="Search platforms..."
         sortOptions={platformSortOptions}
       />
-
       {/* <CatalogueListHeader title="All Platforms" count={totalCount} /> */}
 
       <Suspense

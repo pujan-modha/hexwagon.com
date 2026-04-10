@@ -57,6 +57,12 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
     defaultValues: {
       name: theme?.name ?? "",
       slug: theme?.slug ?? "",
+      seoTitle: theme?.seoTitle ?? "",
+      seoDescription: theme?.seoDescription ?? "",
+      seoIntro: theme?.seoIntro ?? "",
+      seoFaqs: theme?.seoFaqs ?? "",
+      searchAliases: theme?.searchAliases ?? "",
+      seoPlatformOverrides: theme?.seoPlatformOverrides ?? "",
       websiteUrl: theme?.websiteUrl ?? "",
       repositoryUrl: theme?.repositoryUrl ?? "",
       description: theme?.description ?? "",
