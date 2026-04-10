@@ -53,7 +53,6 @@ export default async function PlatformsPage(props: PageProps) {
       platform: [],
       tag: [],
     },
-    q ? undefined : { isFeatured: true },
   )
 
   return (
