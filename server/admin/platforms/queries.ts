@@ -5,6 +5,28 @@ import { platformManyPayload } from "~/server/web/platforms/payloads"
 import { db } from "~/services/db"
 import type { PlatformsTableSchema } from "./schema"
 
+const adminPlatformOnePayload = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  seoTitle: true,
+  seoDescription: true,
+  seoIntro: true,
+  seoFaqs: true,
+  searchAliases: true,
+  websiteUrl: true,
+  faviconUrl: true,
+  installInstructions: true,
+  themeCreationDocs: true,
+  license: true,
+  isFeatured: true,
+  order: true,
+  pageviews: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.PlatformSelect
+
 export const findPlatforms = async (search: PlatformsTableSchema) => {
   const { name, page, perPage, sort, from, to, operator } = search
 
@@ -60,5 +82,6 @@ export const findPlatformList = async () => {
 export const findPlatformBySlug = async (slug: string) => {
   return db.platform.findUnique({
     where: { slug },
+    select: adminPlatformOnePayload,
   })
 }

@@ -6,7 +6,6 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import type { ComponentProps } from "react"
 import { useEffect, useState } from "react"
-import type { UseFormReturn } from "react-hook-form"
 import { useFieldArray, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { useServerAction } from "zsa-react"
@@ -35,6 +34,7 @@ import { siteConfig } from "~/config/site"
 import { useComputedField } from "~/hooks/use-computed-field"
 import { upsertTheme } from "~/server/admin/themes/actions"
 import type { findThemeBySlug } from "~/server/admin/themes/queries"
+import type { ThemeSchema } from "~/server/admin/themes/schema"
 import { themeSchema } from "~/server/admin/themes/schema"
 import { cx } from "~/utils/cva"
 import { PaletteGroupEditor } from "./palette-group-editor"
@@ -48,9 +48,146 @@ type ThemeFormProps = ComponentProps<"form"> & {
   theme?: Awaited<ReturnType<typeof findThemeBySlug>>
 }
 
+type PaletteColorInput = NonNullable<ThemeSchema["palettes"]>[number]["colors"][number]
+type PaletteInput = NonNullable<ThemeSchema["palettes"]>[number]
+
+const normalizePaletteName = (value: unknown, fallback: string) => {
+  if (typeof value !== "string") return fallback
+
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : fallback
+}
+
+const normalizePaletteColor = (
+  entry: unknown,
+  fallbackLabel: string,
+  order: number,
+): PaletteColorInput | null => {
+  if (!entry || typeof entry !== "object") return null
+
+  const labelValue =
+    "label" in entry && typeof entry.label === "string"
+      ? entry.label
+      : "name" in entry && typeof entry.name === "string"
+        ? entry.name
+        : fallbackLabel
+  const hexValue =
+    "hex" in entry && typeof entry.hex === "string"
+      ? entry.hex
+      : "value" in entry && typeof entry.value === "string"
+        ? entry.value
+        : "color" in entry && typeof entry.color === "string"
+          ? entry.color
+          : null
+
+  if (!hexValue) return null
+
+  const normalizedHex = hexValue.startsWith("#") ? hexValue.toUpperCase() : `#${hexValue.toUpperCase()}`
+
+  if (!/^#[0-9A-F]{6}$/.test(normalizedHex)) return null
+
+  return {
+    label: labelValue.trim() || fallbackLabel,
+    hex: normalizedHex,
+    order,
+  }
+}
+
+const normalizePaletteFromObject = (name: string, value: unknown): PaletteInput | null => {
+  if (!value || typeof value !== "object") return null
+
+  const colors = Object.entries(value)
+    .map(([label, hex], index) => normalizePaletteColor({ label, hex }, label, index))
+    .filter((color): color is PaletteColorInput => Boolean(color))
+
+  if (colors.length === 0) return null
+
+  return {
+    name: normalizePaletteName(name, "Imported Palette"),
+    colors,
+  }
+}
+
+const normalizePalette = (entry: unknown, index: number): PaletteInput | null => {
+  if (!entry || typeof entry !== "object") return null
+
+  const paletteEntry = entry as Record<string, unknown>
+  const paletteName = normalizePaletteName(
+    paletteEntry.name ?? paletteEntry.paletteName,
+    `Imported Palette ${index + 1}`,
+  )
+
+  if (Array.isArray(paletteEntry.colors)) {
+    const colors = paletteEntry.colors
+      .map((colorEntry, colorIndex) =>
+        normalizePaletteColor(colorEntry, `Color ${colorIndex + 1}`, colorIndex),
+      )
+      .filter((color): color is PaletteColorInput => Boolean(color))
+
+    return colors.length > 0 ? { name: paletteName, colors } : null
+  }
+
+  if (paletteEntry.colors && typeof paletteEntry.colors === "object") {
+    return normalizePaletteFromObject(paletteName, paletteEntry.colors)
+  }
+
+  return normalizePaletteFromObject(paletteName, paletteEntry)
+}
+
+const parsePaletteImport = (value: string): PaletteInput[] => {
+  const parsed = JSON.parse(value) as unknown
+
+  const paletteSource =
+    parsed && typeof parsed === "object" && !Array.isArray(parsed) && "palettes" in parsed
+      ? (parsed as { palettes?: unknown }).palettes
+      : parsed
+
+  if (Array.isArray(paletteSource)) {
+    const palettes = paletteSource
+      .map((entry, index) => normalizePalette(entry, index))
+      .filter((palette): palette is PaletteInput => Boolean(palette))
+
+    if (palettes.length > 0) return palettes
+  }
+
+  if (paletteSource && typeof paletteSource === "object") {
+    const palettes = Object.entries(paletteSource)
+      .map(([name, paletteValue], index) => {
+        if (
+          paletteValue &&
+          typeof paletteValue === "object" &&
+          !Array.isArray(paletteValue) &&
+          ("colors" in paletteValue || "name" in paletteValue || "paletteName" in paletteValue)
+        ) {
+          return normalizePalette({ name, ...(paletteValue as Record<string, unknown>) }, index)
+        }
+
+        return normalizePaletteFromObject(name, paletteValue)
+      })
+      .filter((palette): palette is PaletteInput => Boolean(palette))
+
+    if (palettes.length > 0) return palettes
+  }
+
+  throw new Error(
+    "Unsupported JSON format. Use either { palettes: [...] }, an array of palette objects, or an object keyed by palette name.",
+  )
+}
+
+const clonePalette = (palette: PaletteInput, index: number): PaletteInput => ({
+  name: `${palette.name} Copy${index > 0 ? ` ${index + 1}` : ""}`,
+  colors: palette.colors.map((color, colorIndex) => ({
+    label: color.label,
+    hex: color.hex,
+    order: colorIndex,
+  })),
+})
+
 export function ThemeForm({ children, className, title, theme, ...props }: ThemeFormProps) {
   const router = useRouter()
   const [isPreviewing, setIsPreviewing] = useState(false)
+  const [isImportingPalettes, setIsImportingPalettes] = useState(false)
+  const [paletteImportJson, setPaletteImportJson] = useState("")
 
   const form = useForm({
     resolver: zodResolver(themeSchema),
@@ -99,7 +236,9 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
   const {
     fields: paletteFields,
     append: appendPalette,
+    insert: insertPalette,
     remove: removePalette,
+    replace: replacePalettes,
   } = useFieldArray({
     control: form.control,
     name: "palettes",
@@ -162,6 +301,40 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
       toast.error("Please fill in all required fields. Check console for details.")
     },
   )
+
+  const handleDuplicatePalette = (paletteIndex: number) => {
+    const palette = form.getValues(`palettes.${paletteIndex}`)
+
+    if (!palette) return
+
+    insertPalette(paletteIndex + 1, clonePalette(palette, 0))
+    toast.success(`Duplicated ${palette.name}`)
+  }
+
+  const importPalettes = (mode: "append" | "replace") => {
+    try {
+      const importedPalettes = parsePaletteImport(paletteImportJson)
+
+      if (importedPalettes.length === 0) {
+        toast.error("No valid palettes found in that JSON.")
+        return
+      }
+
+      if (mode === "replace") {
+        replacePalettes(importedPalettes)
+      } else {
+        appendPalette(importedPalettes)
+      }
+
+      setPaletteImportJson("")
+      setIsImportingPalettes(false)
+      toast.success(
+        `${mode === "replace" ? "Replaced" : "Imported"} ${importedPalettes.length} palette${importedPalettes.length === 1 ? "" : "s"}.`,
+      )
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Invalid palette JSON.")
+    }
+  }
 
   return (
     <Form {...form}>
@@ -425,22 +598,72 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
           <div className="flex flex-col gap-6 border-t pt-6 mt-6 col-span-full">
             <Stack className="justify-between">
               <H3>Color Palettes</H3>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() =>
-                  appendPalette({
-                    name: `Palette ${paletteFields.length + 1}`,
-                    colors: [],
-                  })
-                }
-                prefix={<Icon name="lucide/plus" />}
-                className="-my-0.5"
-              >
-                Add palette
-              </Button>
+              <Stack size="sm" className="-my-0.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setIsImportingPalettes(prev => !prev)}
+                  prefix={<Icon name={isImportingPalettes ? "lucide/x" : "lucide/sparkles"} />}
+                >
+                  {isImportingPalettes ? "Close import" : "Import JSON"}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() =>
+                    appendPalette({
+                      name: `Palette ${paletteFields.length + 1}`,
+                      colors: [],
+                    })
+                  }
+                  prefix={<Icon name="lucide/plus" />}
+                >
+                  Add palette
+                </Button>
+              </Stack>
             </Stack>
+
+            {isImportingPalettes ? (
+              <div className="rounded-lg border bg-muted/20 p-4">
+                <Stack direction="column" size="sm" className="items-stretch">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-foreground">Paste palette JSON</p>
+                    <p className="text-xs text-secondary-foreground">
+                      Supports `{`}"palettes": [...]{`}``, a raw array of palettes, or an object
+                      keyed by palette name.
+                    </p>
+                  </div>
+
+                  <TextArea
+                    value={paletteImportJson}
+                    onChange={event => setPaletteImportJson(event.target.value)}
+                    placeholder={`{\n  "palettes": [\n    {\n      "name": "Mocha",\n      "colors": [\n        { "label": "Base", "hex": "#1E1E2E" }\n      ]\n    }\n  ]\n}`}
+                    className="min-h-56 font-mono text-xs"
+                  />
+
+                  <Stack size="sm" className="justify-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => importPalettes("append")}
+                    >
+                      Append palettes
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => importPalettes("replace")}
+                    >
+                      Replace all palettes
+                    </Button>
+                  </Stack>
+                </Stack>
+              </div>
+            ) : null}
 
             {paletteFields.length === 0 && (
               <p className="text-secondary-foreground text-[0.8125rem]">
@@ -455,6 +678,7 @@ export function ThemeForm({ children, className, title, theme, ...props }: Theme
                   form={form}
                   paletteIndex={pIndex}
                   removePalette={() => removePalette(pIndex)}
+                  duplicatePalette={() => handleDuplicatePalette(pIndex)}
                 />
               ))}
             </div>

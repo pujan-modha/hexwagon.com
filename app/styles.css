@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 @plugin "@tailwindcss/typography";
+@import "github-markdown-css/github-markdown-dark.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -157,4 +158,47 @@
   & [id]:hover > a[tabindex="-1"]:hover {
     @apply opacity-100;
   }
+}
+
+@utility github-markdown-body {
+  @apply max-w-none;
+
+  background-color: transparent;
+}
+
+.github-markdown-body > :first-child {
+  margin-top: 0 !important;
+}
+
+.github-markdown-body > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.github-markdown-body table th,
+.github-markdown-body table td {
+  border-color: #3d444d !important;
+}
+
+.github-markdown-body table tr {
+  background-color: #0d1117 !important;
+  border-top-color: #3d444db3 !important;
+}
+
+.github-markdown-body table tr:nth-child(2n) {
+  background-color: #151b23 !important;
+}
+
+.github-markdown-body table img {
+  display: inline-block !important;
+  vertical-align: middle;
+  margin: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px;
+  min-height: 16px;
+  object-fit: contain;
+}
+
+.github-markdown-body .markdown-alert-title {
+  text-transform: capitalize;
 }

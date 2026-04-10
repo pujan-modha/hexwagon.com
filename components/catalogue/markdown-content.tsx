@@ -1,5 +1,7 @@
 import type { ComponentProps } from "react"
 import ReactMarkdown from "react-markdown"
+import rehypeRaw from "rehype-raw"
+import remarkGithubBlockquoteAlert from "remark-github-blockquote-alert"
 import remarkGfm from "remark-gfm"
 import { Card } from "~/components/common/card"
 import { cx } from "~/utils/cva"
@@ -21,8 +23,13 @@ const MarkdownContent = ({ content, emptyState, className, ...props }: MarkdownC
 
   return (
     <Card className={cx("p-6", className)} {...props}>
-      <div className="prose prose-sm max-w-none dark:prose-invert">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <div className="markdown-body github-markdown-body">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm, remarkGithubBlockquoteAlert]}
+          rehypePlugins={[rehypeRaw]}
+        >
+          {content}
+        </ReactMarkdown>
       </div>
     </Card>
   )

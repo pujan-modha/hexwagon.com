@@ -5,6 +5,43 @@ import { themeManyPayload } from "~/server/web/themes/payloads"
 import { db } from "~/services/db"
 import type { ThemesTableSchema } from "./schema"
 
+const adminThemeOnePayload = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  seoTitle: true,
+  seoDescription: true,
+  seoIntro: true,
+  seoFaqs: true,
+  searchAliases: true,
+  seoPlatformOverrides: true,
+  websiteUrl: true,
+  repositoryUrl: true,
+  faviconUrl: true,
+  guidelines: true,
+  isFeatured: true,
+  order: true,
+  pageviews: true,
+  createdAt: true,
+  updatedAt: true,
+  license: true,
+  colors: true,
+  maintainers: {
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+    },
+    orderBy: { assignedAt: "asc" },
+  },
+} satisfies Prisma.ThemeSelect
+
 export const findThemes = async (search: ThemesTableSchema) => {
   const { name, page, perPage, sort, from, to, operator } = search
 
@@ -60,21 +97,6 @@ export const findThemeList = async () => {
 export const findThemeBySlug = async (slug: string) => {
   return db.theme.findUnique({
     where: { slug },
-    include: {
-      colors: true,
-      maintainers: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
-        },
-        orderBy: { assignedAt: "asc" },
-      },
-    },
+    select: adminThemeOnePayload,
   })
 }

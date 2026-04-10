@@ -11,9 +11,15 @@ type PaletteGroupEditorProps = {
   form: UseFormReturn<any>
   paletteIndex: number
   removePalette: () => void
+  duplicatePalette: () => void
 }
 
-export function PaletteGroupEditor({ form, paletteIndex, removePalette }: PaletteGroupEditorProps) {
+export function PaletteGroupEditor({
+  form,
+  paletteIndex,
+  removePalette,
+  duplicatePalette,
+}: PaletteGroupEditorProps) {
   const {
     fields: colorFields,
     append: appendColor,
@@ -34,6 +40,15 @@ export function PaletteGroupEditor({ form, paletteIndex, removePalette }: Palett
           />
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={duplicatePalette}
+            prefix={<Icon name="lucide/circle-plus" />}
+          >
+            Duplicate
+          </Button>
           <Button
             type="button"
             size="sm"

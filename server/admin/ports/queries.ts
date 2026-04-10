@@ -5,6 +5,40 @@ import { portManyExtendedPayload } from "~/server/web/ports/payloads"
 import { db } from "~/services/db"
 import type { PortsTableSchema } from "./schema"
 
+const adminPortOnePayload = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  seoTitle: true,
+  seoDescription: true,
+  seoFaqs: true,
+  searchAliases: true,
+  content: true,
+  repositoryUrl: true,
+  faviconUrl: true,
+  screenshotUrl: true,
+  status: true,
+  rejectionReason: true,
+  submitterName: true,
+  submitterEmail: true,
+  submitterNote: true,
+  isFeatured: true,
+  isOfficial: true,
+  publishedAt: true,
+  license: true,
+  likes: true,
+  score: true,
+  pageviews: true,
+  createdAt: true,
+  updatedAt: true,
+  themeId: true,
+  platformId: true,
+  theme: true,
+  platform: true,
+  tags: true,
+} satisfies Prisma.PortSelect
+
 export const findPorts = async (search: PortsTableSchema, where?: Prisma.PortWhereInput) => {
   const { name, sort, page, perPage, from, to, operator, status, themeId, platformId } = search
 
@@ -71,10 +105,6 @@ export const findPortList = async () => {
 export const findPortBySlug = async (slug: string) => {
   return db.port.findUnique({
     where: { slug },
-    include: {
-      theme: true,
-      platform: true,
-      tags: true,
-    },
+    select: adminPortOnePayload,
   })
 }
