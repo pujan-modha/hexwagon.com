@@ -24,6 +24,10 @@ type PageProps = {
   searchParams: Promise<SearchParams>
 }
 
+const FEATURED_THEMES_COUNT = 6
+const FEATURED_PLATFORMS_COUNT = 6
+const TRENDING_PORTS_COUNT = 5
+
 export const metadata: Metadata = {
   title: "Theme Ports Directory for VS Code, Ghostty, Neovim, Zed, and More | HexWagon",
   description: config.site.description,
@@ -72,7 +76,7 @@ export default function Home(props: PageProps) {
               ctaLabel="View all themes"
             />
             <CatalogueGrid className="gap-5 xl:grid-cols-3">
-              {Array.from({ length: 4 }).map((_, i) => (
+              {Array.from({ length: FEATURED_THEMES_COUNT }).map((_, i) => (
                 <ThemeCardSkeleton key={i} />
               ))}
             </CatalogueGrid>
@@ -93,7 +97,7 @@ export default function Home(props: PageProps) {
               ctaLabel="View all platforms"
             />
             <CatalogueGrid className="gap-5 xl:grid-cols-3">
-              {Array.from({ length: 4 }).map((_, i) => (
+              {Array.from({ length: FEATURED_PLATFORMS_COUNT }).map((_, i) => (
                 <PlatformCardSkeleton key={i} />
               ))}
             </CatalogueGrid>
@@ -109,7 +113,7 @@ export default function Home(props: PageProps) {
           <section className="flex flex-col gap-8">
             <FeaturedSectionHeader title="Trending Ports" />
             <CatalogueGrid className="gap-5 xl:grid-cols-3">
-              {Array.from({ length: 4 }).flatMap((_, index) => {
+              {Array.from({ length: TRENDING_PORTS_COUNT }).flatMap((_, index) => {
                 const cards = [<PortCardSkeleton key={`featured-port-skeleton-${index}`} />]
 
                 if (index === 1) {
@@ -129,7 +133,7 @@ export default function Home(props: PageProps) {
 }
 
 const FeaturedThemes = async () => {
-  const themes = await findFeaturedThemes({ take: 4 })
+  const themes = await findFeaturedThemes({ take: FEATURED_THEMES_COUNT })
 
   if (!themes.length) return null
 
@@ -151,7 +155,7 @@ const FeaturedThemes = async () => {
 }
 
 const FeaturedPlatforms = async () => {
-  const platforms = await findFeaturedPlatforms({ take: 4 })
+  const platforms = await findFeaturedPlatforms({ take: FEATURED_PLATFORMS_COUNT })
 
   if (!platforms.length) return null
 
@@ -175,7 +179,7 @@ const FeaturedPlatforms = async () => {
 const TrendingPorts = async () => {
   const ports = await findPorts({
     orderBy: [{ likes: { _count: "desc" } }, { score: "desc" }],
-    take: 4,
+    take: TRENDING_PORTS_COUNT,
   })
 
   if (!ports.length) return null
