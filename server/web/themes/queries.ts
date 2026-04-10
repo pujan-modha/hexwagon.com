@@ -15,16 +15,24 @@ const getThemeOrderBy = (sort: string): Prisma.ThemeFindManyArgs["orderBy"] => {
 
     if (sortOrder === "asc" || sortOrder === "desc") {
       if (sortBy === "likes") {
-        return { likes: { _count: sortOrder } }
+        return [{ isFeatured: "desc" }, { likes: { _count: sortOrder } }]
       }
 
       if (["name", "createdAt", "updatedAt", "order"].includes(sortBy)) {
-        return { [sortBy]: sortOrder } as Prisma.ThemeFindManyArgs["orderBy"]
+        return [
+          { isFeatured: "desc" },
+          { [sortBy]: sortOrder } as Prisma.ThemeOrderByWithRelationInput,
+        ]
       }
     }
   }
 
-  return [{ likes: { _count: "desc" } }, { order: "asc" }, { name: "asc" }]
+  return [
+    { isFeatured: "desc" },
+    { likes: { _count: "desc" } },
+    { order: "asc" },
+    { name: "asc" },
+  ]
 }
 
 export const searchThemes = async (search: FilterSchema, where?: Prisma.ThemeWhereInput) => {
