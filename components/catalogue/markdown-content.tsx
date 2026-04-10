@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { Card } from "~/components/common/card"
 import { cx } from "~/utils/cva"
 
@@ -21,7 +22,7 @@ const MarkdownContent = ({ content, emptyState, className, ...props }: MarkdownC
   return (
     <Card className={cx("p-6", className)} {...props}>
       <div className="prose prose-sm max-w-none dark:prose-invert">
-        <ReactMarkdown>{content}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
       </div>
     </Card>
   )

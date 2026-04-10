@@ -23,7 +23,7 @@ const PortDetail = ({ port, canonicalUrl, likeButton, reportButton }: PortDetail
       {/* Header */}
       <div className="flex items-start gap-4">
         <div className="flex-1">
-          <div className="flex w-full items-start justify-between gap-3">
+          <div className="flex w-full items-start justify-between gap-3 pb-3">
             <div className="flex gap-x-3 gap-y-2 flex-row items-center place-content-start flex-wrap flex-1 min-w-0">
               <h1 className="font-display font-semibold text-2xl tracking-micro leading-tight md:text-3xl truncate">
                 {portTitle}

@@ -33,7 +33,7 @@ const EntityHeader = ({
   return (
     <div className="flex flex-col gap-4">
       <Intro>
-        <div className="flex w-full items-start justify-between gap-3">
+        <div className="flex w-full items-start justify-between gap-3 pb-3">
           <div className="flex min-w-0 items-center gap-3">
             <Favicon src={logoSrc ?? null} title={name} plain className="size-10" />
             <IntroTitle className="inline-flex items-center gap-2.5 truncate font-display font-semibold text-2xl tracking-micro leading-tight md:text-3xl">
