@@ -19,7 +19,8 @@
     "db:reset": "prisma migrate reset",
     "prebuild": "bun run icons",
     "postbuild": "next-sitemap",
-    "postinstall": "bun run db:generate"
+    "postinstall": "bun run db:generate",
+    "search:reindex": "bun run ./scripts/setup-meilisearch.ts"
   },
   "dependencies": {
     "@atproto/api": "^0.15.16",

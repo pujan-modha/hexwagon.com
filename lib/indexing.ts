@@ -4,6 +4,20 @@ import { tagManyPayload } from "~/server/web/tags/payloads"
 import { themeManyPayload } from "~/server/web/themes/payloads"
 import { db } from "~/services/db"
 import { getMeiliIndex } from "~/services/meilisearch"
+import { tryCatch } from "~/utils/helpers"
+
+const resetIndexDocuments = async (indexName: "ports" | "themes" | "platforms") => {
+  const { error } = await tryCatch(getMeiliIndex(indexName).deleteAllDocuments())
+
+  if (
+    error &&
+    "code" in error &&
+    error.code !== "index_not_found" &&
+    !String("message" in error ? error.message : "").includes("not found")
+  ) {
+    throw error
+  }
+}
 
 /**
  * Index ports in MeiliSearch
@@ -11,9 +25,15 @@ import { getMeiliIndex } from "~/services/meilisearch"
  */
 export const indexPorts = async ({
   where,
+  replace = false,
 }: {
   where?: Prisma.PortWhereInput
+  replace?: boolean
 }) => {
+  if (replace) {
+    await resetIndexDocuments("ports")
+  }
+
   const ports = await db.port.findMany({
     where: {
       status: { in: [PortStatus.Scheduled, PortStatus.Published] },
@@ -56,9 +76,15 @@ export const indexPorts = async ({
  */
 export const indexThemes = async ({
   where,
+  replace = false,
 }: {
   where?: Prisma.ThemeWhereInput
+  replace?: boolean
 }) => {
+  if (replace) {
+    await resetIndexDocuments("themes")
+  }
+
   const themes = await db.theme.findMany({
     where,
     select: {
@@ -106,9 +132,15 @@ export const indexThemes = async ({
  */
 export const indexPlatforms = async ({
   where,
+  replace = false,
 }: {
   where?: Prisma.PlatformWhereInput
+  replace?: boolean
 }) => {
+  if (replace) {
+    await resetIndexDocuments("platforms")
+  }
+
   const platforms = await db.platform.findMany({
     where,
     select: {

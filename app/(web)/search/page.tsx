@@ -226,7 +226,6 @@ export default async function SearchPage(props: PageProps) {
                 slug: selectedPlatform.slug,
                 name: selectedPlatform.name,
                 faviconUrl: selectedPlatform.faviconUrl ?? undefined,
-                isVerified: selectedPlatform.isFeatured,
               }
             : null
         }

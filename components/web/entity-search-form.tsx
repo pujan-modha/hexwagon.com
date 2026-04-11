@@ -369,7 +369,7 @@ export const EntitySearchForm = ({
 
       {(showThemeDropdown || showPlatformDropdown) && dropdownAnchor ? (
         <div
-          className="absolute z-50"
+          className="absolute z-[80]"
           style={{
             left: `${dropdownAnchor.left}px`,
             top: `${dropdownAnchor.top}px`,
@@ -381,6 +381,7 @@ export const EntitySearchForm = ({
               iconName="lucide/star"
               isPending={themeSearch.isPending}
               emptyText="No theme matches yet"
+              showVerifiedBadge
               items={themeResults}
               onSelect={item => {
                 setSelectedTheme(item)
@@ -458,6 +459,7 @@ type SuggestionDropdownProps<T extends SearchEntity> = {
   items: T[]
   isPending: boolean
   emptyText: string
+  showVerifiedBadge?: boolean
   onSelect: (item: T) => void
   onNavigate: (item: T) => void
 }
@@ -467,6 +469,7 @@ const SuggestionDropdown = <T extends SearchEntity>({
   items,
   isPending,
   emptyText,
+  showVerifiedBadge = false,
   onSelect,
   onNavigate,
 }: SuggestionDropdownProps<T>) => {
@@ -507,7 +510,7 @@ const SuggestionDropdown = <T extends SearchEntity>({
                   )}
                 </span>
                 <span className="min-w-0 truncate">{item.name}</span>
-                {item.isVerified ? <VerifiedBadge size="xs" /> : null}
+                {showVerifiedBadge && item.isVerified ? <VerifiedBadge size="xs" /> : null}
               </button>
 
               <button

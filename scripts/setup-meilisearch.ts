@@ -1,39 +1,34 @@
 import { config } from "~/config"
-import { indexAlternatives, indexCategories, indexTools } from "~/lib/indexing"
+import { indexPlatforms, indexPorts, indexThemes } from "~/lib/indexing"
 import { meili } from "~/services/meilisearch"
 
 const siteSlug = config.site.slug
 
 const indexes = [
   {
-    name: "tools",
+    name: "ports",
     primaryKey: "id",
     settings: {
-      searchableAttributes: [
-        "name",
-        "tagline",
-        "description",
-        "categories",
-        "alternatives",
-        "topics",
-      ],
+      searchableAttributes: ["name", "description", "theme", "platform", "tags"],
       displayedAttributes: [
         "id",
         "name",
         "slug",
-        "tagline",
         "description",
         "websiteUrl",
+        "repositoryUrl",
         "faviconUrl",
         "isFeatured",
         "score",
         "pageviews",
         "status",
-        "alternatives",
-        "categories",
-        "topics",
+        "theme",
+        "themeSlug",
+        "platform",
+        "platformSlug",
+        "tags",
       ],
-      filterableAttributes: ["status", "isFeatured", "categories", "alternatives", "topics"],
+      filterableAttributes: ["status", "isFeatured", "themeSlug", "platformSlug", "tags"],
       sortableAttributes: ["score", "pageviews", "isFeatured"],
       rankingRules: [
         "words",
@@ -49,7 +44,7 @@ const indexes = [
     },
   },
   {
-    name: "alternatives",
+    name: "themes",
     primaryKey: "id",
     settings: {
       searchableAttributes: ["name", "description"],
@@ -60,10 +55,12 @@ const indexes = [
         "description",
         "websiteUrl",
         "faviconUrl",
+        "isVerified",
+        "portsCount",
         "pageviews",
       ],
-      filterableAttributes: ["id", "name"],
-      sortableAttributes: ["pageviews"],
+      filterableAttributes: ["isVerified"],
+      sortableAttributes: ["pageviews", "portsCount", "isVerified"],
       rankingRules: [
         "words",
         "typo",
@@ -71,55 +68,74 @@ const indexes = [
         "attribute",
         "sort",
         "exactness",
+        "isVerified:desc",
+        "portsCount:desc",
         "pageviews:desc",
       ],
     },
   },
   {
-    name: "categories",
+    name: "platforms",
     primaryKey: "id",
     settings: {
-      searchableAttributes: ["name", "description", "fullPath"],
-      displayedAttributes: ["id", "name", "slug", "description", "fullPath"],
-      filterableAttributes: ["name", "fullPath"],
-      sortableAttributes: [],
-      rankingRules: ["words", "typo", "proximity", "attribute", "sort", "exactness"],
+      searchableAttributes: ["name", "description"],
+      displayedAttributes: [
+        "id",
+        "name",
+        "slug",
+        "description",
+        "websiteUrl",
+        "faviconUrl",
+        "isVerified",
+        "portsCount",
+        "pageviews",
+      ],
+      filterableAttributes: ["isVerified"],
+      sortableAttributes: ["pageviews", "portsCount", "isVerified"],
+      rankingRules: [
+        "words",
+        "typo",
+        "proximity",
+        "attribute",
+        "sort",
+        "exactness",
+        "isVerified:desc",
+        "portsCount:desc",
+        "pageviews:desc",
+      ],
     },
   },
 ]
 
-async function cleanupIndexes() {
+async function ensureIndexes() {
   for (const idx of indexes) {
     const indexUid = `${siteSlug}-${idx.name}`
-    try {
-      await meili.index(indexUid).delete()
-      console.log(`Deleted existing index: ${indexUid}`)
-    } catch (e: any) {
-      if (e.code !== "index_not_found" && !e.message?.includes("not found")) {
-        console.warn(`Could not delete index ${indexUid}:`, e.message)
-      }
-    }
-  }
-}
 
-async function setupIndexes() {
-  for (const idx of indexes) {
-    const indexUid = `${siteSlug}-${idx.name}`
-    // Create index
-    await meili.createIndex(indexUid, { primaryKey: idx.primaryKey })
+    try {
+      await meili.getIndex(indexUid)
+    } catch (e: any) {
+      if (e.code !== "index_not_found" && !e.message?.includes("not found")) throw e
+
+      await meili.createIndex(indexUid, { primaryKey: idx.primaryKey })
+      console.log(`Created index: ${indexUid}`)
+    }
+
     await meili.index(indexUid).updateSettings(idx.settings)
     console.log(`Configured index: ${indexUid}`)
   }
 }
 
 async function reindexAll() {
-  await Promise.all([indexTools({}), indexAlternatives({}), indexCategories({})])
+  await Promise.all([
+    indexPorts({ replace: true }),
+    indexThemes({ replace: true }),
+    indexPlatforms({ replace: true }),
+  ])
   console.log("Reindexing complete.")
 }
 
 async function main() {
-  await cleanupIndexes()
-  await setupIndexes()
+  await ensureIndexes()
   await reindexAll()
   console.log("MeiliSearch setup and population complete.")
 }
