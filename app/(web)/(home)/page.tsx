@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 export default function Home(props: PageProps) {
   return (
     <>
-      <section className="relative left-1/2 flex w-dvw -translate-x-1/2 flex-col items-center justify-center overflow-x-hidden overflow-y-visible bg-background pb-18 md:min-h-0">
+      <section className="relative left-1/2 flex w-dvw -translate-x-1/2 flex-col items-center justify-center overflow-hidden bg-background pb-18 md:min-h-0">
         <div className="pointer-events-none absolute inset-0 z-0 border-b-2 opacity-90">
           <WebGLShader />
         </div>

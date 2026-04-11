@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import posthog from "posthog-js"
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { useServerAction } from "zsa-react"
 import { searchItems } from "~/actions/search"
 import { Button } from "~/components/common/button"
@@ -58,6 +59,7 @@ export const EntitySearchForm = ({
   const formRef = useRef<HTMLFormElement>(null)
   const themeFieldRef = useRef<HTMLDivElement>(null)
   const platformFieldRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const [themeQuery, setThemeQuery] = useState(initialThemeSelection?.name ?? initialThemeQuery)
   const [platformQuery, setPlatformQuery] = useState(
@@ -124,6 +126,10 @@ export const EntitySearchForm = ({
       const target = event.target
       if (!(target instanceof Node)) return
 
+      if (formRef.current?.contains(target) || dropdownRef.current?.contains(target)) {
+        return
+      }
+
       if (!formRef.current?.contains(target)) {
         setActiveField(null)
       }
@@ -134,7 +140,7 @@ export const EntitySearchForm = ({
   }, [])
 
   useEffect(() => {
-    if (!activeField || !formRef.current) {
+    if (!activeField) {
       setDropdownAnchor(null)
       return
     }
@@ -143,16 +149,14 @@ export const EntitySearchForm = ({
 
     const updateAnchor = () => {
       const targetEl = targetRef.current
-      const formEl = formRef.current
 
-      if (!targetEl || !formEl) return
+      if (!targetEl) return
 
       const fieldRect = targetEl.getBoundingClientRect()
-      const formRect = formEl.getBoundingClientRect()
 
       setDropdownAnchor({
-        left: fieldRect.left - formRect.left,
-        top: fieldRect.bottom - formRect.top + 8,
+        left: fieldRect.left,
+        top: fieldRect.bottom + 8,
         width: fieldRect.width,
       })
     }
@@ -367,47 +371,51 @@ export const EntitySearchForm = ({
         </div>
       </div>
 
-      {(showThemeDropdown || showPlatformDropdown) && dropdownAnchor ? (
-        <div
-          className="absolute z-[80]"
-          style={{
-            left: `${dropdownAnchor.left}px`,
-            top: `${dropdownAnchor.top}px`,
-            width: `${dropdownAnchor.width}px`,
-          }}
-        >
-          {showThemeDropdown ? (
-            <SuggestionDropdown
-              iconName="lucide/star"
-              isPending={themeSearch.isPending}
-              emptyText="No theme matches yet"
-              showVerifiedBadge
-              items={themeResults}
-              onSelect={item => {
-                setSelectedTheme(item)
-                setThemeQuery(item.name)
-                setDebouncedTheme(item.name)
-                setActiveField(null)
+      {typeof document !== "undefined" && (showThemeDropdown || showPlatformDropdown) && dropdownAnchor
+        ? createPortal(
+            <div
+              ref={dropdownRef}
+              className="fixed z-[120]"
+              style={{
+                left: `${dropdownAnchor.left}px`,
+                top: `${dropdownAnchor.top}px`,
+                width: `${dropdownAnchor.width}px`,
               }}
-              onNavigate={item => router.push(themeHref(item.slug))}
-            />
-          ) : (
-            <SuggestionDropdown
-              iconName="lucide/server"
-              isPending={platformSearch.isPending}
-              emptyText="No platform matches yet"
-              items={platformResults}
-              onSelect={item => {
-                setSelectedPlatform(item)
-                setPlatformQuery(item.name)
-                setDebouncedPlatform(item.name)
-                setActiveField(null)
-              }}
-              onNavigate={item => router.push(platformHref(item.slug))}
-            />
-          )}
-        </div>
-      ) : null}
+            >
+              {showThemeDropdown ? (
+                <SuggestionDropdown
+                  iconName="lucide/star"
+                  isPending={themeSearch.isPending}
+                  emptyText="No theme matches yet"
+                  showVerifiedBadge
+                  items={themeResults}
+                  onSelect={item => {
+                    setSelectedTheme(item)
+                    setThemeQuery(item.name)
+                    setDebouncedTheme(item.name)
+                    setActiveField(null)
+                  }}
+                  onNavigate={item => router.push(themeHref(item.slug))}
+                />
+              ) : (
+                <SuggestionDropdown
+                  iconName="lucide/server"
+                  isPending={platformSearch.isPending}
+                  emptyText="No platform matches yet"
+                  items={platformResults}
+                  onSelect={item => {
+                    setSelectedPlatform(item)
+                    setPlatformQuery(item.name)
+                    setDebouncedPlatform(item.name)
+                    setActiveField(null)
+                  }}
+                  onNavigate={item => router.push(platformHref(item.slug))}
+                />
+              )}
+            </div>,
+            document.body,
+          )
+        : null}
     </form>
   )
 }
