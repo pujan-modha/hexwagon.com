@@ -16,7 +16,6 @@ import { Dialog, DialogContent, DialogTrigger } from "~/components/common/dialog
 import { Icon } from "~/components/common/icon"
 import { Label } from "~/components/common/label"
 import { Favicon } from "~/components/web/ui/favicon"
-import { VerifiedBadge } from "~/components/web/verified-badge"
 import { useSubmissionStore } from "~/stores/submission-store"
 
 type StepPlatformProps = {
@@ -34,7 +33,6 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
       id: string
       name: string
       faviconUrl?: string | null
-      isVerified?: boolean
     }>
   >([])
 
@@ -115,8 +113,6 @@ const StepPlatform = ({ onNext, onBack }: StepPlatformProps) => {
                     )}
 
                     <span className="truncate">{platform.name}</span>
-
-                    {platform.isVerified ? <VerifiedBadge size="xs" className="mr-auto" /> : null}
                   </CommandItem>
                 ))}
               </CommandList>

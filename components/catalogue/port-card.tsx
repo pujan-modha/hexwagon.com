@@ -28,7 +28,7 @@ const PortCard = ({ port, href, className, ...props }: PortCardProps) => {
           </H4>
         </CardHeader>
 
-        <CardDescription className="min-h-[3.25rem] line-clamp-3">
+        <CardDescription className="min-h-[2.5rem] line-clamp-2">
           {port.description || "\u00A0"}
         </CardDescription>
 

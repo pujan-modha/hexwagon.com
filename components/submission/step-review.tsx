@@ -19,7 +19,6 @@ const StepReview = ({ onBack }: StepReviewProps) => {
   const router = useRouter()
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isFailed, setIsFailed] = useState(false)
-  const [redirectIn, setRedirectIn] = useState(2)
 
   const {
     themeName,
@@ -44,8 +43,9 @@ const StepReview = ({ onBack }: StepReviewProps) => {
 
       setIsFailed(false)
       setIsSubmitted(true)
-      setRedirectIn(2)
       toast.success("Submission received. Redirecting to your dashboard.")
+      reset()
+      router.replace("/dashboard")
     },
     onError: ({ err }) => {
       setIsFailed(true)
@@ -56,26 +56,6 @@ const StepReview = ({ onBack }: StepReviewProps) => {
   useEffect(() => {
     router.prefetch("/dashboard")
   }, [router])
-
-  useEffect(() => {
-    if (!isSubmitted) {
-      return
-    }
-
-    const timeout = setTimeout(() => {
-      reset()
-      router.push("/dashboard")
-    }, 1700)
-
-    const interval = setInterval(() => {
-      setRedirectIn(current => Math.max(0, current - 1))
-    }, 1000)
-
-    return () => {
-      clearTimeout(timeout)
-      clearInterval(interval)
-    }
-  }, [isSubmitted, router])
 
   const handleSubmit = () => {
     setIsFailed(false)
@@ -118,10 +98,7 @@ const StepReview = ({ onBack }: StepReviewProps) => {
               {isSubmitted ? (
                 <>
                   <p className="font-medium">Port submitted successfully.</p>
-                  <p className="text-muted-foreground">
-                    Redirecting to your dashboard in {redirectIn} second
-                    {redirectIn === 1 ? "" : "s"}...
-                  </p>
+                  <p className="text-muted-foreground">Redirecting to your dashboard...</p>
                 </>
               ) : isFailed ? (
                 <>

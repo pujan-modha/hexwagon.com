@@ -64,10 +64,9 @@ export const searchPlatformsAction = createServerAction()
         name: string
         slug: string
         faviconUrl?: string | null
-        isVerified?: boolean
       }>(query, {
         limit: SEARCH_LIMIT,
-        attributesToRetrieve: ["id", "name", "slug", "faviconUrl", "isVerified"],
+        attributesToRetrieve: ["id", "name", "slug", "faviconUrl"],
       }),
     )
 
@@ -87,7 +86,6 @@ export const searchPlatformsAction = createServerAction()
         name: true,
         slug: true,
         faviconUrl: true,
-        isFeatured: true,
       },
       take: SEARCH_LIMIT,
       orderBy: { name: "asc" },
@@ -98,6 +96,5 @@ export const searchPlatformsAction = createServerAction()
       name: platform.name,
       slug: platform.slug,
       faviconUrl: platform.faviconUrl,
-      isVerified: platform.isFeatured,
     }))
   })

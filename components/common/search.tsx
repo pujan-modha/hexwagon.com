@@ -21,6 +21,7 @@ import {
 } from "~/components/common/command"
 import { Icon } from "~/components/common/icon"
 import { Kbd } from "~/components/common/kbd"
+import { Favicon } from "~/components/web/ui/favicon"
 import { useSearch } from "~/contexts/search-context"
 import { useSession } from "~/lib/auth-client"
 
@@ -281,7 +282,13 @@ export const Search = () => {
           getHref={({ slug }) => `${isAdminPath ? "/admin" : ""}/themes/${slug}`}
           renderItemDisplay={({ name, faviconUrl, portsCount }) => (
             <>
-              {faviconUrl && <Image src={faviconUrl} alt="" width={16} height={16} />}
+              {faviconUrl ? (
+                <Favicon src={faviconUrl} title={name} plain className="size-4" />
+              ) : (
+                <span className="flex size-4 shrink-0 items-center justify-center rounded-sm bg-muted/50">
+                  <Icon name="lucide/star" className="size-3 text-muted-foreground" />
+                </span>
+              )}
               <span className="flex-1 truncate">{name}</span>
               {formatPortsCount(portsCount) ? (
                 <span className="text-xs text-muted-foreground/70">{formatPortsCount(portsCount)}</span>
@@ -295,8 +302,15 @@ export const Search = () => {
           items={platforms}
           onItemSelect={navigateTo}
           getHref={({ slug }) => (isAdminPath ? `/admin/platforms/${slug}` : `/platforms/${slug}`)}
-          renderItemDisplay={({ name, portsCount }) => (
+          renderItemDisplay={({ name, faviconUrl, portsCount }) => (
             <>
+              {faviconUrl ? (
+                <Favicon src={faviconUrl} title={name} plain className="size-4" />
+              ) : (
+                <span className="flex size-4 shrink-0 items-center justify-center rounded-sm bg-muted/50">
+                  <Icon name="lucide/globe" className="size-3 text-muted-foreground" />
+                </span>
+              )}
               <span className="flex-1 truncate">{name}</span>
               {formatPortsCount(portsCount) ? (
                 <span className="text-xs text-muted-foreground/70">{formatPortsCount(portsCount)}</span>

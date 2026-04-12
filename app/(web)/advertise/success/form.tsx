@@ -198,7 +198,6 @@ export const AdDetailsForm = ({
         id: platform.id,
         label: platform.name,
         logoUrl: platform.faviconUrl,
-        isVerified: platform.isVerified,
       })),
     )
     setIsPlatformsLoading(false)
