@@ -130,6 +130,7 @@ export default async function PlatformPage(props: PageProps) {
     ? []
     : await findFeaturedThemes({
         where: {
+          ...themesWhere,
           id: {
             notIn: themes.map(themeItem => themeItem.id),
           },

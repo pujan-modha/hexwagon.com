@@ -146,6 +146,7 @@ export default async function ThemePage(props: PageProps) {
     ? []
     : await findFeaturedPlatforms({
         where: {
+          ...platformsWhere,
           id: {
             notIn: platforms.map(platformItem => platformItem.id),
           },
