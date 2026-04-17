@@ -9,7 +9,7 @@ import { LoginDialog } from "~/components/web/auth/login-dialog"
 import { useSession } from "~/lib/auth-client"
 import { cx } from "~/utils/cva"
 
-type EntityType = "theme" | "platform" | "port"
+type EntityType = "theme" | "platform" | "port" | "config"
 
 type EntityLikeButtonProps = {
   entityType: EntityType
@@ -87,7 +87,7 @@ export const EntityLikeButton = ({
         <LoginDialog
           isOpen={isOpen}
           setIsOpen={setIsOpen}
-          description="Sign in to save ports, themes, and platforms to your likes."
+          description="Sign in to save ports, themes, platforms, and configs to your likes."
         />
       </>
     )

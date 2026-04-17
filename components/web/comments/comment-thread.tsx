@@ -33,18 +33,15 @@ type Comment = {
 
 type CommentThreadProps = {
   comments: Comment[]
-  portId: string
   onReply?: (parentId: string) => void
 } & ComponentProps<"div">
 
 const CommentItem = ({
   comment,
-  portId,
   onReply,
   isReply = false,
 }: {
   comment: Comment
-  portId: string
   onReply?: (parentId: string) => void
   isReply?: boolean
 }) => {
@@ -101,7 +98,7 @@ const CommentItem = ({
           </div>
 
           {comment.replies?.map(reply => (
-            <CommentItem key={reply.id} comment={reply} portId={portId} onReply={onReply} isReply />
+            <CommentItem key={reply.id} comment={reply} onReply={onReply} isReply />
           ))}
         </div>
       </div>
@@ -127,7 +124,7 @@ const CommentItem = ({
   )
 }
 
-const CommentThread = ({ comments, portId, onReply, ...props }: CommentThreadProps) => {
+const CommentThread = ({ comments, onReply, ...props }: CommentThreadProps) => {
   if (!comments.length) {
     return (
       <p className="py-4 text-center text-sm text-muted-foreground">
@@ -139,7 +136,7 @@ const CommentThread = ({ comments, portId, onReply, ...props }: CommentThreadPro
   return (
     <div className={cn("flex flex-col gap-4", props.className)} {...props}>
       {comments.map(comment => (
-        <CommentItem key={comment.id} comment={comment} portId={portId} onReply={onReply} />
+        <CommentItem key={comment.id} comment={comment} onReply={onReply} />
       ))}
     </div>
   )

@@ -21,9 +21,10 @@ import { useSubmissionStore } from "~/stores/submission-store"
 
 type StepThemeProps = {
   onNext: () => void
+  onBack: () => void
 }
 
-const StepTheme = ({ onNext }: StepThemeProps) => {
+const StepTheme = ({ onNext, onBack }: StepThemeProps) => {
   const { themeName, setTheme } = useSubmissionStore()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
@@ -126,9 +127,14 @@ const StepTheme = ({ onNext }: StepThemeProps) => {
         </Link>
       </p>
 
-      <Button onClick={onNext} disabled={!themeName}>
-        Next
-      </Button>
+      <div className="flex gap-2">
+        <Button variant="secondary" onClick={onBack}>
+          Back
+        </Button>
+        <Button onClick={onNext} disabled={!themeName}>
+          Next
+        </Button>
+      </div>
     </div>
   )
 }

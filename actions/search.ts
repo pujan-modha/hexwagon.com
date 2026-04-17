@@ -1,12 +1,14 @@
 "use server"
 
-import { PortStatus } from "@prisma/client"
+import { ConfigStatus, PortStatus } from "@prisma/client"
 import { z } from "zod"
 import { createServerAction } from "zsa"
+import { parseConfigFonts } from "~/lib/configs"
+import { buildEntitySearchTerms, buildSearchTerms, matchesSearchTerms } from "~/lib/search-terms"
 import { db } from "~/services/db"
 import { getMeiliIndex } from "~/services/meilisearch"
 
-const searchableIndexes = ["ports", "themes", "platforms"] as const
+const searchableIndexes = ["ports", "themes", "platforms", "configs"] as const
 type SearchableIndex = (typeof searchableIndexes)[number]
 
 const searchInputSchema = z.object({
@@ -41,6 +43,16 @@ type PlatformSearchResult = {
   faviconUrl?: string
   isVerified?: boolean
   portsCount?: number
+}
+
+type ConfigSearchResult = {
+  slug: string
+  name: string
+  faviconUrl?: string
+  repositoryUrl?: string | null
+  websiteUrl?: string | null
+  themesCount?: number
+  platformsCount?: number
 }
 
 type SearchResultPayload<T> = {
@@ -217,6 +229,85 @@ const fallbackSearchPlatforms = async (
   }
 }
 
+const fallbackSearchConfigs = async (
+  query: string,
+): Promise<SearchResultPayload<ConfigSearchResult>> => {
+  const start = performance.now()
+  const configs = await db.config.findMany({
+    where: {
+      status: ConfigStatus.Published,
+    },
+    orderBy: [{ isFeatured: "desc" }, { likes: { _count: "desc" } }, { order: "asc" }],
+    select: {
+      slug: true,
+      name: true,
+      description: true,
+      content: true,
+      searchAliases: true,
+      fonts: true,
+      faviconUrl: true,
+      repositoryUrl: true,
+      websiteUrl: true,
+      _count: {
+        select: {
+          configThemes: true,
+          configPlatforms: true,
+        },
+      },
+      configThemes: {
+        select: {
+          theme: {
+            select: {
+              name: true,
+              slug: true,
+              searchAliases: true,
+            },
+          },
+        },
+      },
+      configPlatforms: {
+        select: {
+          platform: {
+            select: {
+              name: true,
+              slug: true,
+              searchAliases: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  const filteredConfigs = configs.filter(config =>
+    matchesSearchTerms({
+      query,
+      text: [config.name, config.description, config.content],
+      terms: buildSearchTerms(
+        config.slug,
+        config.searchAliases,
+        ...parseConfigFonts(config.fonts).map(font => font.name),
+        ...config.configThemes.flatMap(entry => buildEntitySearchTerms(entry.theme)),
+        ...config.configPlatforms.flatMap(entry => buildEntitySearchTerms(entry.platform)),
+      ),
+    }),
+  )
+
+  return {
+    hits: filteredConfigs.slice(0, FALLBACK_LIMIT).map(config => ({
+      slug: config.slug,
+      name: config.name,
+      faviconUrl: config.faviconUrl ?? undefined,
+      repositoryUrl: config.repositoryUrl,
+      websiteUrl: config.websiteUrl,
+      themesCount: config._count.configThemes,
+      platformsCount: config._count.configPlatforms,
+    })),
+    estimatedTotalHits: filteredConfigs.length,
+    processingTimeMs: Math.round(performance.now() - start),
+  }
+}
+
 const enrichPortHits = async (hits: PortSearchResult[]) => {
   const ids = Array.from(new Set(hits.map(hit => hit.id).filter(Boolean)))
 
@@ -268,14 +359,14 @@ const enrichPortHits = async (hits: PortSearchResult[]) => {
 }
 
 const enrichThemeHits = async (hits: ThemeSearchResult[]) => {
-  const slugsNeedingCounts = hits.filter(hit => hit.portsCount === undefined).map(hit => hit.slug)
+  const slugs = hits.map(hit => hit.slug)
 
-  if (!slugsNeedingCounts.length) {
+  if (!slugs.length) {
     return hits
   }
 
   const themes = await db.theme.findMany({
-    where: { slug: { in: slugsNeedingCounts } },
+    where: { slug: { in: slugs } },
     select: {
       slug: true,
       _count: {
@@ -294,19 +385,19 @@ const enrichThemeHits = async (hits: ThemeSearchResult[]) => {
 
   return hits.map(hit => ({
     ...hit,
-    portsCount: hit.portsCount ?? countsBySlug.get(hit.slug) ?? 0,
+    portsCount: countsBySlug.get(hit.slug) ?? hit.portsCount ?? 0,
   }))
 }
 
 const enrichPlatformHits = async (hits: PlatformSearchResult[]) => {
-  const slugsNeedingCounts = hits.filter(hit => hit.portsCount === undefined).map(hit => hit.slug)
+  const slugs = hits.map(hit => hit.slug)
 
-  if (!slugsNeedingCounts.length) {
+  if (!slugs.length) {
     return hits
   }
 
   const platforms = await db.platform.findMany({
-    where: { slug: { in: slugsNeedingCounts } },
+    where: { slug: { in: slugs } },
     select: {
       slug: true,
       _count: {
@@ -325,8 +416,54 @@ const enrichPlatformHits = async (hits: PlatformSearchResult[]) => {
 
   return hits.map(hit => ({
     ...hit,
-    portsCount: hit.portsCount ?? countsBySlug.get(hit.slug) ?? 0,
+    portsCount: countsBySlug.get(hit.slug) ?? hit.portsCount ?? 0,
   }))
+}
+
+const enrichConfigHits = async (hits: ConfigSearchResult[]) => {
+  const slugsNeedingCounts = hits
+    .filter(hit => hit.themesCount === undefined || hit.platformsCount === undefined)
+    .map(hit => hit.slug)
+
+  if (!slugsNeedingCounts.length) {
+    return hits
+  }
+
+  const configs = await db.config.findMany({
+    where: {
+      slug: { in: slugsNeedingCounts },
+      status: ConfigStatus.Published,
+    },
+    select: {
+      slug: true,
+      _count: {
+        select: {
+          configThemes: true,
+          configPlatforms: true,
+        },
+      },
+    },
+  })
+
+  const countsBySlug = new Map(
+    configs.map(config => [
+      config.slug,
+      {
+        themesCount: config._count.configThemes,
+        platformsCount: config._count.configPlatforms,
+      },
+    ]),
+  )
+
+  return hits.map(hit => {
+    const counts = countsBySlug.get(hit.slug)
+
+    return {
+      ...hit,
+      themesCount: hit.themesCount ?? counts?.themesCount ?? 0,
+      platformsCount: hit.platformsCount ?? counts?.platformsCount ?? 0,
+    }
+  })
 }
 
 export const searchItems = createServerAction()
@@ -336,12 +473,14 @@ export const searchItems = createServerAction()
     const shouldSearchPorts = indexes.includes("ports")
     const shouldSearchThemes = indexes.includes("themes")
     const shouldSearchPlatforms = indexes.includes("platforms")
+    const shouldSearchConfigs = indexes.includes("configs")
 
     const emptyPorts = createEmptyResult<PortSearchResult>()
     const emptyThemes = createEmptyResult<ThemeSearchResult>()
     const emptyPlatforms = createEmptyResult<PlatformSearchResult>()
+    const emptyConfigs = createEmptyResult<ConfigSearchResult>()
 
-    const [portsResult, themesResult, platformsResult] = await Promise.allSettled([
+    const [portsResult, themesResult, platformsResult, configsResult] = await Promise.allSettled([
       shouldSearchPorts
         ? getMeiliIndex("ports").search<PortSearchResult>(query, {
             attributesToRetrieve: [
@@ -370,6 +509,20 @@ export const searchItems = createServerAction()
             attributesToRetrieve: ["slug", "name", "faviconUrl", "isVerified", "portsCount"],
           })
         : Promise.resolve(emptyPlatforms),
+
+      shouldSearchConfigs
+        ? getMeiliIndex("configs").search<ConfigSearchResult>(query, {
+            attributesToRetrieve: [
+              "slug",
+              "name",
+              "faviconUrl",
+              "repositoryUrl",
+              "websiteUrl",
+              "themesCount",
+              "platformsCount",
+            ],
+          })
+        : Promise.resolve(emptyConfigs),
     ])
 
     console.log(`Search: ${Math.round(performance.now() - start)}ms`)
@@ -378,6 +531,7 @@ export const searchItems = createServerAction()
     const themes = themesResult.status === "fulfilled" ? themesResult.value : emptyThemes
     const platforms =
       platformsResult.status === "fulfilled" ? platformsResult.value : emptyPlatforms
+    const configs = configsResult.status === "fulfilled" ? configsResult.value : emptyConfigs
 
     const portsFallbackReason: FallbackReason | null = !shouldSearchPorts
       ? null
@@ -403,24 +557,36 @@ export const searchItems = createServerAction()
           ? "empty"
           : null
 
+    const configsFallbackReason: FallbackReason | null = !shouldSearchConfigs
+      ? null
+      : configsResult.status === "rejected"
+        ? "error"
+        : configs.hits.length === 0
+          ? "empty"
+          : null
+
     const usePortsFallback = shouldSearchPorts && Boolean(portsFallbackReason)
     const useThemesFallback = shouldSearchThemes && Boolean(themesFallbackReason)
     const usePlatformsFallback = shouldSearchPlatforms && Boolean(platformsFallbackReason)
+    const useConfigsFallback = shouldSearchConfigs && Boolean(configsFallbackReason)
 
-    const [fallbackPorts, fallbackThemes, fallbackPlatforms] = await Promise.all([
+    const [fallbackPorts, fallbackThemes, fallbackPlatforms, fallbackConfigs] = await Promise.all([
       usePortsFallback ? fallbackSearchPorts(query) : Promise.resolve(null),
       useThemesFallback ? fallbackSearchThemes(query) : Promise.resolve(null),
       usePlatformsFallback ? fallbackSearchPlatforms(query) : Promise.resolve(null),
+      useConfigsFallback ? fallbackSearchConfigs(query) : Promise.resolve(null),
     ])
 
     if (portsResult.status === "rejected") console.error(portsResult.reason)
     if (themesResult.status === "rejected") console.error(themesResult.reason)
     if (platformsResult.status === "rejected") console.error(platformsResult.reason)
+    if (configsResult.status === "rejected") console.error(configsResult.reason)
 
     const fallbackReasons = {
       ...(portsFallbackReason ? { ports: portsFallbackReason } : {}),
       ...(themesFallbackReason ? { themes: themesFallbackReason } : {}),
       ...(platformsFallbackReason ? { platforms: platformsFallbackReason } : {}),
+      ...(configsFallbackReason ? { configs: configsFallbackReason } : {}),
     } satisfies Partial<Record<SearchableIndex, FallbackReason>>
 
     const fallbackIndexes = Object.keys(fallbackReasons) as SearchableIndex[]
@@ -429,6 +595,7 @@ export const searchItems = createServerAction()
         portsResult.status === "rejected" ? "ports" : null,
         themesResult.status === "rejected" ? "themes" : null,
         platformsResult.status === "rejected" ? "platforms" : null,
+        configsResult.status === "rejected" ? "configs" : null,
       ] as const
     ).filter((value): value is SearchableIndex => value !== null)
 
@@ -453,12 +620,15 @@ export const searchItems = createServerAction()
     const finalPorts = fallbackPorts ?? ports
     const finalThemes = fallbackThemes ?? themes
     const finalPlatforms = fallbackPlatforms ?? platforms
+    const finalConfigs = fallbackConfigs ?? configs
 
-    const [enrichedPortHits, enrichedThemeHits, enrichedPlatformHits] = await Promise.all([
-      enrichPortHits(finalPorts.hits),
-      enrichThemeHits(finalThemes.hits),
-      enrichPlatformHits(finalPlatforms.hits),
-    ])
+    const [enrichedPortHits, enrichedThemeHits, enrichedPlatformHits, enrichedConfigHits] =
+      await Promise.all([
+        enrichPortHits(finalPorts.hits),
+        enrichThemeHits(finalThemes.hits),
+        enrichPlatformHits(finalPlatforms.hits),
+        enrichConfigHits(finalConfigs.hits),
+      ])
 
     return {
       ports: {
@@ -472,6 +642,10 @@ export const searchItems = createServerAction()
       platforms: {
         ...finalPlatforms,
         hits: enrichedPlatformHits,
+      },
+      configs: {
+        ...finalConfigs,
+        hits: enrichedConfigHits,
       },
       telemetry,
     }

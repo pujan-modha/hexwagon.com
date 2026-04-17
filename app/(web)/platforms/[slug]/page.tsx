@@ -10,6 +10,7 @@ import { EntityLikeButton } from "~/components/catalogue/entity-like-button"
 import { EntityReportButton } from "~/components/catalogue/entity-report-button"
 import { EntityTabs } from "~/components/catalogue/entity-tabs"
 import { MarkdownContent } from "~/components/catalogue/markdown-content"
+import { PlatformConfigsTab } from "~/components/catalogue/platform-configs-tab"
 import { PlatformThemeDocsTab } from "~/components/catalogue/platform-theme-docs-tab"
 import { PlatformThemesTab } from "~/components/catalogue/platform-themes-tab"
 import { Icon } from "~/components/common/icon"
@@ -20,6 +21,7 @@ import { Section } from "~/components/web/ui/section"
 import { config } from "~/config"
 import { metadataConfig } from "~/config/metadata"
 import { buildKeywords, buildRobots, hasSeoQueryState, parseSearchAliases } from "~/lib/seo"
+import { findConfigsByPlatform } from "~/server/web/configs/queries"
 import { findPlatform } from "~/server/web/platforms/queries"
 import { findPlatformSlugs } from "~/server/web/platforms/queries"
 import { findFeaturedThemes, findThemes, searchThemes } from "~/server/web/themes/queries"
@@ -141,22 +143,28 @@ export default async function PlatformPage(props: PageProps) {
     (themeItem, index, allThemes) =>
       allThemes.findIndex(candidate => candidate.id === themeItem.id) === index,
   )
+  const configs = await findConfigsByPlatform(platform.slug, { q, sort })
 
   const tabs = [
-        {
-          value: "themes",
-          label: `Themes (${platform._count.ports})`,
-          content: (
-            <Suspense fallback={<div>Loading...</div>}>
-              <PlatformThemesTab
-                themes={linkedThemes}
-                platformSlug={platform.slug}
-                query={q}
-                sort={sort}
-              />
-            </Suspense>
-          ),
-        },
+    {
+      value: "themes",
+      label: `Themes (${platform._count.ports})`,
+      content: (
+        <Suspense fallback={<div>Loading...</div>}>
+          <PlatformThemesTab
+            themes={linkedThemes}
+            platformSlug={platform.slug}
+            query={q}
+            sort={sort}
+          />
+        </Suspense>
+      ),
+    },
+    {
+      value: "configs",
+      label: `Configs (${configs.length})`,
+      content: <PlatformConfigsTab configs={configs} query={q} sort={sort} />,
+    },
     {
       value: "instructions",
       label: "Install Instructions",
@@ -234,16 +242,7 @@ export default async function PlatformPage(props: PageProps) {
                 {
                   label: "Ports",
                   value: platform._count.ports,
-                  icon: <Icon name="lucide/star" />,
-                },
-                {
-                  label: "Submitted",
-                  value: platform.createdAt.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  }),
-                  icon: <Icon name="lucide/history" />,
+                  icon: <Icon name="lucide/layout-dashboard" />,
                 },
               ].filter(Boolean) as any
             }
@@ -261,11 +260,6 @@ export default async function PlatformPage(props: PageProps) {
                   }
                 : undefined
             }
-            footer={`Updated ${platform.updatedAt.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}`}
           />
 
           <Suspense fallback={<AdCardSkeleton className="min-h-[190px]" />}>

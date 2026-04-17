@@ -68,6 +68,11 @@ export const Sidebar = () => {
           prefix: <Icon name="lucide/blocks" />,
         },
         {
+          title: "Configs",
+          href: "/admin/configs",
+          prefix: <Icon name="lucide/dock" />,
+        },
+        {
           title: "Users",
           href: "/admin/users",
           prefix: <Icon name="lucide/users" />,
@@ -90,6 +95,11 @@ export const Sidebar = () => {
         {
           title: "Port Edits",
           href: "/admin/port-edits",
+          prefix: <Icon name="lucide/pencil" />,
+        },
+        {
+          title: "Config Edits",
+          href: "/admin/config-edits",
           prefix: <Icon name="lucide/pencil" />,
         },
         {

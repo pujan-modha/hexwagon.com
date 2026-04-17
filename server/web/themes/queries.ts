@@ -27,12 +27,7 @@ const getThemeOrderBy = (sort: string): Prisma.ThemeFindManyArgs["orderBy"] => {
     }
   }
 
-  return [
-    { isFeatured: "desc" },
-    { likes: { _count: "desc" } },
-    { order: "asc" },
-    { name: "asc" },
-  ]
+  return [{ isFeatured: "desc" }, { likes: { _count: "desc" } }, { order: "asc" }, { name: "asc" }]
 }
 
 export const searchThemes = async (search: FilterSchema, where?: Prisma.ThemeWhereInput) => {

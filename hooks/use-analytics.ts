@@ -29,6 +29,11 @@ type AnalyticsEvent =
     }
   | { event: "platform_liked"; properties: { platformSlug: string } }
   | {
+      event: "config_viewed"
+      properties: { configId: string; configSlug: string }
+    }
+  | { event: "config_liked"; properties: { configSlug: string } }
+  | {
       event: "search_performed"
       properties: { query: string; resultCount: number }
     }
@@ -47,7 +52,7 @@ type AnalyticsEvent =
   | {
       event: "website_clicked"
       properties: {
-        entityType: "theme" | "platform"
+        entityType: "theme" | "platform" | "config"
         entityId: string
         entitySlug: string
         url: string

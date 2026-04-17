@@ -11,14 +11,14 @@ type PageProps = {
 }
 
 export const metadata: Metadata = {
-  title: "Suggest a Theme or Platform",
-  description: "Suggest a new theme or platform for HexWagon.",
+  title: "Suggest a Theme, Platform, or Config",
+  description: "Suggest a new theme, platform, or config for HexWagon.",
   alternates: { ...metadataConfig.alternates, canonical: "/suggest" },
 }
 
 export default async function SuggestPage(props: PageProps) {
   const search = await props.searchParams
-  const type = search.type === "Platform" ? "Platform" : "Theme"
+  const type = search.type === "Platform" || search.type === "Config" ? search.type : "Theme"
 
   return (
     <>

@@ -63,6 +63,7 @@ const Header = ({ children, className, session, ...props }: HeaderProps) => {
           <nav className="flex flex-wrap gap-4 max-md:hidden">
             <NavLink href="/themes">Themes</NavLink>
             <NavLink href="/platforms">Platforms</NavLink>
+            <NavLink href="/configs">Configs</NavLink>
             <NavLink href="/advertise">Advertise</NavLink>
           </nav>
 
@@ -96,6 +97,9 @@ const Header = ({ children, className, session, ...props }: HeaderProps) => {
           </NavLink>
           <NavLink href="/platforms" className="text-base">
             Platforms
+          </NavLink>
+          <NavLink href="/configs" className="text-base">
+            Configs
           </NavLink>
           <NavLink href="/submit" className="text-base">
             Submit

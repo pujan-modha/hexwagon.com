@@ -56,9 +56,15 @@ enum PortStatus {
   PendingEdit
 }
 
+enum ConfigStatus {
+  Draft
+  Published
+}
+
 enum SuggestionType {
   Theme
   Platform
+  Config
 }
 
 enum SuggestionStatus {
@@ -115,6 +121,8 @@ model User {
   comments         Comment[]
   suggestions      Suggestion[]
   portEdits        PortEdit[]
+  configEdits      ConfigEdit[]
+  configs          Config[]
   maintainedThemes ThemeMaintainer[]
   themeMaintainerClaims         ThemeMaintainerClaim[] @relation("ThemeMaintainerClaimRequester")
   reviewedThemeMaintainerClaims ThemeMaintainerClaim[] @relation("ThemeMaintainerClaimReviewer")
@@ -307,6 +315,7 @@ model Theme {
 
   // Relations
   ports       Port[]
+  configThemes ConfigTheme[]
   colors      ColorPalette[]
   likes       Like[]
   reports     Report[]
@@ -344,6 +353,7 @@ model Platform {
 
   // Relations
   ports   Port[]
+  configPlatforms ConfigPlatform[]
   likes   Like[]
   reports Report[]
   targetedByAds Ad[] @relation("AdTargetPlatforms")
@@ -414,6 +424,95 @@ model Port {
   // Only one official port per theme+platform pair is enforced by a partial unique index in SQL migration.
 }
 
+model Config {
+  id             String       @id @default(cuid())
+  name           String       @db.Citext
+  slug           String       @unique
+  description    String?      @db.Text
+  seoTitle       String?
+  seoDescription String?      @db.Text
+  seoFaqs        String?      @db.Text
+  searchAliases  String?      @db.Text
+  content        String?      @db.Text
+  repositoryUrl  String?
+  websiteUrl     String?
+  screenshotUrl  String?
+  screenshots    Json?
+  fonts          Json?
+  faviconUrl     String?
+  license        String?
+  submitterNote  String?      @db.Text
+  isFeatured     Boolean      @default(false)
+  order          Int          @default(0)
+  pageviews      Int?         @default(0)
+  status         ConfigStatus @default(Draft)
+  authorId       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  author          User?          @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  configThemes    ConfigTheme[]
+  configPlatforms ConfigPlatform[]
+  likes           Like[]
+  comments        Comment[]
+  reports         Report[]
+  pendingEdits    ConfigEdit[]
+
+  // Indexes
+  @@index([authorId])
+  @@index([slug])
+  @@index([status])
+  @@index([isFeatured, order])
+}
+
+model ConfigEdit {
+  id         String     @id @default(cuid())
+  diff       Json
+  status     EditStatus @default(Pending)
+  adminNote  String?
+  config     Config     @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId   String
+  editor     User       @relation(fields: [editorId], references: [id])
+  editorId   String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([configId])
+  @@index([editorId])
+  @@index([status])
+}
+
+model ConfigTheme {
+  config    Config   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId  String
+  theme     Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  themeId   String
+  isPrimary Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([configId, themeId])
+  @@index([themeId])
+  @@index([themeId, isPrimary])
+}
+
+model ConfigPlatform {
+  config     Config   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId   String
+  platform   Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  platformId String
+  isPrimary  Boolean  @default(false)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([configId, platformId])
+  @@index([platformId])
+  @@index([platformId, isPrimary])
+}
+
 model Tag {
   slug      String   @id @unique
   createdAt DateTime @default(now())
@@ -479,8 +578,10 @@ model Comment {
   content   String    @db.Text
   author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId  String
-  port      Port      @relation(fields: [portId], references: [id], onDelete: Cascade)
-  portId    String
+  port      Port?     @relation(fields: [portId], references: [id], onDelete: Cascade)
+  portId    String?
+  config    Config?   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId  String?
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
   parentId  String?
   replies   Comment[] @relation("CommentReplies")
@@ -489,6 +590,7 @@ model Comment {
   updatedAt DateTime  @updatedAt
 
   @@index([portId])
+  @@index([configId])
   @@index([authorId])
   @@index([parentId])
 }
@@ -553,6 +655,8 @@ model Report {
   themeId    String?
   platform   Platform?  @relation(fields: [platformId], references: [id], onDelete: Cascade)
   platformId String?
+  config     Config?    @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId   String?
   comment    Comment?   @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId  String?
 
@@ -560,6 +664,7 @@ model Report {
   @@index([portId])
   @@index([themeId])
   @@index([platformId])
+  @@index([configId])
   @@index([commentId])
   @@index([status])
 }
@@ -577,13 +682,17 @@ model Like {
   themeId    String?
   platform   Platform? @relation(fields: [platformId], references: [id], onDelete: Cascade)
   platformId String?
+  config     Config?   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId   String?
 
   // Indexes
   @@unique([userId, portId])
   @@unique([userId, themeId])
   @@unique([userId, platformId])
+  @@unique([userId, configId])
   @@index([userId])
   @@index([portId])
   @@index([themeId])
   @@index([platformId])
+  @@index([configId])
 }

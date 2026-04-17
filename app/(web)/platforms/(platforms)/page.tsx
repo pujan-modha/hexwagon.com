@@ -43,17 +43,15 @@ export default async function PlatformsPage(props: PageProps) {
     : (search.sort ?? "default")
   const page = Number(search.page) || 1
 
-  const { platforms, totalCount } = await searchPlatforms(
-    {
-      q,
-      page,
-      perPage: PLATFORMS_PER_PAGE,
-      sort,
-      theme: [],
-      platform: [],
-      tag: [],
-    },
-  )
+  const { platforms, totalCount } = await searchPlatforms({
+    q,
+    page,
+    perPage: PLATFORMS_PER_PAGE,
+    sort,
+    theme: [],
+    platform: [],
+    tag: [],
+  })
 
   return (
     <>

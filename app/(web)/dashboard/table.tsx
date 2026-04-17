@@ -121,18 +121,6 @@ export const DashboardTable = ({
         },
       },
       {
-        accessorKey: "pageviews",
-        enableHiding: false,
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Views (last 30d)" />,
-        cell: ({ row }) => <Note>{row.getValue<number>("pageviews")?.toLocaleString()}</Note>,
-      },
-      {
-        accessorKey: "createdAt",
-        enableHiding: false,
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" />,
-        cell: ({ row }) => <Note>{formatDate(row.getValue<Date>("createdAt"))}</Note>,
-      },
-      {
         id: "actions",
         enableSorting: false,
         enableHiding: false,
@@ -167,10 +155,10 @@ export const DashboardTable = ({
   })
 
   return (
-    <DataTable table={table} emptyState="No ports found. Submit or claim a port to get started.">
+    <DataTable table={table} emptyState="No ports found. Submit a port or config to get started.">
       <DataTableToolbar table={table} filterFields={filterFields}>
         <Button size="md" variant="primary" prefix={<Icon name="lucide/plus" />} asChild>
-          <Link href="/submit">Submit a port</Link>
+          <Link href="/submit">Submit</Link>
         </Button>
 
         <Button size="md" variant="secondary" prefix={<Icon name="lucide/badge-check" />} asChild>

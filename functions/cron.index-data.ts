@@ -1,6 +1,6 @@
 import { millisecondsInMinute } from "date-fns/constants"
 import { config } from "~/config"
-import { indexPlatforms, indexPorts, indexThemes } from "~/lib/indexing"
+import { indexConfigs, indexPlatforms, indexPorts, indexThemes } from "~/lib/indexing"
 import { inngest } from "~/services/inngest"
 
 export const indexData = inngest.createFunction(
@@ -21,6 +21,10 @@ export const indexData = inngest.createFunction(
 
       step.run("index-platforms", async () => {
         await indexPlatforms({ where: { updatedAt: { gte: timeThreshold } } })
+      }),
+
+      step.run("index-configs", async () => {
+        await indexConfigs({ where: { updatedAt: { gte: timeThreshold } } })
       }),
     ])
 

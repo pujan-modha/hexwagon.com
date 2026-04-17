@@ -20,3 +20,5 @@ export const portHrefFromPlatform = (platformSlug: string, themeSlug: string, po
 
 export const canonicalPortHref = (themeSlug: string, platformSlug: string, portId: string) =>
   portHrefFromTheme(themeSlug, platformSlug, portId)
+
+export const configHref = (slug: string) => `/configs/${slug}`

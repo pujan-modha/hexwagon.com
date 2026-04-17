@@ -1,12 +1,8 @@
 "use server"
 
 import { z } from "zod"
-import {
-  MAX_IMAGE_UPLOAD_BYTES,
-  isAllowedImageMimeType,
-  uploadFavicon,
-  uploadImageFile,
-} from "~/lib/media"
+import { MAX_IMAGE_UPLOAD_BYTES } from "~/lib/media-constants"
+import { isAllowedImageMimeType, uploadFavicon, uploadImageFile } from "~/lib/media"
 import { userProcedure } from "~/lib/safe-actions"
 
 const pathSchema = z
@@ -14,7 +10,7 @@ const pathSchema = z
   .min(1)
   .regex(/^[a-z0-9/_-]+$/i)
   .refine(
-    value => /^(themes|platforms|ports|ads|users|reports)\//i.test(value),
+    value => /^(themes|platforms|ports|configs|ads|users|reports)\//i.test(value),
     "Invalid storage path",
   )
 

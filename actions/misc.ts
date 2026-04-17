@@ -1,6 +1,6 @@
 "use server"
 
-import { indexPlatforms, indexPorts, indexThemes } from "~/lib/indexing"
+import { indexConfigs, indexPlatforms, indexPorts, indexThemes } from "~/lib/indexing"
 import { adminProcedure } from "~/lib/safe-actions"
 
 export const indexAllData = adminProcedure.createServerAction().handler(async () => {
@@ -8,6 +8,7 @@ export const indexAllData = adminProcedure.createServerAction().handler(async ()
     indexPorts({ replace: true }),
     indexThemes({ replace: true }),
     indexPlatforms({ replace: true }),
+    indexConfigs({ replace: true }),
   ])
 })
 

@@ -6,7 +6,7 @@ import { userProcedure } from "~/lib/safe-actions"
 import { db } from "~/services/db"
 
 const likeEntitySchema = z.object({
-  entityType: z.enum(["port", "theme", "platform"]),
+  entityType: z.enum(["port", "theme", "platform", "config"]),
   entityId: z.string().min(1),
 })
 
@@ -23,7 +23,11 @@ const getLikeWhere = (
     return { userId, themeId: entityId }
   }
 
-  return { userId, platformId: entityId }
+  if (entityType === "platform") {
+    return { userId, platformId: entityId }
+  }
+
+  return { userId, configId: entityId }
 }
 
 export const toggleLike = userProcedure
@@ -62,10 +66,21 @@ export const toggleLike = userProcedure
         return { liked: true }
       }
 
+      if (entityType === "platform") {
+        await db.like.create({
+          data: {
+            user: { connect: { id: user.id } },
+            platform: { connect: { id: entityId } },
+          },
+        })
+
+        return { liked: true }
+      }
+
       await db.like.create({
         data: {
           user: { connect: { id: user.id } },
-          platform: { connect: { id: entityId } },
+          config: { connect: { id: entityId } },
         },
       })
     } catch (error) {

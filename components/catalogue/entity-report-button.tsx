@@ -7,7 +7,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { useServerAction } from "zsa-react"
-import { reportPlatform, reportPort, reportTheme } from "~/actions/report"
+import { reportConfig, reportPlatform, reportPort, reportTheme } from "~/actions/report"
 import { Button } from "~/components/common/button"
 import {
   Dialog,
@@ -33,7 +33,7 @@ import { LoginDialog } from "~/components/web/auth/login-dialog"
 import { useSession } from "~/lib/auth-client"
 import { type ReportSchema, reportSchema } from "~/server/web/shared/schema"
 
-type EntityType = "theme" | "platform" | "port"
+type EntityType = "theme" | "platform" | "port" | "config"
 
 type EntityReportButtonProps = {
   entityType: EntityType
@@ -73,8 +73,16 @@ export const EntityReportButton = ({
     onSuccess,
     onError,
   })
+  const configAction = useServerAction(reportConfig, {
+    onSuccess,
+    onError,
+  })
 
-  const isPending = portAction.isPending || themeAction.isPending || platformAction.isPending
+  const isPending =
+    portAction.isPending ||
+    themeAction.isPending ||
+    platformAction.isPending ||
+    configAction.isPending
 
   const handleSubmit = form.handleSubmit(data => {
     if (entityType === "port") {
@@ -87,7 +95,12 @@ export const EntityReportButton = ({
       return
     }
 
-    platformAction.execute({ platformId: entityId, ...data })
+    if (entityType === "platform") {
+      platformAction.execute({ platformId: entityId, ...data })
+      return
+    }
+
+    configAction.execute({ configId: entityId, ...data })
   })
 
   if (!session?.user) {

@@ -43,17 +43,15 @@ export default async function ThemesPage(props: PageProps) {
     : (search.sort ?? "default")
   const page = Number(search.page) || 1
 
-  const { themes, totalCount } = await searchThemes(
-    {
-      q,
-      page,
-      perPage: THEMES_PER_PAGE,
-      sort,
-      theme: [],
-      platform: [],
-      tag: [],
-    },
-  )
+  const { themes, totalCount } = await searchThemes({
+    q,
+    page,
+    perPage: THEMES_PER_PAGE,
+    sort,
+    theme: [],
+    platform: [],
+    tag: [],
+  })
 
   return (
     <>

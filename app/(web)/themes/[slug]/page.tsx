@@ -12,6 +12,7 @@ import { EntityLikeButton } from "~/components/catalogue/entity-like-button"
 import { EntityReportButton } from "~/components/catalogue/entity-report-button"
 import { EntityTabs } from "~/components/catalogue/entity-tabs"
 import { ThemeClaimButton } from "~/components/catalogue/theme-claim-button"
+import { ThemeConfigsTab } from "~/components/catalogue/theme-configs-tab"
 import { ThemeGuidelinesTab } from "~/components/catalogue/theme-guidelines-tab"
 import { ThemePlatformsTab } from "~/components/catalogue/theme-platforms-tab"
 import { Button } from "~/components/common/button"
@@ -26,6 +27,7 @@ import { config } from "~/config"
 import { metadataConfig } from "~/config/metadata"
 import { auth } from "~/lib/auth"
 import { buildKeywords, buildRobots, hasSeoQueryState, parseSearchAliases } from "~/lib/seo"
+import { findConfigsByTheme } from "~/server/web/configs/queries"
 import {
   findFeaturedPlatforms,
   findPlatforms,
@@ -157,6 +159,7 @@ export default async function ThemePage(props: PageProps) {
     (platformItem, index, allPlatforms) =>
       allPlatforms.findIndex(candidate => candidate.id === platformItem.id) === index,
   )
+  const configs = await findConfigsByTheme(theme.slug, { q, sort })
 
   const paletteCount = new Set(theme.colors.map(color => color.paletteName || "Default")).size
   const isMaintainer =
@@ -164,20 +167,25 @@ export default async function ThemePage(props: PageProps) {
     theme.maintainers.some(maintainer => maintainer.userId === session?.user.id)
 
   const tabs = [
-        {
-          value: "platforms",
-          label: `Platforms (${theme._count.ports})`,
-          content: (
-            <Suspense fallback={<div>Loading...</div>}>
-              <ThemePlatformsTab
-                platforms={linkedPlatforms}
-                themeSlug={theme.slug}
-                query={q}
-                sort={sort}
-              />
-            </Suspense>
-          ),
-        },
+    {
+      value: "platforms",
+      label: `Platforms (${theme._count.ports})`,
+      content: (
+        <Suspense fallback={<div>Loading...</div>}>
+          <ThemePlatformsTab
+            platforms={linkedPlatforms}
+            themeSlug={theme.slug}
+            query={q}
+            sort={sort}
+          />
+        </Suspense>
+      ),
+    },
+    {
+      value: "configs",
+      label: `Configs (${configs.length})`,
+      content: <ThemeConfigsTab configs={configs} query={q} sort={sort} />,
+    },
     {
       value: "colors",
       label: `Color Palettes (${paletteCount})`,
@@ -265,16 +273,7 @@ export default async function ThemePage(props: PageProps) {
                 {
                   label: "Ports",
                   value: theme._count.ports,
-                  icon: <Icon name="lucide/star" />,
-                },
-                {
-                  label: "Submitted",
-                  value: theme.createdAt.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  }),
-                  icon: <Icon name="lucide/history" />,
+                  icon: <Icon name="lucide/layout-dashboard" />,
                 },
               ].filter(Boolean) as any
             }
@@ -292,11 +291,6 @@ export default async function ThemePage(props: PageProps) {
                   }
                 : undefined
             }
-            footer={`Updated ${theme.updatedAt.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}`}
           />
 
           <Suspense fallback={<AdCardSkeleton className="min-h-[190px]" />}>

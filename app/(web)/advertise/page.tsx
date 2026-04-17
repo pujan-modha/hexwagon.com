@@ -31,7 +31,7 @@ export default async function AdvertisePage() {
         <IntroTitle>{`${metadata.title}`}</IntroTitle>
 
         <IntroDescription className="max-w-3xl">
-          Reach developers exploring themes, platforms, and ports. Check our{" "}
+          Reach developers exploring theme ports and dotfiles. Check our{" "}
           <ExternalLink href={config.links.analytics}>real-time analytics</ExternalLink> to see the
           impact on your business.
         </IntroDescription>

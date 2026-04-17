@@ -1,5 +1,5 @@
 import { formatDate, formatNumber, isTruthy } from "@primoui/utils"
-import { formatDistanceToNowStrict, formatISO } from "date-fns"
+import { formatDistanceToNowStrict } from "date-fns"
 import type { ComponentProps } from "react"
 import { Button } from "~/components/common/button"
 import { Card } from "~/components/common/card"
@@ -89,14 +89,7 @@ export const RepositoryDetails = ({ className, tool, ...props }: RepositoryDetai
           </ExternalLink>
         </Button>
       )}
-
-      <p className="text-muted-foreground/75 text-[11px]">
-        Auto-fetched from GitHub{" "}
-        <time dateTime={formatISO(tool.updatedAt)} className="font-medium text-muted-foreground">
-          {formatDistanceToNowStrict(tool.updatedAt, { addSuffix: true })}
-        </time>
-        .
-      </p>
+      <p className="text-muted-foreground/75 text-[11px]">Auto-fetched from GitHub.</p>
     </Card>
   )
 }

@@ -1,10 +1,13 @@
 "use client"
 
+import { useRef } from "react"
 import { Button } from "~/components/common/button"
 import { Input } from "~/components/common/input"
 import { Label } from "~/components/common/label"
 import { Switch } from "~/components/common/switch"
 import { Textarea } from "~/components/common/textarea"
+import { ConfigFontFields } from "~/components/submission/config-font-fields"
+import { ConfigScreenshotFields } from "~/components/submission/config-screenshot-fields"
 import { LICENSE_SUGGESTIONS } from "~/config/licenses"
 import { useSubmissionStore } from "~/stores/submission-store"
 
@@ -15,66 +18,74 @@ type StepDetailsProps = {
 
 const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
   const {
+    kind,
     name,
     description,
     content,
     repositoryUrl,
     license,
+    fonts,
+    screenshots,
     submitterNote,
     newsletterOptIn,
-    setPortDetails,
+    setDetails,
   } = useSubmissionStore()
+
+  const isConfig = kind === "config"
+  const configUploadPathRef = useRef(`configs/submissions/${Date.now()}`)
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="port-name">Port Name</Label>
+        <Label htmlFor="submission-name">{isConfig ? "Config Name" : "Port Name"}</Label>
         <Input
-          id="port-name"
+          id="submission-name"
           value={name}
-          onChange={e => setPortDetails({ name: e.target.value })}
-          placeholder="e.g., Dracula for VS Code"
+          onChange={e => setDetails({ name: e.target.value })}
+          placeholder={isConfig ? "e.g., Catppuccin dotfiles" : "e.g., Dracula for VS Code"}
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="port-description">Short Description</Label>
+        <Label htmlFor="submission-description">Short Description</Label>
         <Input
-          id="port-description"
+          id="submission-description"
           value={description}
-          onChange={e => setPortDetails({ description: e.target.value })}
-          placeholder="Brief description of this port"
+          onChange={e => setDetails({ description: e.target.value })}
+          placeholder={
+            isConfig ? "Brief description of this config" : "Brief description of this port"
+          }
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="port-content">Full Description (Markdown)</Label>
+        <Label htmlFor="submission-content">Full Description (Markdown)</Label>
         <Textarea
-          id="port-content"
+          id="submission-content"
           value={content}
-          onChange={e => setPortDetails({ content: e.target.value })}
-          placeholder="Detailed description, installation instructions, etc."
+          onChange={e => setDetails({ content: e.target.value })}
+          placeholder="Detailed description, installation instructions, setup notes, etc."
           rows={6}
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="repository-url">Port URL</Label>
+        <Label htmlFor="repository-url">{isConfig ? "Repository URL" : "Port URL"}</Label>
         <Input
           id="repository-url"
           type="url"
           value={repositoryUrl}
-          onChange={e => setPortDetails({ repositoryUrl: e.target.value })}
+          onChange={e => setDetails({ repositoryUrl: e.target.value })}
           placeholder="https://example.com/..."
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="port-license">License</Label>
+        <Label htmlFor="submission-license">License {isConfig ? "(optional)" : ""}</Label>
         <Input
-          id="port-license"
+          id="submission-license"
           value={license}
-          onChange={e => setPortDetails({ license: e.target.value })}
+          onChange={e => setDetails({ license: e.target.value })}
           placeholder="MIT"
           list="submission-license-suggestions"
         />
@@ -85,13 +96,28 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         </datalist>
       </div>
 
+      {isConfig ? (
+        <>
+          <ConfigFontFields
+            fonts={fonts}
+            onChange={nextFonts => setDetails({ fonts: nextFonts })}
+          />
+
+          <ConfigScreenshotFields
+            screenshots={screenshots}
+            onChange={nextScreenshots => setDetails({ screenshots: nextScreenshots })}
+            uploadPath={configUploadPathRef.current}
+          />
+        </>
+      ) : null}
+
       <div className="flex flex-col gap-2">
         <Label htmlFor="submitter-note">Note for moderators</Label>
         <Textarea
           id="submitter-note"
           value={submitterNote}
-          onChange={e => setPortDetails({ submitterNote: e.target.value })}
-          placeholder="Anything the review team should know?"
+          onChange={e => setDetails({ submitterNote: e.target.value })}
+          placeholder="Anything review team should know?"
           rows={3}
         />
       </div>
@@ -100,7 +126,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         <Switch
           id="newsletter-opt-in"
           checked={newsletterOptIn}
-          onCheckedChange={checked => setPortDetails({ newsletterOptIn: checked })}
+          onCheckedChange={checked => setDetails({ newsletterOptIn: checked })}
         />
         <Label htmlFor="newsletter-opt-in">Subscribe to newsletter</Label>
       </div>
@@ -109,7 +135,7 @@ const StepDetails = ({ onNext, onBack }: StepDetailsProps) => {
         <Button variant="secondary" onClick={onBack}>
           Back
         </Button>
-        <Button onClick={onNext} disabled={!name || !repositoryUrl || !license}>
+        <Button onClick={onNext} disabled={!name || !repositoryUrl || (!isConfig && !license)}>
           Next
         </Button>
       </div>

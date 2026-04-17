@@ -10,7 +10,7 @@ import { db } from "~/services/db"
 export const addComment = userProcedure
   .createServerAction()
   .input(commentSchema)
-  .handler(async ({ input: { portId, parentId, content }, ctx: { user } }) => {
+  .handler(async ({ input: { portId, configId, parentId, content }, ctx: { user } }) => {
     const ip = await getIP()
 
     if (await isRateLimited(`comment:${ip}`, "comment")) {
@@ -21,13 +21,21 @@ export const addComment = userProcedure
       data: {
         content,
         portId,
+        configId,
         parentId,
         authorId: user.id,
       },
     })
 
     revalidateTag("comments", "max")
-    revalidateTag(`comments-${portId}`, "max")
+
+    if (portId) {
+      revalidateTag(`comments-${portId}`, "max")
+    }
+
+    if (configId) {
+      revalidateTag(`config-comments-${configId}`, "max")
+    }
 
     return comment
   })
@@ -38,7 +46,7 @@ export const deleteComment = userProcedure
   .handler(async ({ input: { id }, ctx: { user } }) => {
     const comment = await db.comment.findUnique({
       where: { id },
-      select: { authorId: true, portId: true },
+      select: { authorId: true, portId: true, configId: true },
     })
 
     if (!comment) {
@@ -52,7 +60,14 @@ export const deleteComment = userProcedure
     await db.comment.delete({ where: { id } })
 
     revalidateTag("comments", "max")
-    revalidateTag(`comments-${comment.portId}`, "max")
+
+    if (comment.portId) {
+      revalidateTag(`comments-${comment.portId}`, "max")
+    }
+
+    if (comment.configId) {
+      revalidateTag(`config-comments-${comment.configId}`, "max")
+    }
 
     return true
   })

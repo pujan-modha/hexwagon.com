@@ -9,7 +9,8 @@ import { Textarea } from "~/components/common/textarea"
 import { useAuth } from "~/lib/auth-client"
 
 type CommentFormProps = {
-  portId: string
+  portId?: string
+  configId?: string
   parentId?: string
   onSuccess?: () => void
   onCancel?: () => void
@@ -18,6 +19,7 @@ type CommentFormProps = {
 
 const CommentForm = ({
   portId,
+  configId,
   parentId,
   onSuccess,
   onCancel,
@@ -37,7 +39,7 @@ const CommentForm = ({
 
     setIsLoading(true)
     try {
-      await addComment({ portId, parentId, content })
+      await addComment({ portId, configId, parentId, content })
       setContent("")
       onSuccess?.()
       toast.success("Comment added")

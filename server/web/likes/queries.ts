@@ -1,4 +1,5 @@
-import { PortStatus } from "@prisma/client"
+import { ConfigStatus, PortStatus } from "@prisma/client"
+import { configManyPayload } from "~/server/web/configs/payloads"
 import { platformManyPayload } from "~/server/web/platforms/payloads"
 import { portManyPayload } from "~/server/web/ports/payloads"
 import { themeManyPayload } from "~/server/web/themes/payloads"
@@ -7,7 +8,7 @@ import { db } from "~/services/db"
 const DASHBOARD_LIKES_LIMIT = 12
 
 export const findUserLikedEntities = async (userId: string) => {
-  const [portLikes, themeLikes, platformLikes] = await db.$transaction([
+  const [portLikes, themeLikes, platformLikes, configLikes] = await db.$transaction([
     db.like.findMany({
       where: {
         userId,
@@ -44,6 +45,19 @@ export const findUserLikedEntities = async (userId: string) => {
         platform: { select: platformManyPayload },
       },
     }),
+
+    db.like.findMany({
+      where: {
+        userId,
+        configId: { not: null },
+        config: { is: { status: ConfigStatus.Published } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: DASHBOARD_LIKES_LIMIT,
+      select: {
+        config: { select: configManyPayload },
+      },
+    }),
   ])
 
   const ports = portLikes
@@ -58,5 +72,9 @@ export const findUserLikedEntities = async (userId: string) => {
     .map(item => item.platform)
     .filter((item): item is NonNullable<typeof item> => Boolean(item))
 
-  return { ports, themes, platforms }
+  const configs = configLikes
+    .map(item => item.config)
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+
+  return { ports, themes, platforms, configs }
 }

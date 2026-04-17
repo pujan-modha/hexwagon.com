@@ -13,7 +13,7 @@ import { Textarea } from "~/components/common/textarea"
 import { useAuth } from "~/lib/auth-client"
 
 type SuggestionFormProps = {
-  defaultType?: "Theme" | "Platform"
+  defaultType?: "Theme" | "Platform" | "Config"
   onSuccess?: () => void
 }
 
@@ -85,6 +85,12 @@ const SuggestionForm = ({ defaultType = "Theme", onSuccess }: SuggestionFormProp
               Platform
             </Label>
           </div>
+          <div className="flex items-center gap-2">
+            <RadioGroupItem value="Config" id="type-config" />
+            <Label htmlFor="type-config" className="font-normal">
+              Config
+            </Label>
+          </div>
         </RadioGroup>
       </div>
 
@@ -94,7 +100,7 @@ const SuggestionForm = ({ defaultType = "Theme", onSuccess }: SuggestionFormProp
           id="suggestion-name"
           value={name}
           onChange={e => setName(e.target.value)}
-          placeholder={`e.g., ${type === "Theme" ? "Nord" : "VS Code"}`}
+          placeholder={`e.g., ${type === "Theme" ? "Nord" : type === "Platform" ? "VS Code" : "LazyVim Starter"}`}
         />
       </div>
 

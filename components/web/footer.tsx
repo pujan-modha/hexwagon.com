@@ -108,7 +108,7 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
           <NavLink href="/about">About Us</NavLink>
           <NavLink href="/blog">Blog</NavLink>
           <NavLink href="/advertise">Advertise</NavLink>
-          <NavLink href="/submit">Submit a Port</NavLink>
+          <NavLink href="/submit">Submit</NavLink>
         </Stack>
       </div>
 

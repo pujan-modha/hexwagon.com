@@ -1,18 +1,18 @@
-import { getRandomDigits } from "@primoui/utils";
-import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
-import { createAuthMiddleware } from "better-auth/api";
-import { admin, magicLink, oneTimeToken } from "better-auth/plugins";
-import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { cache } from "react";
-import { config } from "~/config";
-import { claimsConfig } from "~/config/claims";
-import EmailMagicLink from "~/emails/magic-link";
-import EmailWelcome from "~/emails/welcome";
-import { env } from "~/env";
-import { sendEmail } from "~/lib/email";
-import { db } from "~/services/db";
+import { getRandomDigits } from "@primoui/utils"
+import { betterAuth } from "better-auth"
+import { prismaAdapter } from "better-auth/adapters/prisma"
+import { createAuthMiddleware } from "better-auth/api"
+import { admin, magicLink, oneTimeToken } from "better-auth/plugins"
+import { revalidatePath } from "next/cache"
+import { headers } from "next/headers"
+import { cache } from "react"
+import { config } from "~/config"
+import { claimsConfig } from "~/config/claims"
+import EmailMagicLink from "~/emails/magic-link"
+import EmailWelcome from "~/emails/welcome"
+import { env } from "~/env"
+import { sendEmail } from "~/lib/email"
+import { db } from "~/services/db"
 
 export const auth = betterAuth({
   database: prismaAdapter(db, {
@@ -45,25 +45,25 @@ export const auth = betterAuth({
 
   hooks: {
     after: createAuthMiddleware(async ({ path, context }) => {
-      const { newSession, responseHeaders } = context;
+      const { newSession, responseHeaders } = context
 
       // Revalidate the callback URL after login
       if (path.startsWith("/callback/:id")) {
-        const callbackURL = responseHeaders?.get("location");
+        const callbackURL = responseHeaders?.get("location")
 
         if (callbackURL) {
-          revalidatePath(callbackURL);
+          revalidatePath(callbackURL)
         }
       }
 
       // Send a message to the user after registration
       if (path.startsWith("/sign-up")) {
         if (newSession) {
-          const to = newSession.user.email;
-          const name = newSession.user.name;
-          const subject = `Welcome to ${config.site.name}`;
+          const to = newSession.user.email
+          const name = newSession.user.name
+          const subject = `Welcome to ${config.site.name}`
 
-          await sendEmail({ to, subject, react: EmailWelcome({ to, name }) });
+          await sendEmail({ to, subject, react: EmailWelcome({ to, name }) })
         }
       }
     }),
@@ -72,10 +72,10 @@ export const auth = betterAuth({
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        const to = email;
-        const subject = `Your ${config.site.name} Login Link`;
+        const to = email
+        const subject = `Your ${config.site.name} Login Link`
 
-        await sendEmail({ to, subject, react: EmailMagicLink({ to, url }) });
+        await sendEmail({ to, subject, react: EmailMagicLink({ to, url }) })
       },
     }),
 
@@ -86,10 +86,10 @@ export const auth = betterAuth({
 
     admin(),
   ],
-});
+})
 
 export const getServerSession = cache(async () => {
   return auth.api.getSession({
     headers: await headers(),
-  });
-});
+  })
+})

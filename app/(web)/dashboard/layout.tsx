@@ -6,7 +6,7 @@ import { buildRobots } from "~/lib/seo"
 
 export const metadata: Metadata = {
   title: "Dashboard",
-  description: "Manage your account and theme port submissions.",
+  description: "Manage your account and submissions.",
   openGraph: { ...metadataConfig.openGraph, url: "/dashboard" },
   alternates: { ...metadataConfig.alternates, canonical: "/dashboard" },
   robots: buildRobots({ index: false, follow: true }),

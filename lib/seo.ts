@@ -206,7 +206,7 @@ export const buildCombinationMetadata = ({
     faqs,
     aliases,
     notes: override?.notes ?? null,
-    shouldIndex: override?.indexOverride === "noindex" ? false : true,
+    shouldIndex: override?.indexOverride !== "noindex",
   }
 }
 

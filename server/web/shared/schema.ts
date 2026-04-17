@@ -22,7 +22,7 @@ export const filterParamsSchema = {
 export const filterParamsCache = createSearchParamsCache(filterParamsSchema)
 export type FilterSchema = Awaited<ReturnType<typeof filterParamsCache.parse>>
 
-const portUrlMessage = "Please enter a valid port URL"
+const repositoryUrlMessage = "Please enter a valid repository URL"
 const allowedAdImageMimeTypes = [
   "image/png",
   "image/jpeg",
@@ -34,7 +34,21 @@ const allowedAdImageMimeTypes = [
 ]
 const maxAdImageSizeBytes = 8 * 1024 * 1024
 
-export const repositorySchema = z.string().min(1, "Port URL is required").url(portUrlMessage).trim()
+export const repositorySchema = z
+  .string()
+  .min(1, "Repository URL is required")
+  .url(repositoryUrlMessage)
+  .trim()
+
+export const configFontSchema = z.object({
+  name: z.string().trim().min(1, "Font name is required").max(120),
+  url: z.string().trim().url("Please enter a valid font URL"),
+})
+
+export const configScreenshotSchema = z.string().trim().url("Please enter a valid screenshot URL")
+
+export const configFontsSchema = z.array(configFontSchema).max(12)
+export const configScreenshotsSchema = z.array(configScreenshotSchema).max(12)
 
 export const submitPortSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -48,6 +62,20 @@ export const submitPortSchema = z.object({
   license: z.string().trim().min(1, "License is required").max(120),
 })
 
+export const submitConfigSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  content: z.string().optional(),
+  repositoryUrl: repositorySchema,
+  submitterNote: z.string().max(200),
+  newsletterOptIn: z.boolean().optional().default(true),
+  themeIds: z.array(z.string()).min(1, "Select at least one theme"),
+  platformIds: z.array(z.string()).min(1, "Select at least one platform"),
+  license: z.string().trim().max(120).optional().or(z.literal("")),
+  fonts: configFontsSchema.default([]),
+  screenshots: configScreenshotsSchema.default([]),
+})
+
 export const submitSuggestionSchema = z.object({
   type: z.nativeEnum(SuggestionType),
   name: z.string().min(1, "Name is required"),
@@ -55,11 +83,21 @@ export const submitSuggestionSchema = z.object({
   websiteUrl: z.string().url().optional().or(z.literal("")),
 })
 
-export const commentSchema = z.object({
-  content: z.string().min(1, "Comment cannot be empty").max(2000),
-  portId: z.string().min(1),
-  parentId: z.string().optional(),
-})
+export const commentSchema = z
+  .object({
+    content: z.string().min(1, "Comment cannot be empty").max(2000),
+    portId: z.string().min(1).optional(),
+    configId: z.string().min(1).optional(),
+    parentId: z.string().optional(),
+  })
+  .refine(
+    value =>
+      (Boolean(value.portId) && !value.configId) || (!value.portId && Boolean(value.configId)),
+    {
+      message: "Comment must belong to either port or config",
+      path: ["portId"],
+    },
+  )
 
 export const newsletterSchema = z.object({
   captcha: z.literal("").optional(),
@@ -100,6 +138,7 @@ export const adDetailsSchema = z.object({
 })
 
 export type SubmitPortSchema = z.infer<typeof submitPortSchema>
+export type SubmitConfigSchema = z.infer<typeof submitConfigSchema>
 export type SubmitSuggestionSchema = z.infer<typeof submitSuggestionSchema>
 export type CommentSchema = z.infer<typeof commentSchema>
 export type NewsletterSchema = z.infer<typeof newsletterSchema>

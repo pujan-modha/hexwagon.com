@@ -371,7 +371,9 @@ export const EntitySearchForm = ({
         </div>
       </div>
 
-      {typeof document !== "undefined" && (showThemeDropdown || showPlatformDropdown) && dropdownAnchor
+      {typeof document !== "undefined" &&
+      (showThemeDropdown || showPlatformDropdown) &&
+      dropdownAnchor
         ? createPortal(
             <div
               ref={dropdownRef}

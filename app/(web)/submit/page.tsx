@@ -5,8 +5,8 @@ import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { metadataConfig } from "~/config/metadata"
 
-const submitTitle = "Submit a Theme Port"
-const submitDescription = "Submit a new theme port to HexWagon."
+const submitTitle = "Submit a Resource"
+const submitDescription = "Submit a new theme port or config to HexWagon."
 
 export const metadata: Metadata = {
   title: submitTitle,

@@ -100,7 +100,14 @@ const getPageData = async ({
       }),
     ])
 
-  return { theme, platform, filteredPorts, publishedPorts, themePortsElsewhere, platformAlternatives }
+  return {
+    theme,
+    platform,
+    filteredPorts,
+    publishedPorts,
+    themePortsElsewhere,
+    platformAlternatives,
+  }
 }
 
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
@@ -247,7 +254,7 @@ export default async function ThemePlatformPage(props: PageProps) {
 
               <div className="flex flex-wrap gap-3">
                 <Button size="md" asChild>
-                  <Link href="/submit">Submit a Port</Link>
+                  <Link href="/submit?type=port">Submit a Port</Link>
                 </Button>
                 <Button size="md" variant="secondary" asChild>
                   <Link href="/suggest?type=Theme">Suggest a Theme</Link>
@@ -260,7 +267,10 @@ export default async function ThemePlatformPage(props: PageProps) {
                   <ul className="flex flex-col gap-3 text-sm text-secondary-foreground">
                     {otherThemePortLinks.map(item => (
                       <li key={item.href}>
-                        <Link href={item.href} className="font-medium text-foreground hover:text-primary">
+                        <Link
+                          href={item.href}
+                          className="font-medium text-foreground hover:text-primary"
+                        >
                           {item.label}
                         </Link>
                         {item.description ? <p>{item.description}</p> : null}
@@ -278,7 +288,10 @@ export default async function ThemePlatformPage(props: PageProps) {
                   <ul className="flex flex-col gap-3 text-sm text-secondary-foreground">
                     {platformAlternativeLinks.map(item => (
                       <li key={item.href}>
-                        <Link href={item.href} className="font-medium text-foreground hover:text-primary">
+                        <Link
+                          href={item.href}
+                          className="font-medium text-foreground hover:text-primary"
+                        >
                           {item.label}
                         </Link>
                         {item.description ? <p>{item.description}</p> : null}

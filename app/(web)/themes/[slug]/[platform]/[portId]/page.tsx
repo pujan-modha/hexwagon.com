@@ -21,8 +21,8 @@ import {
   buildFaqJsonLd,
   buildKeywords,
   mergeFaqs,
-  parseSeoFaqs,
   parseSearchAliases,
+  parseSeoFaqs,
 } from "~/lib/seo"
 import { findCommentsByPort } from "~/server/web/comments/queries"
 import { findPlatform } from "~/server/web/platforms/queries"
@@ -185,7 +185,7 @@ export default async function ThemePortPage(props: PageProps) {
             <h2 className="mb-4 text-xl font-semibold">Comments</h2>
             <CommentForm portId={port.id} />
             <div className="mt-6">
-              <CommentThread comments={comments} portId={port.id} />
+              <CommentThread comments={comments} />
             </div>
           </div>
         </Section.Content>
@@ -207,22 +207,8 @@ export default async function ThemePortPage(props: PageProps) {
                   link: `/platforms/${port.platform.slug}`,
                   icon: <Icon name="lucide/globe" />,
                 },
-                {
-                  label: "Submitted",
-                  value: port.createdAt.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  }),
-                  icon: <Icon name="lucide/history" />,
-                },
               ].filter(Boolean) as any
             }
-            footer={`Updated ${port.updatedAt.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}`}
           />
 
           <Suspense fallback={<AdCardSkeleton className="min-h-[190px]" />}>

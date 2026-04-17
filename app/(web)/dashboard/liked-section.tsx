@@ -1,5 +1,6 @@
 import { DashboardUnlikeButton } from "~/app/(web)/dashboard/unlike-button"
 import { CatalogueGrid } from "~/components/catalogue/catalogue-grid"
+import { ConfigCard } from "~/components/catalogue/config-card"
 import { PlatformCard } from "~/components/catalogue/platform-card"
 import { PortCard } from "~/components/catalogue/port-card"
 import { ThemeCard } from "~/components/catalogue/theme-card"
@@ -20,7 +21,7 @@ export const DashboardLikedSection = ({ liked }: LikedSectionProps) => {
       <div>
         <h2 className="text-xl font-semibold tracking-tight">Your likes</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Saved ports, themes, and platforms, sorted by most recently liked.
+          Saved ports, themes, platforms, and configs, sorted by most recently liked.
         </p>
       </div>
 
@@ -75,6 +76,23 @@ export const DashboardLikedSection = ({ liked }: LikedSectionProps) => {
           </CatalogueGrid>
         ) : (
           <EmptyState message="You have not liked any platforms yet." />
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Liked Configs ({liked.configs.length})</h3>
+
+        {liked.configs.length > 0 ? (
+          <CatalogueGrid>
+            {liked.configs.map(config => (
+              <div key={config.id} className="relative">
+                <DashboardUnlikeButton entityType="config" entityId={config.id} />
+                <ConfigCard config={config} />
+              </div>
+            ))}
+          </CatalogueGrid>
+        ) : (
+          <EmptyState message="You have not liked any configs yet." />
         )}
       </div>
     </section>

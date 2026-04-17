@@ -25,14 +25,7 @@ const getPortOrderBy = (sort: string): Prisma.PortFindManyArgs["orderBy"] => {
       }
 
       if (
-        [
-          "name",
-          "score",
-          "updatedAt",
-          "createdAt",
-          "publishedAt",
-          "isFeatured",
-        ].includes(sortBy)
+        ["name", "score", "updatedAt", "createdAt", "publishedAt", "isFeatured"].includes(sortBy)
       ) {
         return { [sortBy]: sortOrder } as Prisma.PortFindManyArgs["orderBy"]
       }

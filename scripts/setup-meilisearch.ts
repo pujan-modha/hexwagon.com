@@ -1,5 +1,5 @@
 import { config } from "~/config"
-import { indexPlatforms, indexPorts, indexThemes } from "~/lib/indexing"
+import { indexConfigs, indexPlatforms, indexPorts, indexThemes } from "~/lib/indexing"
 import { meili } from "~/services/meilisearch"
 
 const siteSlug = config.site.slug
@@ -9,12 +9,22 @@ const indexes = [
     name: "ports",
     primaryKey: "id",
     settings: {
-      searchableAttributes: ["name", "description", "theme", "platform", "tags"],
+      searchableAttributes: [
+        "name",
+        "description",
+        "searchAliases",
+        "searchTerms",
+        "theme",
+        "platform",
+        "tags",
+      ],
       displayedAttributes: [
         "id",
         "name",
         "slug",
         "description",
+        "searchAliases",
+        "searchTerms",
         "websiteUrl",
         "repositoryUrl",
         "faviconUrl",
@@ -47,12 +57,14 @@ const indexes = [
     name: "themes",
     primaryKey: "id",
     settings: {
-      searchableAttributes: ["name", "description"],
+      searchableAttributes: ["name", "description", "searchAliases", "searchTerms"],
       displayedAttributes: [
         "id",
         "name",
         "slug",
         "description",
+        "searchAliases",
+        "searchTerms",
         "websiteUrl",
         "faviconUrl",
         "isVerified",
@@ -78,12 +90,14 @@ const indexes = [
     name: "platforms",
     primaryKey: "id",
     settings: {
-      searchableAttributes: ["name", "description"],
+      searchableAttributes: ["name", "description", "searchAliases", "searchTerms"],
       displayedAttributes: [
         "id",
         "name",
         "slug",
         "description",
+        "searchAliases",
+        "searchTerms",
         "websiteUrl",
         "faviconUrl",
         "isVerified",
@@ -102,6 +116,57 @@ const indexes = [
         "isVerified:desc",
         "portsCount:desc",
         "pageviews:desc",
+      ],
+    },
+  },
+  {
+    name: "configs",
+    primaryKey: "id",
+    settings: {
+      searchableAttributes: [
+        "name",
+        "description",
+        "searchAliases",
+        "searchTerms",
+        "fontNames",
+        "themeNames",
+        "platformNames",
+      ],
+      displayedAttributes: [
+        "id",
+        "name",
+        "slug",
+        "description",
+        "searchAliases",
+        "searchTerms",
+        "repositoryUrl",
+        "websiteUrl",
+        "faviconUrl",
+        "screenshotUrl",
+        "isFeatured",
+        "pageviews",
+        "status",
+        "themesCount",
+        "platformsCount",
+        "fontNames",
+        "themeNames",
+        "themeSlugs",
+        "platformNames",
+        "platformSlugs",
+      ],
+      filterableAttributes: ["status", "isFeatured", "themeSlugs", "platformSlugs"],
+      sortableAttributes: ["pageviews", "isFeatured", "themesCount", "platformsCount"],
+      rankingRules: [
+        "words",
+        "typo",
+        "proximity",
+        "attribute",
+        "sort",
+        "exactness",
+        "isFeatured:desc",
+        "pageviews:desc",
+        "platformsCount:desc",
+        "themesCount:desc",
       ],
     },
   },
@@ -130,6 +195,7 @@ async function reindexAll() {
     indexPorts({ replace: true }),
     indexThemes({ replace: true }),
     indexPlatforms({ replace: true }),
+    indexConfigs({ replace: true }),
   ])
   console.log("Reindexing complete.")
 }

@@ -4,21 +4,13 @@ import { DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { Upload } from "@aws-sdk/lib-storage"
 import { stripURLSubpath } from "@primoui/utils"
 import { env, isProd } from "~/env"
+import {
+  ALLOWED_IMAGE_MIME_TYPES,
+  IMAGE_ACCEPT,
+  MAX_IMAGE_UPLOAD_BYTES,
+} from "~/lib/media-constants"
 import { s3Client } from "~/services/s3"
 import { tryCatch } from "~/utils/helpers"
-
-export const ALLOWED_IMAGE_MIME_TYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "image/webp",
-  "image/gif",
-  "image/avif",
-  "image/svg+xml",
-] as const
-
-export const IMAGE_ACCEPT = `${ALLOWED_IMAGE_MIME_TYPES.join(",")},.svg`
-export const MAX_IMAGE_UPLOAD_BYTES = 8 * 1024 * 1024
 
 const IMAGE_EXTENSION_BY_MIME: Record<string, string> = {
   "image/png": "png",

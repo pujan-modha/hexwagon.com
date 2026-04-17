@@ -109,7 +109,7 @@ export const adsConfig = {
     {
       question: "What does targeting add-on do?",
       answer:
-        "Theme and platform targeting boosts delivery for matching pages and matching ports. Each selected target adds to package price.",
+        "Theme and platform targeting boosts delivery for matching ports and matching configs. Each selected target adds to package price.",
     },
     {
       question: "What happens after payment?",
@@ -117,8 +117,9 @@ export const adsConfig = {
         "We review and approve all campaigns before they go live. This process usually takes 8-12 hours.",
     },
     {
-      question: "Do I get a refund if rejected?",
-      answer: "Yes. Rejected paid campaigns are automatically refunded in full.",
+      question: "What is your refund policy?",
+      answer:
+        "There are no refunds after purchase unless we reject your ad submission. Rejected paid campaigns are automatically refunded in full.",
     },
   ],
 }

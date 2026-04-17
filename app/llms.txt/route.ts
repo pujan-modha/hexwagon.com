@@ -1,9 +1,10 @@
-import { PortStatus } from "@prisma/client"
+import { ConfigStatus, PortStatus } from "@prisma/client"
 import { NextResponse } from "next/server"
 import { allPosts } from "~/.content-collections/generated"
 import { siteConfig } from "~/config/site"
 import { getToolSuffix } from "~/lib/tools"
 import { db } from "~/services/db"
+import { tryCatch } from "~/utils/helpers"
 
 export const GET = async () => {
   const tools = await db.port.findMany({
@@ -17,6 +18,18 @@ export const GET = async () => {
       platform: { select: { name: true, slug: true } },
     },
   })
+  const configResult = await tryCatch(
+    db.config.findMany({
+      where: { status: ConfigStatus.Published },
+      orderBy: [{ pageviews: "desc" }, { createdAt: "desc" }],
+      select: {
+        name: true,
+        slug: true,
+      },
+      take: 100,
+    }),
+  )
+  const configs = configResult.data ?? []
 
   let content = `# ${siteConfig.name} - ${siteConfig.tagline}
 ${siteConfig.description}\n
@@ -28,6 +41,12 @@ ${allPosts.map(post => `- [${post.title}](${siteConfig.url}/blog/${post._meta.pa
   for (const tool of tools) {
     const canonicalUrl = `${siteConfig.url}/themes/${tool.theme.slug}/${tool.platform.slug}/${tool.id}`
     content += `- [${tool.name}](${canonicalUrl}): ${getToolSuffix(tool)}\n`
+  }
+
+  content += "\n## Configs and Dotfiles\n"
+
+  for (const config of configs) {
+    content += `- [${config.name}](${siteConfig.url}/configs/${config.slug})\n`
   }
 
   return new NextResponse(content, {

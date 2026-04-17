@@ -1,4 +1,7 @@
-import { PortStatus, type Prisma } from "@prisma/client"
+import { ConfigStatus, PortStatus, type Prisma } from "@prisma/client"
+import { parseConfigFonts } from "~/lib/configs"
+import { buildEntitySearchTerms, buildSearchTerms } from "~/lib/search-terms"
+import { configManyPayload } from "~/server/web/configs/payloads"
 import { platformManyPayload } from "~/server/web/platforms/payloads"
 import { tagManyPayload } from "~/server/web/tags/payloads"
 import { themeManyPayload } from "~/server/web/themes/payloads"
@@ -6,7 +9,7 @@ import { db } from "~/services/db"
 import { getMeiliIndex } from "~/services/meilisearch"
 import { tryCatch } from "~/utils/helpers"
 
-const resetIndexDocuments = async (indexName: "ports" | "themes" | "platforms") => {
+const resetIndexDocuments = async (indexName: "ports" | "themes" | "platforms" | "configs") => {
   const { error } = await tryCatch(getMeiliIndex(indexName).deleteAllDocuments())
 
   if (
@@ -61,11 +64,25 @@ export const indexPorts = async ({
       score: port.score,
       pageviews: port.pageviews,
       status: port.status,
+      searchAliases: port.searchAliases,
       theme: port.theme.name,
       themeSlug: port.theme.slug,
       platform: port.platform.name,
       platformSlug: port.platform.slug,
       tags: port.tags.map(t => t.slug),
+      searchTerms: buildSearchTerms(
+        port.name,
+        port.slug,
+        port.description,
+        port.searchAliases,
+        port.theme.name,
+        port.theme.slug,
+        port.theme.searchAliases,
+        port.platform.name,
+        port.platform.slug,
+        port.platform.searchAliases,
+        ...port.tags.map(tag => tag.slug),
+      ),
     })),
   )
 }
@@ -92,6 +109,7 @@ export const indexThemes = async ({
       name: true,
       slug: true,
       description: true,
+      searchAliases: true,
       websiteUrl: true,
       faviconUrl: true,
       pageviews: true,
@@ -121,6 +139,8 @@ export const indexThemes = async ({
       pageviews: theme.pageviews,
       isVerified: theme._count.maintainers > 0,
       portsCount: theme._count.ports,
+      searchAliases: theme.searchAliases,
+      searchTerms: buildSearchTerms(theme.name, theme.slug, theme.description, theme.searchAliases),
     })),
   )
 }
@@ -148,6 +168,7 @@ export const indexPlatforms = async ({
       name: true,
       slug: true,
       description: true,
+      searchAliases: true,
       websiteUrl: true,
       faviconUrl: true,
       pageviews: true,
@@ -177,6 +198,88 @@ export const indexPlatforms = async ({
       pageviews: platform.pageviews,
       isVerified: platform.isFeatured,
       portsCount: platform._count.ports,
+      searchAliases: platform.searchAliases,
+      searchTerms: buildSearchTerms(
+        platform.name,
+        platform.slug,
+        platform.description,
+        platform.searchAliases,
+      ),
+    })),
+  )
+}
+
+/**
+ * Index configs in MeiliSearch
+ * @returns Enqueued task
+ */
+export const indexConfigs = async ({
+  where,
+  replace = false,
+}: {
+  where?: Prisma.ConfigWhereInput
+  replace?: boolean
+}) => {
+  if (replace) {
+    await resetIndexDocuments("configs")
+  }
+
+  const configs = await db.config.findMany({
+    where: {
+      status: ConfigStatus.Published,
+      ...where,
+    },
+    select: {
+      ...configManyPayload,
+      configThemes: {
+        select: {
+          isPrimary: true,
+          theme: { select: { id: true, name: true, slug: true } },
+        },
+        orderBy: [{ isPrimary: "desc" }, { order: "asc" }, { theme: { name: "asc" } }],
+      },
+      configPlatforms: {
+        select: {
+          isPrimary: true,
+          platform: { select: { id: true, name: true, slug: true } },
+        },
+        orderBy: [{ isPrimary: "desc" }, { order: "asc" }, { platform: { name: "asc" } }],
+      },
+    },
+  })
+
+  if (!configs.length) return
+
+  return await getMeiliIndex("configs").addDocuments(
+    configs.map(config => ({
+      id: config.id,
+      name: config.name,
+      slug: config.slug,
+      description: config.description,
+      searchAliases: config.searchAliases,
+      repositoryUrl: config.repositoryUrl,
+      websiteUrl: config.websiteUrl,
+      faviconUrl: config.faviconUrl,
+      screenshotUrl: config.screenshotUrl,
+      isFeatured: config.isFeatured,
+      pageviews: config.pageviews,
+      status: config.status,
+      themesCount: config._count.configThemes,
+      platformsCount: config._count.configPlatforms,
+      fontNames: parseConfigFonts(config.fonts).map(font => font.name),
+      themeNames: config.configThemes.map(entry => entry.theme.name),
+      themeSlugs: config.configThemes.map(entry => entry.theme.slug),
+      platformNames: config.configPlatforms.map(entry => entry.platform.name),
+      platformSlugs: config.configPlatforms.map(entry => entry.platform.slug),
+      searchTerms: buildSearchTerms(
+        config.name,
+        config.slug,
+        config.description,
+        config.searchAliases,
+        ...parseConfigFonts(config.fonts).map(font => font.name),
+        ...config.configThemes.flatMap(entry => buildEntitySearchTerms(entry.theme)),
+        ...config.configPlatforms.flatMap(entry => buildEntitySearchTerms(entry.platform)),
+      ),
     })),
   )
 }

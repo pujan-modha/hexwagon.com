@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import type { SearchParams } from "nuqs/server"
 import type { ReactNode } from "react"
 import { CatalogueGrid } from "~/components/catalogue/catalogue-grid"
+import { ConfigCard } from "~/components/catalogue/config-card"
+import { ExpandableCatalogueGrid } from "~/components/catalogue/expandable-catalogue-grid"
 import { PlatformCard } from "~/components/catalogue/platform-card"
 import { PortCard } from "~/components/catalogue/port-card"
 import { ThemeCard } from "~/components/catalogue/theme-card"
@@ -10,8 +12,9 @@ import { EntitySearchForm } from "~/components/web/entity-search-form"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { metadataConfig } from "~/config/metadata"
-import { buildRobots } from "~/lib/seo"
 import { searchPageSortOptions } from "~/lib/search-page"
+import { buildRobots } from "~/lib/seo"
+import { searchConfigs } from "~/server/web/configs/queries"
 import { findPlatforms, searchPlatforms } from "~/server/web/platforms/queries"
 import { searchPorts } from "~/server/web/ports/queries"
 import { findThemes, searchThemes } from "~/server/web/themes/queries"
@@ -21,8 +24,8 @@ type PageProps = {
 }
 
 export const metadata: Metadata = {
-  title: "Search Themes and Platforms",
-  description: "Search themes, platforms, and ports from one place.",
+  title: "Search Themes, Platforms, Ports, Configs, and Dotfiles",
+  description: "Search themes, platforms, ports, configs, and dotfiles from one place.",
   openGraph: { ...metadataConfig.openGraph, url: "/search" },
   alternates: { ...metadataConfig.alternates, canonical: "/search" },
   robots: buildRobots({ index: false, follow: true }),
@@ -31,10 +34,12 @@ export const metadata: Metadata = {
 const THEME_RESULTS_LIMIT = 6
 const PLATFORM_RESULTS_LIMIT = 6
 const PORT_RESULTS_LIMIT = 12
+const CONFIG_RESULTS_LIMIT = 6
 const SECONDARY_PREVIEW_LIMIT = 3
 
 const SEARCH_SECTION_IDS = {
   ports: "search-ports",
+  configs: "search-configs",
   themes: "search-themes",
   platforms: "search-platforms",
 } as const
@@ -135,7 +140,7 @@ export default async function SearchPage(props: PageProps) {
     selectedPlatformName: selectedPlatform?.name,
   })
 
-  const [themeResults, platformResults, portResults] = await Promise.all([
+  const [themeResults, platformResults, portResults, configResults] = await Promise.all([
     selectedTheme
       ? Promise.resolve({
           themes: [selectedTheme],
@@ -185,24 +190,34 @@ export default async function SearchPage(props: PageProps) {
           tag: [],
         })
       : Promise.resolve({ ports: [], totalCount: 0 }),
+    hasCriteria
+      ? searchConfigs({
+          q: genericQuery || portTextQuery || themeQuery || platformQuery,
+          page: 1,
+          perPage: CONFIG_RESULTS_LIMIT,
+          sort,
+          theme: selectedTheme?.slug ? [selectedTheme.slug] : [],
+          platform: selectedPlatform?.slug ? [selectedPlatform.slug] : [],
+          tag: [],
+        })
+      : Promise.resolve({ configs: [], totalCount: 0 }),
   ])
 
-  const resultCount = themeResults.totalCount + platformResults.totalCount + portResults.totalCount
-  const visibleThemePreview = themeResults.themes.slice(0, SECONDARY_PREVIEW_LIMIT)
-  const hiddenThemeResults = themeResults.themes.slice(SECONDARY_PREVIEW_LIMIT)
-  const visiblePlatformPreview = platformResults.platforms.slice(0, SECONDARY_PREVIEW_LIMIT)
-  const hiddenPlatformResults = platformResults.platforms.slice(SECONDARY_PREVIEW_LIMIT)
-
+  const resultCount =
+    themeResults.totalCount +
+    platformResults.totalCount +
+    portResults.totalCount +
+    configResults.totalCount
   return (
     <>
       <Breadcrumbs items={[{ href: "/search", name: "Search" }]} />
 
       <Intro>
-        <IntroTitle>Search Themes, Platforms, and Ports</IntroTitle>
+        <IntroTitle>Search Themes, Platforms, Ports, Configs, and Dotfiles</IntroTitle>
         <IntroDescription>
           {hasCriteria
-            ? `Found ${resultCount.toLocaleString()} relevant result${resultCount === 1 ? "" : "s"} across themes, platforms, and ports.`
-            : "Choose a theme, platform, or both to explore relevant themes, platforms, and ports from one results page."}
+            ? `Found ${resultCount.toLocaleString()} relevant result${resultCount === 1 ? "" : "s"} across themes, platforms, ports, configs, and dotfiles.`
+            : "Choose a theme, platform, or both to explore relevant themes, platforms, ports, configs, and dotfiles from one results page."}
         </IntroDescription>
       </Intro>
 
@@ -238,6 +253,7 @@ export default async function SearchPage(props: PageProps) {
         <div className="flex flex-col gap-12">
           <SearchResultJumpNav
             portsCount={portResults.totalCount}
+            configsCount={configResults.totalCount}
             themesCount={themeResults.totalCount}
             platformsCount={platformResults.totalCount}
           />
@@ -261,6 +277,36 @@ export default async function SearchPage(props: PageProps) {
           </SearchResultSection>
 
           <SearchResultSection
+            id={SEARCH_SECTION_IDS.configs}
+            title="Configs & Dotfiles"
+            description={
+              selectedTheme && selectedPlatform
+                ? `Configs and dotfiles tagged to ${selectedTheme.name} and ${selectedPlatform.name}.`
+                : selectedTheme
+                  ? `Configs and dotfiles tagged to ${selectedTheme.name}.`
+                  : selectedPlatform
+                    ? `Configs and dotfiles tagged to ${selectedPlatform.name}.`
+                    : "Matching configs and dotfiles from your search."
+            }
+            count={configResults.totalCount}
+            visibleCount={configResults.configs.length}
+          >
+            {configResults.configs.length ? (
+              <ExpandableCatalogueGrid
+                previewCount={SECONDARY_PREVIEW_LIMIT}
+                singularLabel="config/dotfile result"
+                pluralLabel="config/dotfile results"
+              >
+                {configResults.configs.map(config => (
+                  <ConfigCard key={config.id} config={config} />
+                ))}
+              </ExpandableCatalogueGrid>
+            ) : (
+              <EmptySectionMessage message="No configs or dotfiles match this search yet." />
+            )}
+          </SearchResultSection>
+
+          <SearchResultSection
             id={SEARCH_SECTION_IDS.themes}
             title="Themes"
             description={
@@ -272,29 +318,11 @@ export default async function SearchPage(props: PageProps) {
             visibleCount={themeResults.themes.length}
           >
             {themeResults.themes.length ? (
-              <div className="flex flex-col gap-4">
-                <CatalogueGrid>
-                  {visibleThemePreview.map(theme => (
-                    <ThemeCard key={theme.id} theme={theme} showCount />
-                  ))}
-                </CatalogueGrid>
-
-                {hiddenThemeResults.length ? (
-                  <details className="rounded-2xl border border-border bg-muted/10 p-4">
-                    <summary className="cursor-pointer text-sm font-medium text-foreground">
-                      Show {hiddenThemeResults.length.toLocaleString()} more theme
-                      {hiddenThemeResults.length === 1 ? "" : "s"}
-                    </summary>
-                    <div className="mt-4">
-                      <CatalogueGrid>
-                        {hiddenThemeResults.map(theme => (
-                          <ThemeCard key={theme.id} theme={theme} showCount />
-                        ))}
-                      </CatalogueGrid>
-                    </div>
-                  </details>
-                ) : null}
-              </div>
+              <ExpandableCatalogueGrid previewCount={SECONDARY_PREVIEW_LIMIT} singularLabel="theme">
+                {themeResults.themes.map(theme => (
+                  <ThemeCard key={theme.id} theme={theme} showCount />
+                ))}
+              </ExpandableCatalogueGrid>
             ) : (
               <EmptySectionMessage message="No themes match this search yet." />
             )}
@@ -312,29 +340,14 @@ export default async function SearchPage(props: PageProps) {
             visibleCount={platformResults.platforms.length}
           >
             {platformResults.platforms.length ? (
-              <div className="flex flex-col gap-4">
-                <CatalogueGrid>
-                  {visiblePlatformPreview.map(platform => (
-                    <PlatformCard key={platform.id} platform={platform} showCount />
-                  ))}
-                </CatalogueGrid>
-
-                {hiddenPlatformResults.length ? (
-                  <details className="rounded-2xl border border-border bg-muted/10 p-4">
-                    <summary className="cursor-pointer text-sm font-medium text-foreground">
-                      Show {hiddenPlatformResults.length.toLocaleString()} more platform
-                      {hiddenPlatformResults.length === 1 ? "" : "s"}
-                    </summary>
-                    <div className="mt-4">
-                      <CatalogueGrid>
-                        {hiddenPlatformResults.map(platform => (
-                          <PlatformCard key={platform.id} platform={platform} showCount />
-                        ))}
-                      </CatalogueGrid>
-                    </div>
-                  </details>
-                ) : null}
-              </div>
+              <ExpandableCatalogueGrid
+                previewCount={SECONDARY_PREVIEW_LIMIT}
+                singularLabel="platform"
+              >
+                {platformResults.platforms.map(platform => (
+                  <PlatformCard key={platform.id} platform={platform} showCount />
+                ))}
+              </ExpandableCatalogueGrid>
             ) : (
               <EmptySectionMessage message="No platforms match this search yet." />
             )}
@@ -347,15 +360,18 @@ export default async function SearchPage(props: PageProps) {
 
 const SearchResultJumpNav = ({
   portsCount,
+  configsCount,
   themesCount,
   platformsCount,
 }: {
   portsCount: number
+  configsCount: number
   themesCount: number
   platformsCount: number
 }) => {
   const navItems = [
     { href: `#${SEARCH_SECTION_IDS.ports}`, label: "Ports", count: portsCount },
+    { href: `#${SEARCH_SECTION_IDS.configs}`, label: "Configs & Dotfiles", count: configsCount },
     { href: `#${SEARCH_SECTION_IDS.themes}`, label: "Themes", count: themesCount },
     { href: `#${SEARCH_SECTION_IDS.platforms}`, label: "Platforms", count: platformsCount },
   ]

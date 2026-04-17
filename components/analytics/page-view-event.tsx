@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import { trackEvent } from "~/hooks/use-analytics"
 
 type PageViewEventProps = {
-  event: "port_viewed" | "theme_viewed" | "platform_viewed"
+  event: "port_viewed" | "theme_viewed" | "platform_viewed" | "config_viewed"
   properties: Record<string, string>
 }
 

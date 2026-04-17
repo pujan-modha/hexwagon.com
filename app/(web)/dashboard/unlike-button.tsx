@@ -7,7 +7,7 @@ import { removeLike } from "~/actions/like"
 import { Button } from "~/components/common/button"
 import { Icon } from "~/components/common/icon"
 
-type EntityType = "port" | "theme" | "platform"
+type EntityType = "port" | "theme" | "platform" | "config"
 
 type DashboardUnlikeButtonProps = {
   entityType: EntityType

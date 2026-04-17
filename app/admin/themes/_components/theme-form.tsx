@@ -82,7 +82,9 @@ const normalizePaletteColor = (
 
   if (!hexValue) return null
 
-  const normalizedHex = hexValue.startsWith("#") ? hexValue.toUpperCase() : `#${hexValue.toUpperCase()}`
+  const normalizedHex = hexValue.startsWith("#")
+    ? hexValue.toUpperCase()
+    : `#${hexValue.toUpperCase()}`
 
   if (!/^#[0-9A-F]{6}$/.test(normalizedHex)) return null
 

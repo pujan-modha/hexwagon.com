@@ -1,8 +1,8 @@
 import type { ComponentProps } from "react"
 import ReactMarkdown from "react-markdown"
 import rehypeRaw from "rehype-raw"
-import remarkGithubBlockquoteAlert from "remark-github-blockquote-alert"
 import remarkGfm from "remark-gfm"
+import remarkGithubBlockquoteAlert from "remark-github-blockquote-alert"
 import { Card } from "~/components/common/card"
 import { cx } from "~/utils/cva"
 

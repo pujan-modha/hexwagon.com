@@ -1,7 +1,18 @@
-import { PrismaClient } from "@prisma/client"
+import { Prisma, PrismaClient } from "@prisma/client"
 
-const globalForPrisma = global as unknown as { db: PrismaClient }
+const schemaMarker = Prisma.dmmf.datamodel.models
+  .map(model => `${model.name}:${model.fields.map(field => field.name).join(",")}`)
+  .join("|")
 
-export const db = globalForPrisma.db || new PrismaClient()
+const globalForPrisma = global as unknown as {
+  db?: PrismaClient
+  dbSchemaMarker?: string
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.db = db
+if (!globalForPrisma.db || globalForPrisma.dbSchemaMarker !== schemaMarker) {
+  void globalForPrisma.db?.$disconnect().catch(() => undefined)
+  globalForPrisma.db = new PrismaClient()
+  globalForPrisma.dbSchemaMarker = schemaMarker
+}
+
+export const db = globalForPrisma.db

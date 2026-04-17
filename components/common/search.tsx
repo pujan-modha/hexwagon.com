@@ -86,6 +86,7 @@ export const Search = () => {
   const ports = results?.ports?.hits
   const themes = results?.themes?.hits
   const platforms = results?.platforms?.hits
+  const configs = results?.configs?.hits
   const isAdmin = session?.user.role === "admin"
   const isAdminPath = pathname.startsWith("/admin")
   const hasQuery = normalizedQuery.length > 0
@@ -146,6 +147,11 @@ export const Search = () => {
           path: "/admin/platforms/new",
           shortcut: true,
         },
+        {
+          label: "New Config",
+          path: "/admin/configs/new",
+          shortcut: true,
+        },
       ],
     })
 
@@ -161,6 +167,7 @@ export const Search = () => {
         { label: "Ports", path: "/" },
         { label: "Themes", path: "/themes" },
         { label: "Platforms", path: "/platforms" },
+        { label: "Configs & Dotfiles", path: "/configs" },
       ],
     })
   }
@@ -291,7 +298,9 @@ export const Search = () => {
               )}
               <span className="flex-1 truncate">{name}</span>
               {formatPortsCount(portsCount) ? (
-                <span className="text-xs text-muted-foreground/70">{formatPortsCount(portsCount)}</span>
+                <span className="text-xs text-muted-foreground/70">
+                  {formatPortsCount(portsCount)}
+                </span>
               ) : null}
             </>
           )}
@@ -313,8 +322,32 @@ export const Search = () => {
               )}
               <span className="flex-1 truncate">{name}</span>
               {formatPortsCount(portsCount) ? (
-                <span className="text-xs text-muted-foreground/70">{formatPortsCount(portsCount)}</span>
+                <span className="text-xs text-muted-foreground/70">
+                  {formatPortsCount(portsCount)}
+                </span>
               ) : null}
+            </>
+          )}
+        />
+
+        <SearchResults
+          name="Configs & Dotfiles"
+          items={configs}
+          onItemSelect={navigateTo}
+          getHref={({ slug }) => (isAdminPath ? `/admin/configs/${slug}` : `/configs/${slug}`)}
+          renderItemDisplay={({ name, faviconUrl, themesCount, platformsCount }) => (
+            <>
+              {faviconUrl ? (
+                <Favicon src={faviconUrl} title={name} plain className="size-4" />
+              ) : (
+                <span className="flex size-4 shrink-0 items-center justify-center rounded-sm bg-muted/50">
+                  <Icon name="lucide/dock" className="size-3 text-muted-foreground" />
+                </span>
+              )}
+              <span className="flex-1 truncate">{name}</span>
+              <span className="text-xs text-muted-foreground/70">
+                {themesCount ?? 0}T / {platformsCount ?? 0}P
+              </span>
             </>
           )}
         />
@@ -325,12 +358,14 @@ export const Search = () => {
           Found{" "}
           {(results.ports?.estimatedTotalHits ?? 0) +
             (results.themes?.estimatedTotalHits ?? 0) +
-            (results.platforms?.estimatedTotalHits ?? 0)}{" "}
+            (results.platforms?.estimatedTotalHits ?? 0) +
+            (results.configs?.estimatedTotalHits ?? 0)}{" "}
           results in{" "}
           {Math.max(
             results.ports?.processingTimeMs ?? 0,
             results.themes?.processingTimeMs ?? 0,
             results.platforms?.processingTimeMs ?? 0,
+            results.configs?.processingTimeMs ?? 0,
           )}
           ms
         </div>

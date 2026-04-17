@@ -11,8 +11,8 @@ import { metadataConfig } from "~/config/metadata"
 import { buildRobots } from "~/lib/seo"
 import { findPlatform } from "~/server/web/platforms/queries"
 import { findPortsByThemeAndPlatform } from "~/server/web/ports/queries"
-import { findTheme } from "~/server/web/themes/queries"
 import { findThemePlatformRouteParams } from "~/server/web/ports/queries"
+import { findTheme } from "~/server/web/themes/queries"
 
 type PageProps = {
   params: Promise<{ slug: string; theme: string }>

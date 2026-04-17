@@ -130,6 +130,41 @@ export const reportPlatform = userProcedure
     return { success: true }
   })
 
+export const reportConfig = userProcedure
+  .createServerAction()
+  .input(reportSchema.extend({ configId: z.string() }))
+  .handler(async ({ input: { configId, type, message }, ctx: { user } }) => {
+    const ip = await getIP()
+    const rateLimitKey = `report:${ip}`
+
+    if (await isRateLimited(rateLimitKey, "report")) {
+      throw new Error("Too many requests. Please try again later.")
+    }
+
+    const result = await tryCatch(
+      db.report.create({
+        data: {
+          type,
+          message,
+          config: { connect: { id: configId } },
+          user: { connect: { id: user.id } },
+        },
+      }),
+    )
+
+    if (result.error) {
+      console.error("Failed to report config:", result.error)
+      return {
+        success: false,
+        error: "Failed to report config. Please try again later.",
+      }
+    }
+
+    queueReportAcknowledgment(user.email, "config")
+
+    return { success: true }
+  })
+
 export const reportComment = userProcedure
   .createServerAction()
   .input(reportSchema.extend({ commentId: z.string() }))

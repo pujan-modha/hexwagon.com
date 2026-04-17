@@ -26,12 +26,7 @@ const getPlatformOrderBy = (sort: string): Prisma.PlatformFindManyArgs["orderBy"
     }
   }
 
-  return [
-    { isFeatured: "desc" },
-    { likes: { _count: "desc" } },
-    { order: "asc" },
-    { name: "asc" },
-  ]
+  return [{ isFeatured: "desc" }, { likes: { _count: "desc" } }, { order: "asc" }, { name: "asc" }]
 }
 
 export const searchPlatforms = async (search: FilterSchema, where?: Prisma.PlatformWhereInput) => {

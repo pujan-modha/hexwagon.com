@@ -1,39 +1,46 @@
-import type { Metadata } from "next"
-import type { SearchParams } from "nuqs/server"
-import { Suspense } from "react"
-import { CountBadge, CountBadgeSkeleton } from "~/app/(web)/(home)/count-badge"
-import { CatalogueGrid } from "~/components/catalogue/catalogue-grid"
-import { PlatformCard, PlatformCardSkeleton } from "~/components/catalogue/platform-card"
-import { PortCard, PortCardSkeleton } from "~/components/catalogue/port-card"
-import { ThemeCard, ThemeCardSkeleton } from "~/components/catalogue/theme-card"
-import { Button } from "~/components/common/button"
-import { Icon } from "~/components/common/icon"
-import { Link } from "~/components/common/link"
-import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card"
-import { BuiltWith } from "~/components/web/built-with"
-import { HeroSearch } from "~/components/web/hero-search"
-import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
-import { WebGLShader } from "~/components/web/ui/web-gl-shader"
-import { config } from "~/config"
-import { metadataConfig } from "~/config/metadata"
-import { findFeaturedPlatforms } from "~/server/web/platforms/queries"
-import { findPorts } from "~/server/web/ports/queries"
-import { findFeaturedThemes } from "~/server/web/themes/queries"
+import type { Metadata } from "next";
+import type { SearchParams } from "nuqs/server";
+import { Suspense } from "react";
+import { CountBadge, CountBadgeSkeleton } from "~/app/(web)/(home)/count-badge";
+import { CatalogueGrid } from "~/components/catalogue/catalogue-grid";
+import {
+  PlatformCard,
+  PlatformCardSkeleton,
+} from "~/components/catalogue/platform-card";
+import { PortCard, PortCardSkeleton } from "~/components/catalogue/port-card";
+import {
+  ThemeCard,
+  ThemeCardSkeleton,
+} from "~/components/catalogue/theme-card";
+import { Button } from "~/components/common/button";
+import { Icon } from "~/components/common/icon";
+import { Link } from "~/components/common/link";
+import { AdCard, AdCardSkeleton } from "~/components/web/ads/ad-card";
+import { BuiltWith } from "~/components/web/built-with";
+import { HeroSearch } from "~/components/web/hero-search";
+import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro";
+import { WebGLShader } from "~/components/web/ui/web-gl-shader";
+import { config } from "~/config";
+import { metadataConfig } from "~/config/metadata";
+import { findFeaturedPlatforms } from "~/server/web/platforms/queries";
+import { findPorts } from "~/server/web/ports/queries";
+import { findFeaturedThemes } from "~/server/web/themes/queries";
 
 type PageProps = {
-  searchParams: Promise<SearchParams>
-}
+  searchParams: Promise<SearchParams>;
+};
 
-const FEATURED_THEMES_COUNT = 6
-const FEATURED_PLATFORMS_COUNT = 6
-const TRENDING_PORTS_COUNT = 5
+const FEATURED_THEMES_COUNT = 6;
+const FEATURED_PLATFORMS_COUNT = 6;
+const TRENDING_PORTS_COUNT = 5;
 
 export const metadata: Metadata = {
-  title: "Theme Ports Directory for VS Code, Ghostty, Neovim, Zed, and More | HexWagon",
+  title:
+    "Theme Ports Directory for VS Code, Ghostty, Neovim, Zed, and More | HexWagon",
   description: config.site.description,
   openGraph: { ...metadataConfig.openGraph, url: "/" },
   alternates: { ...metadataConfig.alternates, canonical: "/" },
-}
+};
 
 export default function Home(props: PageProps) {
   return (
@@ -45,12 +52,12 @@ export default function Home(props: PageProps) {
 
         <div className="relative z-20 flex w-full flex-col justify-center gap-y-6">
           <Intro alignment="center">
-            <IntroTitle className="max-w-[16em] sm:text-4xl md:text-5xl lg:text-6xl">
-              Find Theme Ports Faster
+            <IntroTitle className="sm:text-4xl md:text-5xl lg:text-6xl">
+              Default Dies Here
             </IntroTitle>
-
             <IntroDescription className="lg:mt-2">
-              Search by theme, platform, or both.
+              Browse theme ports, dotfiles, fonts, and configs for your favorite
+              platforms.
             </IntroDescription>
 
             <Suspense fallback={<CountBadgeSkeleton />}>
@@ -113,15 +120,23 @@ export default function Home(props: PageProps) {
           <section className="flex flex-col gap-8">
             <FeaturedSectionHeader title="Trending Ports" />
             <CatalogueGrid className="gap-5 xl:grid-cols-3">
-              {Array.from({ length: TRENDING_PORTS_COUNT }).flatMap((_, index) => {
-                const cards = [<PortCardSkeleton key={`featured-port-skeleton-${index}`} />]
+              {Array.from({ length: TRENDING_PORTS_COUNT }).flatMap(
+                (_, index) => {
+                  const cards = [
+                    <PortCardSkeleton
+                      key={`featured-port-skeleton-${index}`}
+                    />,
+                  ];
 
-                if (index === 1) {
-                  cards.push(<AdCardSkeleton key="home-port-listing-ad-skeleton" />)
-                }
+                  if (index === 1) {
+                    cards.push(
+                      <AdCardSkeleton key="home-port-listing-ad-skeleton" />,
+                    );
+                  }
 
-                return cards
-              })}
+                  return cards;
+                },
+              )}
             </CatalogueGrid>
           </section>
         }
@@ -129,13 +144,13 @@ export default function Home(props: PageProps) {
         <TrendingPorts />
       </Suspense>
     </>
-  )
+  );
 }
 
 const FeaturedThemes = async () => {
-  const themes = await findFeaturedThemes({ take: FEATURED_THEMES_COUNT })
+  const themes = await findFeaturedThemes({ take: FEATURED_THEMES_COUNT });
 
-  if (!themes.length) return null
+  if (!themes.length) return null;
 
   return (
     <section className="flex flex-col gap-8">
@@ -146,18 +161,20 @@ const FeaturedThemes = async () => {
         ctaLabel="View all themes"
       />
       <CatalogueGrid className="gap-5 xl:grid-cols-3">
-        {themes.map(theme => (
+        {themes.map((theme) => (
           <ThemeCard key={theme.id} theme={theme} showCount />
         ))}
       </CatalogueGrid>
     </section>
-  )
-}
+  );
+};
 
 const FeaturedPlatforms = async () => {
-  const platforms = await findFeaturedPlatforms({ take: FEATURED_PLATFORMS_COUNT })
+  const platforms = await findFeaturedPlatforms({
+    take: FEATURED_PLATFORMS_COUNT,
+  });
 
-  if (!platforms.length) return null
+  if (!platforms.length) return null;
 
   return (
     <section className="flex flex-col gap-8">
@@ -168,46 +185,46 @@ const FeaturedPlatforms = async () => {
         ctaLabel="View all platforms"
       />
       <CatalogueGrid className="gap-5 xl:grid-cols-3">
-        {platforms.map(platform => (
+        {platforms.map((platform) => (
           <PlatformCard key={platform.id} platform={platform} showCount />
         ))}
       </CatalogueGrid>
     </section>
-  )
-}
+  );
+};
 
 const TrendingPorts = async () => {
   const ports = await findPorts({
     orderBy: [{ likes: { _count: "desc" } }, { score: "desc" }],
     take: TRENDING_PORTS_COUNT,
-  })
+  });
 
-  if (!ports.length) return null
+  if (!ports.length) return null;
 
   return (
     <section className="flex flex-col gap-8">
       <FeaturedSectionHeader title="Trending Ports" />
       <CatalogueGrid className="gap-5 xl:grid-cols-3">
         {ports.flatMap((port, index) => {
-          const cards = [<PortCard key={port.id} port={port} />]
+          const cards = [<PortCard key={port.id} port={port} />];
 
           if (index === 0) {
-            cards.push(<AdCard key="home-port-listing-ad" slot="Listing" />)
+            cards.push(<AdCard key="home-port-listing-ad" slot="Listing" />);
           }
 
-          return cards
+          return cards;
         })}
       </CatalogueGrid>
     </section>
-  )
-}
+  );
+};
 
 type SpotlightSectionHeaderProps = {
-  title: string
-  description: string
-  href: string
-  ctaLabel: string
-}
+  title: string;
+  description: string;
+  href: string;
+  ctaLabel: string;
+};
 
 const SpotlightSectionHeader = ({
   title,
@@ -239,12 +256,12 @@ const SpotlightSectionHeader = ({
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
 type FeaturedSectionHeaderProps = {
-  title: string
-}
+  title: string;
+};
 
 const FeaturedSectionHeader = ({ title }: FeaturedSectionHeaderProps) => {
   return (
@@ -260,5 +277,5 @@ const FeaturedSectionHeader = ({ title }: FeaturedSectionHeaderProps) => {
         />
       </div>
     </div>
-  )
-}
+  );
+};
