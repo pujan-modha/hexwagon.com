@@ -26,7 +26,16 @@ export const SearchForm = ({ className, ...props }: ComponentProps<"form">) => {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    router.push(`/?q=${query}`)
+
+    const normalizedQuery = query.trim()
+    const params = new URLSearchParams()
+
+    if (normalizedQuery.length > 0) {
+      params.set("q", normalizedQuery)
+    }
+
+    const queryString = params.toString()
+    router.push(queryString ? `/?${queryString}` : "/")
   }
 
   useEffect(() => {

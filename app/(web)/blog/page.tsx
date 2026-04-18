@@ -7,9 +7,8 @@ import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { metadataConfig } from "~/config/metadata"
 
 export const metadata: Metadata = {
-  title: "Open Source Blog",
-  description:
-    "A collection of useful articles for developers and open source enthusiasts. Learn about the latest trends and technologies in the open source community.",
+  title: "HexWagon Blog",
+  description: "Notes on theme design, port quality, and maintainership across editor platforms.",
   openGraph: { ...metadataConfig.openGraph, url: "/blog" },
   alternates: { ...metadataConfig.alternates, canonical: "/blog" },
 }
@@ -23,7 +22,7 @@ export default function BlogPage() {
         items={[
           {
             href: "/blog",
-            name: "Open Source Blog",
+            name: "Blog",
           },
         ]}
       />
@@ -35,12 +34,12 @@ export default function BlogPage() {
 
       {posts.length ? (
         <Grid>
-          {allPosts.map(post => (
+          {posts.map(post => (
             <PostCard key={post._meta.path} post={post} />
           ))}
         </Grid>
       ) : (
-        <p>No posts found.</p>
+        <p>No blog posts published yet.</p>
       )}
     </>
   )

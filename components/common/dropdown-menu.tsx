@@ -1,13 +1,24 @@
 "use client"
 
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
-import type { ComponentProps } from "react"
+import { type ComponentProps, useId } from "react"
 import { Kbd } from "~/components/common/kbd"
 import { cx, popoverAnimationClasses } from "~/utils/cva"
 import { Icon } from "./icon"
 
 const DropdownMenu = DropdownMenuPrimitive.Root
-const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
+
+const DropdownMenuTrigger = ({
+  id,
+  ...props
+}: ComponentProps<typeof DropdownMenuPrimitive.Trigger>) => {
+  const generatedId = useId().replace(/:/g, "")
+
+  return (
+    <DropdownMenuPrimitive.Trigger id={id ?? `dropdown-menu-trigger-${generatedId}`} {...props} />
+  )
+}
+
 const DropdownMenuGroup = DropdownMenuPrimitive.Group
 const DropdownMenuPortal = DropdownMenuPrimitive.Portal
 const DropdownMenuSub = DropdownMenuPrimitive.Sub

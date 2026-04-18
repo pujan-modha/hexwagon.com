@@ -1,4 +1,4 @@
-import type { Tool } from "@prisma/client"
+import type { Port as Tool } from "@prisma/client"
 import type { ComponentProps } from "react"
 import { toast } from "sonner"
 import { Button } from "~/components/common/button"
@@ -18,12 +18,12 @@ export const FeatureNudge = ({ className, tool, t, ...props }: FeatureNudgeProps
     <Card hover={false} focus={false} className={cx("max-w-xs", className)} {...props}>
       <p className="text-sm text-secondary-foreground">
         <strong>{tool.name}</strong> has already been published on {config.site.name}. If you want,
-        you can feature it for extra exposure.
+        you can manage it from your dashboard.
       </p>
 
       <Stack size="sm" className="w-full">
         <Button size="md" className="flex-1" onClick={() => toast.dismiss(t)} asChild>
-          <Link href={`/submit/${tool.slug}`}>Feature {tool.name}</Link>
+          <Link href="/dashboard">Go to Dashboard</Link>
         </Button>
 
         <Button size="md" variant="secondary" onClick={() => toast.dismiss(t)}>

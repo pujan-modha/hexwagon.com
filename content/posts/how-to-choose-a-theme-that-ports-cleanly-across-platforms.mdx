@@ -1,0 +1,123 @@
+---
+title: "Most Themes Travel Badly. Here's How to Pick One That Doesn't."
+description: "A practical guide to spotting theme ports that actually hold up across VS Code, Neovim, Zed, terminals, and the rest of your stack."
+publishedAt: 2026-03-31
+author:
+  name: Pujan Modha
+  image: "/authors/default.webp"
+  twitterHandle: "pujan_modha"
+---
+
+Most themes look portable until you try to live with them.
+
+You install a theme in VS Code. It looks excellent. Then you open the same theme in Neovim, your terminal, maybe Zed, maybe Obsidian, and the whole illusion falls apart. Comments are too dim. Diffs are loud in one app and invisible in another. Warnings look like accents instead of errors. The palette is technically "the same," but the experience is not.
+
+That is because a theme is not really a palette. A theme is a set of decisions. Good ports preserve those decisions. Bad ports only copy the hex codes.
+
+If you care about using one theme across your stack, that distinction matters more than almost anything else.
+
+## Start with behavior, not branding
+
+The easiest mistake is judging a port by hero screenshots. Screenshots reward dramatic palettes. Daily work rewards restraint, structure, and legibility.
+
+When you test a port, ignore the first impression for a minute. Open a real project and look at the boring parts:
+
+- sidebars
+- tabs
+- inline errors
+- Git diff hunks
+- search matches
+- command palettes
+- inactive UI states
+
+If those areas feel off, the port is off. Most bad ports do not fail in the editor gutter; they fail in the small, repetitive surfaces you look at hundreds of times a day.
+
+## A strong port recreates meaning, not color
+
+This is the core test.
+
+Suppose original theme uses one color for strings, another for keywords, another for types, and a sharper accent for errors. That is not just decoration. It is information hierarchy. A good port asks: what is the equivalent hierarchy in this app? Which scopes or tokens map to those same jobs?
+
+Bad ports skip that work. They grab palette values, wire them into whatever token names seem close, and call it done. That is why two ports with the exact same colors can feel completely different in use.
+
+Good signs:
+
+- diagnostics are instantly distinguishable from hints or informational text
+- diffs read cleanly without screaming
+- active and inactive UI states are obvious
+- terminal ANSI colors feel intentional, not like leftovers
+- syntax still makes sense in dense files, not only in demos
+
+If everything is colorful but nothing feels organized, you are looking at palette cosplay, not a real port.
+
+## Test more than one language, or you learn nothing
+
+Many ports look decent in TypeScript because that is what maintainers previewed. Then you open Markdown, JSON, shell scripts, Rust, Go, or Python and the semantic coverage collapses.
+
+Use at least three files when checking a port:
+
+1. one source file from your main language
+2. one config-heavy file like JSON, YAML, or TOML
+3. one prose-heavy file like Markdown
+
+Why Markdown? Because weak ports often reveal themselves there. Code fences, links, emphasis, blockquotes, inline code, list bullets, and headings expose whether the theme author actually thought through non-code content or only syntax highlighting.
+
+Why JSON or YAML? Because configuration files punish shallow contrast. If punctuation, keys, and values blur together, you will feel it fast.
+
+## Check the theme where work actually hurts
+
+If you want to know whether a port is serious, test it in the places where poor design becomes exhausting:
+
+- long editing sessions at night
+- search and replace
+- merge conflict markers
+- lint errors and warnings
+- terminal output with success, warning, and failure states
+- file trees with selected, hovered, and inactive items
+
+This matters more than whether the accent color looks fashionable in a screenshot. A theme earns trust when it lowers friction during ugly, ordinary work.
+
+## Maintenance quality matters more than novelty
+
+People often overvalue "official" and undervalue "maintained."
+
+An official port is great when it is active. But a non-official port with clear ownership, recent fixes, and thoughtful issue responses is often the safer choice than an abandoned official one.
+
+Look for simple signals:
+
+- named maintainer
+- recent commits
+- issue replies that mention scope mapping or platform quirks
+- screenshots from the actual app, not just borrowed promo art
+- notes about unsupported features or known tradeoffs
+
+The best maintainers usually do one thing that bad ones never do: they explain compromises. They will tell you when an app's token model is limited, when ANSI colors had to be adapted, or when a certain semantic group cannot match the source theme exactly. That honesty is usually a sign the rest of the port was built carefully too.
+
+## Consistency beats perfection
+
+One more trap: expecting identical results everywhere.
+
+Different apps expose different theming APIs. Neovim highlight groups, VS Code token scopes, terminal ANSI palettes, and Zed themes do not give you the same controls. So the goal is not pixel-for-pixel sameness. The goal is recognizable behavior.
+
+When a theme travels well, it still feels like itself even after adaptation. Errors are still urgent. Comments are still quiet. Selections still stand out. Important symbols still pop at the right moments. The personality survives because the hierarchy survives.
+
+That is what you are really evaluating.
+
+## A simple way to decide
+
+If you are choosing between multiple ports of the same theme, ask four questions:
+
+1. Does this port preserve the original hierarchy, or only the colors?
+2. Does it still work in ugly, high-friction screens like diffs, diagnostics, and config files?
+3. Is somebody clearly maintaining it?
+4. Does it feel consistent with the rest of my stack?
+
+If the answer is "mostly yes" across all four, you probably found a port worth keeping.
+
+If not, move on early. There are too many good themes to spend weeks rationalizing a mediocre port.
+
+## Final thought
+
+The best cross-platform theme is not the one that shouts the loudest. It is the one that stays coherent as you move from editor to terminal to notes to browser devtools. It keeps your eyes calibrated. It lets you trust what color means. After a few days, you stop noticing the theme and start noticing the work.
+
+That is when a port is doing its job.

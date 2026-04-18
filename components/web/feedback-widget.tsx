@@ -21,6 +21,8 @@ type FeedbackWidgetFormProps = {
   setDismissed: (dismissed: boolean) => void
 }
 
+const FEEDBACK_TOAST_POSITION = "bottom-left" as const
+
 const ENGAGEMENT_THRESHOLD = 60 // seconds
 const PAGE_VIEW_THRESHOLD = 3 // number of pages
 const SCROLL_THRESHOLD = 66 // percentage
@@ -41,6 +43,7 @@ const FeedbackWidgetForm = ({ toastId, setDismissed }: FeedbackWidgetFormProps) 
       toast("Thank you for your feedback!", {
         id: toastId,
         duration: 3000,
+        position: FEEDBACK_TOAST_POSITION,
       })
 
       setDismissed(true)
@@ -51,6 +54,7 @@ const FeedbackWidgetForm = ({ toastId, setDismissed }: FeedbackWidgetFormProps) 
       toast.error(err.message, {
         id: toastId,
         duration: 3000,
+        position: FEEDBACK_TOAST_POSITION,
       })
     },
   })
@@ -154,6 +158,7 @@ export const FeedbackWidget = () => {
         id: toastId,
         duration: Number.POSITIVE_INFINITY,
         className: "max-w-54 py-3",
+        position: FEEDBACK_TOAST_POSITION,
         onDismiss: () => setDismissed(true),
       })
     }

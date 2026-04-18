@@ -11,8 +11,8 @@ export const metadataConfig: Metadata = {
     images: { url: `${siteConfig.url}/opengraph.png`, width: 1200, height: 630 },
   },
   twitter: {
-    site: "@ossalternative",
-    creator: "@piotrkulpinski",
+    site: "@hexwagon",
+    creator: "@pujan_modha",
     card: "summary_large_image",
   },
   alternates: {

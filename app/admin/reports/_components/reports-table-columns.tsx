@@ -1,7 +1,7 @@
 "use client"
 
 import { formatDate } from "@primoui/utils"
-import type { Report, Tool, User } from "@prisma/client"
+import type { Config, Platform, Port, Report, Theme, User } from "@prisma/client"
 import type { ColumnDef } from "@tanstack/react-table"
 import { ReportActions } from "~/app/admin/reports/_components/report-actions"
 import { RowCheckbox } from "~/components/admin/row-checkbox"
@@ -79,13 +79,42 @@ export const getColumns = (): ColumnDef<Report>[] => {
       },
     },
     {
-      accessorKey: "tool",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Tool" />,
+      id: "target",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Target" />,
       cell: ({ row }) => {
-        const tool = row.getValue<Pick<Tool, "slug" | "name">>("tool")
+        const report = row.original as Report & {
+          port?: Pick<Port, "slug" | "name"> | null
+          theme?: Pick<Theme, "slug" | "name"> | null
+          platform?: Pick<Platform, "slug" | "name"> | null
+          config?: Pick<Config, "slug" | "name"> | null
+        }
 
-        return (
-          <DataTableLink href={`/admin/tools/${tool?.slug}`} title={tool?.name} isOverlay={false} />
+        const target = report.port
+          ? {
+              href: `/admin/ports/${report.port.slug}`,
+              title: report.port.name ?? report.port.slug,
+            }
+          : report.theme
+            ? {
+                href: `/admin/themes/${report.theme.slug}`,
+                title: report.theme.name ?? report.theme.slug,
+              }
+            : report.platform
+              ? {
+                  href: `/admin/platforms/${report.platform.slug}`,
+                  title: report.platform.name ?? report.platform.slug,
+                }
+              : report.config
+                ? {
+                    href: `/admin/configs/${report.config.slug}`,
+                    title: report.config.name ?? report.config.slug,
+                  }
+                : null
+
+        return target ? (
+          <DataTableLink href={target.href} title={target.title} isOverlay={false} />
+        ) : (
+          <Note>Site feedback</Note>
         )
       },
     },

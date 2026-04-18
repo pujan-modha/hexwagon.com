@@ -1,112 +1,261 @@
-import { type Tool, ToolStatus } from "@prisma/client"
+import { type Ad, type Port, PortStatus } from "@prisma/client"
 import { config } from "~/config"
-import EmailAdminSubmissionPremium from "~/emails/admin-submission-premium"
-import EmailSubmission from "~/emails/submission"
-import EmailSubmissionPremium from "~/emails/submission-premium"
-import EmailSubmissionPublished from "~/emails/submission-published"
-import EmailSubmissionScheduled from "~/emails/submission-scheduled"
+import EmailAdApproved from "~/emails/ad-approved"
+import EmailAdChangesRequested from "~/emails/ad-changes-requested"
+import EmailAdLive from "~/emails/ad-live"
+import EmailAdRejected from "~/emails/ad-rejected"
+import EmailAdSubmitted from "~/emails/ad-submitted"
+import EmailPortApproved from "~/emails/port-approved"
+import EmailPortEditApproved from "~/emails/port-edit-approved"
+import EmailPortEditRejected from "~/emails/port-edit-rejected"
+import EmailPortRejected from "~/emails/port-rejected"
+import EmailPortScheduled from "~/emails/port-scheduled"
+import EmailPortSubmitted from "~/emails/port-submitted"
+import EmailSuggestionApproved from "~/emails/suggestion-approved"
+import EmailSuggestionRejected from "~/emails/suggestion-rejected"
+import EmailSuggestionSubmitted from "~/emails/suggestion-submitted"
 import { sendEmail } from "~/lib/email"
-import { countSubmittedTools } from "~/server/web/tools/queries"
+import { countSubmittedPorts } from "~/server/web/ports/queries"
+
+type SuggestionWithSubmitter = {
+  name: string
+  submitter?: {
+    email: string
+    name: string
+  } | null
+}
+
+type AdWithContact = Ad & {
+  adminNote?: string | null
+}
 
 /**
- * Notify the submitter of a tool submission
- *
- * @param tool - The tool to notify the submitter of
- * @returns The email that was sent
+ * Notify the submitter of a port submission
  */
-export const notifySubmitterOfToolSubmitted = async (tool: Tool) => {
-  if (!tool.submitterEmail) {
+export const notifySubmitterOfPortSubmitted = async (port: Port) => {
+  if (!port.submitterEmail) {
     return
   }
 
-  const to = tool.submitterEmail
-  const subject = `🙌 Thanks for submitting ${tool.name}!`
-  const queueLength = await countSubmittedTools({})
+  const to = port.submitterEmail
+  const subject = `🙌 Thanks for submitting ${port.name}!`
+  const queueLength = await countSubmittedPorts({})
 
   return await sendEmail({
     to,
     subject,
-    react: EmailSubmission({ to, tool, queueLength }),
+    react: EmailPortSubmitted({ to, port, queueLength }),
   })
 }
 
 /**
- * Notify the submitter of a tool scheduled for publication
- *
- * @param tool - The tool to notify the submitter of
- * @returns The email that was sent
+ * Notify the submitter of a port scheduled for publication
  */
-export const notifySubmitterOfToolScheduled = async (tool: Tool) => {
-  if (!tool.submitterEmail || !tool.publishedAt || tool.status !== ToolStatus.Scheduled) {
+export const notifySubmitterOfPortScheduled = async (port: Port) => {
+  if (!port.submitterEmail || !port.publishedAt || port.status !== PortStatus.Scheduled) {
     return
   }
 
-  const to = tool.submitterEmail
-  const subject = `Great news! ${tool.name} is scheduled for publication on ${config.site.name} 🎉`
+  const to = port.submitterEmail
+  const subject = `Great news! ${port.name} is scheduled for publication on ${config.site.name} 🎉`
 
   return await sendEmail({
     to,
     subject,
-    react: EmailSubmissionScheduled({ to, tool }),
+    react: EmailPortScheduled({ to, port }),
   })
 }
 
 /**
- * Notify the submitter of a tool published
- *
- * @param tool - The tool to notify the submitter of
- * @returns The email that was sent
+ * Notify the submitter of a port published
  */
-export const notifySubmitterOfToolPublished = async (tool: Tool) => {
-  if (!tool.submitterEmail || !tool.publishedAt || tool.status !== ToolStatus.Published) {
+export const notifySubmitterOfPortApproved = async (port: Port) => {
+  if (!port.submitterEmail || !port.publishedAt || port.status !== PortStatus.Published) {
     return
   }
 
-  const to = tool.submitterEmail
-  const subject = `${tool.name} has been published on ${config.site.name} 🎉`
+  const to = port.submitterEmail
+  const subject = `${port.name} has been published on ${config.site.name} 🎉`
 
   return await sendEmail({
     to,
     subject,
-    react: EmailSubmissionPublished({ to, tool }),
+    react: EmailPortApproved({ to, port }),
   })
 }
 
 /**
- * Notify the submitter of a premium tool
- *
- * @param tool - The tool to notify the submitter of
- * @returns The email that was sent
+ * Notify the submitter of a port rejected
  */
-export const notifySubmitterOfPremiumTool = async (tool: Tool) => {
-  if (!tool.submitterEmail) {
+export const notifySubmitterOfPortRejected = async (port: Port) => {
+  if (!port.submitterEmail) {
     return
   }
 
-  const to = tool.submitterEmail
-  const subject = `🙌 Thank you for ${tool.isFeatured ? "featuring" : "expediting"} ${tool.name}!`
+  const to = port.submitterEmail
+  const subject = `${port.name} was not approved on ${config.site.name}`
 
   return await sendEmail({
     to,
     subject,
-    react: EmailSubmissionPremium({ to, tool }),
+    react: EmailPortRejected({ to, port }),
   })
 }
 
 /**
- * Notify the admin of a premium tool
- *
- * @param tool - The tool to notify the admin of
- * @returns The email that was sent
+ * Notify the submitter of a suggestion submitted
  */
-export const notifyAdminOfPremiumTool = async (tool: Tool) => {
-  const to = config.site.email
-  const subject = `New tool ${tool.isFeatured ? "featured" : "expedited"}: ${tool.name}`
+export const notifySubmitterOfSuggestionSubmitted = async (suggestion: SuggestionWithSubmitter) => {
+  if (!suggestion.submitter) {
+    return
+  }
+
+  const to = suggestion.submitter.email
+  const subject = `🙌 Thanks for suggesting ${suggestion.name}!`
 
   return await sendEmail({
     to,
     subject,
-    replyTo: tool.submitterEmail ?? undefined,
-    react: EmailAdminSubmissionPremium({ to, tool }),
+    react: EmailSuggestionSubmitted({ to, suggestion }),
+  })
+}
+
+/**
+ * Notify the submitter of a suggestion approved
+ */
+export const notifySubmitterOfSuggestionApproved = async (suggestion: SuggestionWithSubmitter) => {
+  if (!suggestion.submitter) {
+    return
+  }
+
+  const to = suggestion.submitter.email
+  const subject = `🎉 Your suggestion "${suggestion.name}" has been approved!`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailSuggestionApproved({ to, suggestion }),
+  })
+}
+
+/**
+ * Notify the submitter of a suggestion rejected
+ */
+export const notifySubmitterOfSuggestionRejected = async (suggestion: SuggestionWithSubmitter) => {
+  if (!suggestion.submitter) {
+    return
+  }
+
+  const to = suggestion.submitter.email
+  const subject = `Update on your suggestion "${suggestion.name}"`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailSuggestionRejected({ to, suggestion }),
+  })
+}
+
+/**
+ * Notify the editor of a port edit approved
+ */
+export const notifyEditorOfPortEditApproved = async (portEdit: {
+  editor: { email: string }
+  port: { name: string | null }
+}) => {
+  const to = portEdit.editor.email
+  const subject = `Your edit to "${portEdit.port.name ?? "this port"}" has been approved!`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailPortEditApproved({ to, portEdit }),
+  })
+}
+
+/**
+ * Notify the editor of a port edit rejected
+ */
+export const notifyEditorOfPortEditRejected = async (portEdit: {
+  editor: { email: string }
+  port?: { name: string | null }
+}) => {
+  const to = portEdit.editor.email
+  const subject = `Update on your edit to "${portEdit.port?.name ?? "this port"}"`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailPortEditRejected({ to, portEdit }),
+  })
+}
+
+/**
+ * Notify the advertiser of an approved ad
+ */
+export const notifyAdvertiserOfAdApproved = async (ad: AdWithContact, paymentUrl?: string) => {
+  const to = ad.email
+  const subject = `🎉 Your ad for ${ad.name} has been approved!`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailAdApproved({ to, ad, paymentUrl }),
+  })
+}
+
+/**
+ * Notify the advertiser that an ad booking was submitted
+ */
+export const notifyAdvertiserOfAdSubmitted = async (ad: AdWithContact) => {
+  const to = ad.email
+  const subject = `🙌 We received your ad booking for ${ad.name}`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailAdSubmitted({ to, ad }),
+  })
+}
+
+/**
+ * Notify the advertiser that an ad campaign is confirmed
+ */
+export const notifyAdvertiserOfAdLive = async (ad: AdWithContact) => {
+  const to = ad.email
+  const subject = `✅ Your ad campaign for ${ad.name} is confirmed`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailAdLive({ to, ad }),
+  })
+}
+
+/**
+ * Notify the advertiser of a rejected ad
+ */
+export const notifyAdvertiserOfAdRejected = async (ad: AdWithContact) => {
+  const to = ad.email
+  const subject = `Update on your ad for ${ad.name}`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailAdRejected({ to, ad }),
+  })
+}
+
+/**
+ * Notify the advertiser that changes are requested on an ad
+ */
+export const notifyAdvertiserOfAdChangesRequested = async (ad: AdWithContact) => {
+  const to = ad.email
+  const subject = `Action needed: update your ad for ${ad.name}`
+
+  return await sendEmail({
+    to,
+    subject,
+    react: EmailAdChangesRequested({ to, ad }),
   })
 }

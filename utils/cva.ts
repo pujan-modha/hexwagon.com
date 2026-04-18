@@ -9,6 +9,9 @@ export const { cva, cx, compose } = defineConfig({
   },
 })
 
+/** @deprecated Use cx instead. */
+export const cn = cx
+
 export const popoverAnimationClasses = [
   "origin-(--radix-popper-transform-origin)",
   "data-[state=open]:animate-in data-[state=closed]:animate-out",

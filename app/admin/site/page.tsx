@@ -1,6 +1,7 @@
+import { withAdminPage } from "~/components/admin/auth-hoc"
 import { siteConfig } from "~/config/site"
 
-export default function SitePage() {
+function SitePage() {
   return (
     <iframe
       src={siteConfig.url}
@@ -9,3 +10,5 @@ export default function SitePage() {
     />
   )
 }
+
+export default withAdminPage(SitePage)

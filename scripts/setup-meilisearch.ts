@@ -1,47 +1,44 @@
 import { config } from "~/config"
-import { env } from "~/env"
-import { indexAlternatives, indexCategories, indexTools } from "~/lib/indexing"
+import { indexConfigs, indexPlatforms, indexPorts, indexThemes } from "~/lib/indexing"
 import { meili } from "~/services/meilisearch"
 
 const siteSlug = config.site.slug
 
 const indexes = [
   {
-    name: "tools",
+    name: "ports",
     primaryKey: "id",
-    embedder: {
-      source: "openAi",
-      apiKey: env.OPENAI_API_KEY,
-      model: "text-embedding-3-small",
-      documentTemplate:
-        'Tool: {{doc.name}}\nTagline: {{doc.tagline}}\nDescription: {{doc.description}}\nCategories: {{doc.categories | join: ", "}}\nAlternatives: {{doc.alternatives | join: ", "}}',
-    },
     settings: {
       searchableAttributes: [
         "name",
-        "tagline",
         "description",
-        "categories",
-        "alternatives",
-        "topics",
+        "searchAliases",
+        "searchTerms",
+        "theme",
+        "platform",
+        "tags",
       ],
       displayedAttributes: [
         "id",
         "name",
         "slug",
-        "tagline",
         "description",
+        "searchAliases",
+        "searchTerms",
         "websiteUrl",
+        "repositoryUrl",
         "faviconUrl",
         "isFeatured",
         "score",
         "pageviews",
         "status",
-        "alternatives",
-        "categories",
-        "topics",
+        "theme",
+        "themeSlug",
+        "platform",
+        "platformSlug",
+        "tags",
       ],
-      filterableAttributes: ["status", "isFeatured", "categories", "alternatives", "topics"],
+      filterableAttributes: ["status", "isFeatured", "themeSlug", "platformSlug", "tags"],
       sortableAttributes: ["score", "pageviews", "isFeatured"],
       rankingRules: [
         "words",
@@ -54,31 +51,28 @@ const indexes = [
         "score:desc",
         "pageviews:desc",
       ],
-      embedders: undefined, // will be set below
     },
   },
   {
-    name: "alternatives",
+    name: "themes",
     primaryKey: "id",
-    embedder: {
-      source: "openAi",
-      apiKey: env.OPENAI_API_KEY,
-      model: "text-embedding-3-small",
-      documentTemplate: "Alternative: {{doc.name}}\nDescription: {{doc.description}}",
-    },
     settings: {
-      searchableAttributes: ["name", "description"],
+      searchableAttributes: ["name", "description", "searchAliases", "searchTerms"],
       displayedAttributes: [
         "id",
         "name",
         "slug",
         "description",
+        "searchAliases",
+        "searchTerms",
         "websiteUrl",
         "faviconUrl",
+        "isVerified",
+        "portsCount",
         "pageviews",
       ],
-      filterableAttributes: ["id", "name"],
-      sortableAttributes: ["pageviews"],
+      filterableAttributes: ["isVerified"],
+      sortableAttributes: ["pageviews", "portsCount", "isVerified"],
       rankingRules: [
         "words",
         "typo",
@@ -86,70 +80,128 @@ const indexes = [
         "attribute",
         "sort",
         "exactness",
+        "isVerified:desc",
+        "portsCount:desc",
         "pageviews:desc",
       ],
-      embedders: undefined, // will be set below
     },
   },
   {
-    name: "categories",
+    name: "platforms",
     primaryKey: "id",
-    embedder: {
-      source: "openAi",
-      apiKey: env.OPENAI_API_KEY,
-      model: "text-embedding-3-small",
-      documentTemplate:
-        "Category: {{doc.name}}\nDescription: {{doc.description}}\nFull path: {{doc.fullPath}}",
-    },
     settings: {
-      searchableAttributes: ["name", "description", "fullPath"],
-      displayedAttributes: ["id", "name", "slug", "description", "fullPath"],
-      filterableAttributes: ["name", "fullPath"],
-      sortableAttributes: [],
-      rankingRules: ["words", "typo", "proximity", "attribute", "sort", "exactness"],
-      embedders: undefined, // will be set below
+      searchableAttributes: ["name", "description", "searchAliases", "searchTerms"],
+      displayedAttributes: [
+        "id",
+        "name",
+        "slug",
+        "description",
+        "searchAliases",
+        "searchTerms",
+        "websiteUrl",
+        "faviconUrl",
+        "isVerified",
+        "portsCount",
+        "pageviews",
+      ],
+      filterableAttributes: ["isVerified"],
+      sortableAttributes: ["pageviews", "portsCount", "isVerified"],
+      rankingRules: [
+        "words",
+        "typo",
+        "proximity",
+        "attribute",
+        "sort",
+        "exactness",
+        "isVerified:desc",
+        "portsCount:desc",
+        "pageviews:desc",
+      ],
+    },
+  },
+  {
+    name: "configs",
+    primaryKey: "id",
+    settings: {
+      searchableAttributes: [
+        "name",
+        "description",
+        "searchAliases",
+        "searchTerms",
+        "fontNames",
+        "themeNames",
+        "platformNames",
+      ],
+      displayedAttributes: [
+        "id",
+        "name",
+        "slug",
+        "description",
+        "searchAliases",
+        "searchTerms",
+        "repositoryUrl",
+        "websiteUrl",
+        "faviconUrl",
+        "screenshotUrl",
+        "isFeatured",
+        "pageviews",
+        "status",
+        "themesCount",
+        "platformsCount",
+        "fontNames",
+        "themeNames",
+        "themeSlugs",
+        "platformNames",
+        "platformSlugs",
+      ],
+      filterableAttributes: ["status", "isFeatured", "themeSlugs", "platformSlugs"],
+      sortableAttributes: ["pageviews", "isFeatured", "themesCount", "platformsCount"],
+      rankingRules: [
+        "words",
+        "typo",
+        "proximity",
+        "attribute",
+        "sort",
+        "exactness",
+        "isFeatured:desc",
+        "pageviews:desc",
+        "platformsCount:desc",
+        "themesCount:desc",
+      ],
     },
   },
 ]
 
-async function cleanupIndexes() {
+async function ensureIndexes() {
   for (const idx of indexes) {
     const indexUid = `${siteSlug}-${idx.name}`
-    try {
-      await meili.index(indexUid).delete()
-      console.log(`Deleted existing index: ${indexUid}`)
-    } catch (e: any) {
-      if (e.code !== "index_not_found" && !e.message?.includes("not found")) {
-        console.warn(`Could not delete index ${indexUid}:`, e.message)
-      }
-    }
-  }
-}
 
-async function setupIndexes() {
-  for (const idx of indexes) {
-    const indexUid = `${siteSlug}-${idx.name}`
-    // Create index
-    await meili.createIndex(indexUid, { primaryKey: idx.primaryKey })
-    // Set embedder (key must match what is used in search: 'openAi')
-    const embedders = { openAi: idx.embedder } as any
-    // Patch settings
-    await meili.index(indexUid).updateSettings({
-      ...idx.settings,
-      embedders,
-    })
+    try {
+      await meili.getIndex(indexUid)
+    } catch (e: any) {
+      if (e.code !== "index_not_found" && !e.message?.includes("not found")) throw e
+
+      await meili.createIndex(indexUid, { primaryKey: idx.primaryKey })
+      console.log(`Created index: ${indexUid}`)
+    }
+
+    await meili.index(indexUid).updateSettings(idx.settings)
     console.log(`Configured index: ${indexUid}`)
   }
 }
 
 async function reindexAll() {
-  await Promise.all([indexTools({}), indexAlternatives({}), indexCategories({})])
+  await Promise.all([
+    indexPorts({ replace: true }),
+    indexThemes({ replace: true }),
+    indexPlatforms({ replace: true }),
+    indexConfigs({ replace: true }),
+  ])
   console.log("Reindexing complete.")
 }
 
 async function main() {
-  await cleanupIndexes()
-  await setupIndexes()
+  await ensureIndexes()
   await reindexAll()
   console.log("MeiliSearch setup and population complete.")
 }

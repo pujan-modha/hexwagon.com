@@ -1,16 +1,23 @@
 import type { ComponentProps } from "react"
 import ReactMarkdown from "react-markdown"
-import { Prose } from "~/components/common/prose"
-import { MDXComponents } from "~/components/web/mdx-components"
+import rehypeRaw from "rehype-raw"
+import remarkGfm from "remark-gfm"
+import remarkGithubBlockquoteAlert from "remark-github-blockquote-alert"
+import { cx } from "~/utils/cva"
 
-type MarkdownProps = ComponentProps<typeof Prose> & {
+type MarkdownProps = ComponentProps<"div"> & {
   code: string
 }
 
-export const Markdown = ({ code, ...props }: MarkdownProps) => {
+export const Markdown = ({ code, className, ...props }: MarkdownProps) => {
   return (
-    <Prose {...props}>
-      <ReactMarkdown components={MDXComponents}>{code}</ReactMarkdown>
-    </Prose>
+    <div className={cx("markdown-body github-markdown-body", className)} {...props}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkGithubBlockquoteAlert]}
+        rehypePlugins={[rehypeRaw]}
+      >
+        {code}
+      </ReactMarkdown>
+    </div>
   )
 }

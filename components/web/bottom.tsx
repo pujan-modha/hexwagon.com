@@ -5,17 +5,17 @@ import { Container } from "~/components/web/ui/container"
 import { NavLink } from "~/components/web/ui/nav-link"
 import { Tile, TileCaption, TileDivider } from "~/components/web/ui/tile"
 import { siteConfig } from "~/config/site"
-import { findAlternatives } from "~/server/web/alternatives/queries"
+import { findThemes } from "~/server/web/themes/queries"
 import { cx } from "~/utils/cva"
 
 export const Bottom = async ({ className, ...props }: ComponentProps<"div">) => {
-  const alternatives = await findAlternatives({
+  const themes = await findThemes({
     where: { websiteUrl: { startsWith: siteConfig.affiliateUrl } },
-    orderBy: { tools: { _count: "desc" } },
+    orderBy: { ports: { _count: "desc" } },
     take: 12,
   })
 
-  if (!alternatives?.length) {
+  if (!themes?.length) {
     return null
   }
 
@@ -28,19 +28,19 @@ export const Bottom = async ({ className, ...props }: ComponentProps<"div">) => 
         )}
         {...props}
       >
-        {!!alternatives?.length && (
+        {!!themes?.length && (
           <Stack className="gap-x-4 text-sm">
-            <H6 as="strong">Popular Proprietary Tools:</H6>
+            <H6 as="strong">Popular Themes:</H6>
 
             <div className="grid grid-cols-2xs gap-x-4 gap-y-2 w-full sm:grid-cols-xs md:grid-cols-sm">
-              {alternatives.map(alternative => (
-                <Tile key={alternative.slug} className="gap-2" asChild>
-                  <NavLink href={`/alternatives/${alternative.slug}`}>
-                    <span className="truncate">{alternative.name} Alternatives</span>
+              {themes.map(theme => (
+                <Tile key={theme.slug} className="gap-2" asChild>
+                  <NavLink href={`/themes/${theme.slug}`}>
+                    <span className="truncate">{theme.name}</span>
 
                     <TileDivider />
 
-                    <TileCaption className="max-sm:hidden">{alternative._count.tools}</TileCaption>
+                    <TileCaption className="max-sm:hidden">{theme._count.ports}</TileCaption>
                   </NavLink>
                 </Tile>
               ))}

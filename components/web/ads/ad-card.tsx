@@ -1,5 +1,4 @@
-import { isExternalUrl } from "@primoui/utils"
-import type { Prisma } from "@prisma/client"
+import type { AdSlot, Prisma } from "@prisma/client"
 import type { ComponentProps } from "react"
 import { Badge } from "~/components/common/badge"
 import { Button } from "~/components/common/button"
@@ -8,83 +7,86 @@ import {
   CardBadges,
   CardDescription,
   CardHeader,
-  CardIcon,
   type CardProps,
 } from "~/components/common/card"
 import { H4 } from "~/components/common/heading"
-import { Icon } from "~/components/common/icon"
 import { Skeleton } from "~/components/common/skeleton"
-import { ExternalLink } from "~/components/web/external-link"
-import { Favicon, FaviconImage } from "~/components/web/ui/favicon"
-import { LogoSymbol } from "~/components/web/ui/logo-symbol"
+import { Favicon } from "~/components/web/ui/favicon"
 import { config } from "~/config"
 import type { AdOne } from "~/server/web/ads/payloads"
-import { findAd } from "~/server/web/ads/queries"
+import { findAd, findAllocatedSlotAd } from "~/server/web/ads/queries"
 import { cx } from "~/utils/cva"
+import { AdPreviewCard } from "./ad-preview"
+import { AllocatedAdCardClient } from "./allocated-ad-card-client"
 
 type AdCardProps = CardProps & {
   // Database query conditions to find a specific ad
   where?: Prisma.AdWhereInput
+  // Allocation slot for random weighted ad selection
+  slot?: AdSlot
+  // Optional allocation scope to share one slot allocation set across multiple ad components
+  allocationScope?: string
+  // Optional context for targeting boost
+  context?: {
+    themeId?: string
+    platformId?: string
+  }
   // Override ad data without database query
   overrideAd?: AdOne | null
   // Default values to merge with the fallback ad
   defaultOverride?: Partial<AdOne>
 }
 
-const AdCard = async ({ className, where, overrideAd, defaultOverride, ...props }: AdCardProps) => {
+const AdCard = async ({
+  className,
+  where,
+  slot,
+  allocationScope,
+  context,
+  overrideAd,
+  defaultOverride,
+  ...props
+}: AdCardProps) => {
   // Default ad values to display if no ad is found
   const defaultAd = { ...config.ads.defaultAd, ...defaultOverride }
 
   // Resolve the ad data from the override or database (don't query if override is defined)
-  const resolvedAd = overrideAd !== undefined ? overrideAd : await findAd({ where })
+  const resolvedAd =
+    overrideAd !== undefined
+      ? overrideAd
+      : slot
+        ? await findAllocatedSlotAd({
+            slot,
+            scope: allocationScope,
+            context,
+          })
+        : await findAd({ where })
 
   // Final ad data to display
   const ad = resolvedAd ?? defaultAd
 
-  // Determine if the ad is internal or external
-  const isInternalAd = !isExternalUrl(ad.websiteUrl)
+  if (slot === "Listing" || slot === "Sidebar") {
+    return (
+      <AllocatedAdCardClient
+        initialAd={resolvedAd ?? null}
+        slot={slot}
+        scope={allocationScope}
+        context={context}
+        className={className}
+      />
+    )
+  }
 
-  return (
-    <Card className={cx("group/button", className)} asChild {...props}>
-      <ExternalLink
-        href={ad.websiteUrl}
-        target={isInternalAd ? "_self" : undefined}
-        eventName="click_ad"
-        eventProps={{ url: ad.websiteUrl, type: ad.type, source: "card" }}
-      >
-        <CardBadges>
-          <Badge variant="outline">Ad</Badge>
-        </CardBadges>
-
-        <CardHeader wrap={false}>
-          <Favicon src={ad.faviconUrl ?? "/favicon.png"} title={ad.name} />
-
-          <H4 as="strong" className="truncate">
-            {ad.name}
-          </H4>
-        </CardHeader>
-
-        <CardDescription className="mb-auto pr-2 line-clamp-4">{ad.description}</CardDescription>
-
-        <Button
-          className="pointer-events-none md:w-full"
-          suffix={<Icon name="lucide/arrow-up-right" />}
-          asChild
-        >
-          <span>{ad.buttonLabel || `Visit ${ad.name}`}</span>
-        </Button>
-
-        <CardIcon>
-          {isInternalAd ? <LogoSymbol /> : <FaviconImage src={ad.faviconUrl} title={ad.name} />}
-        </CardIcon>
-      </ExternalLink>
-    </Card>
-  )
+  return <AdPreviewCard className={className} ad={ad} interactive {...props} />
 }
 
 const AdCardSkeleton = ({ className, ...props }: ComponentProps<typeof Card>) => {
   return (
-    <Card hover={false} className={cx("items-stretch select-none", className)} {...props}>
+    <Card
+      hover={false}
+      className={cx("h-[190px] min-h-[190px] items-stretch select-none", className)}
+      {...props}
+    >
       <CardBadges>
         <Badge variant="outline">Ad</Badge>
       </CardBadges>

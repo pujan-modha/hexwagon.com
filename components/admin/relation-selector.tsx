@@ -1,6 +1,4 @@
-import { useCompletion } from "@ai-sdk/react"
-import { isTruthy } from "@primoui/utils"
-import { type ReactNode, useEffect, useState } from "react"
+import { type ReactNode, useState } from "react"
 import { AnimatedContainer } from "~/components/common/animated-container"
 import { Badge } from "~/components/common/badge"
 import { Button } from "~/components/common/button"
@@ -27,7 +25,6 @@ type Relation = {
 type RelationSelectorProps<T> = {
   relations: T[]
   selectedIds: string[]
-  prompt?: string
   maxSuggestions?: number
   suggestedIds?: string[]
   mapFunction?: (relation: T) => Relation
@@ -38,7 +35,6 @@ type RelationSelectorProps<T> = {
 export const RelationSelector = <T extends Relation>({
   relations,
   selectedIds,
-  prompt,
   maxSuggestions = 5,
   suggestedIds,
   mapFunction,
@@ -48,38 +44,6 @@ export const RelationSelector = <T extends Relation>({
   const suggestRelations = suggestedIds ? relations.filter(r => suggestedIds.includes(r.id)) : []
   const [suggestedRelations, setSuggestedRelations] = useState<T[]>(suggestRelations)
   const selectedRelations = relations?.filter(({ id }) => selectedIds.includes(id))
-
-  const { complete } = useCompletion({
-    api: "/api/ai/completion",
-    experimental_throttle: 1000,
-
-    onFinish: (_, completion) => {
-      if (completion) {
-        const suggestions = completion
-          .split(",")
-          .map(name => name.trim())
-          .map(name => relations.find(c => c.name === name) || null)
-          .filter((name, index, self) => self.indexOf(name) === index)
-          .filter(isTruthy)
-          .slice(0, maxSuggestions)
-
-        setSuggestedRelations(suggestions)
-      }
-    },
-  })
-
-  useEffect(() => {
-    if (prompt && !!relations.length && !selectedIds.length && !suggestedRelations.length) {
-      complete(`${prompt}
-        
-        Only return the relation names in comma-separated format, and nothing else. If there are no relevant relations, return an empty string.
-        Sort the relations by relevance to the link.
-        Suggest only ${maxSuggestions} relations at most.
-
-        Available relations: ${relations.map(({ name }) => name).join(", ")}
-      `)
-    }
-  }, [prompt, selectedIds])
 
   const handleFilter = (value: string, search: string) => {
     const normalizedValue = value.toLowerCase()
@@ -184,11 +148,11 @@ export const RelationSelector = <T extends Relation>({
         </PopoverContent>
       </Popover>
 
-      {(suggestedRelations.length || prompt) && (
+      {!!suggestedRelations.length && (
         <AnimatedContainer height transition={{ ease: "linear", duration: 0.1 }}>
           {!!suggestedRelations.length && (
             <Stack direction="column" className="items-start">
-              <Tooltip tooltip="AI-suggested relations. Click on them to add to the selection.">
+              <Tooltip tooltip="Suggested relations. Click on them to add to the selection.">
                 <span className="mt-px text-xs text-muted-foreground">Suggested:</span>
               </Tooltip>
 

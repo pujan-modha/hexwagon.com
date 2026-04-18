@@ -12,46 +12,90 @@ datasource db {
 
 enum AdType {
   Banner
-  Alternatives
-  AlternativePage
-  Tools
-  ToolPage
-  SelfHosted
-  BlogPost
+  Listing
+  Sidebar
+  Footer
+  Themes
+  ThemePage
+  Platforms
+  PlatformPage
+  Ports
+  PortPage
   All
 }
 
-enum ToolStatus {
+enum AdStatus {
+  Pending
+  PendingEdit
+  Approved
+  Rejected
+  Cancelled
+}
+
+enum AdBillingCycle {
+  Weekly
+  Monthly
+}
+
+enum BillingProvider {
+  Stripe
+  PayPal
+}
+
+enum AdSlot {
+  Banner
+  Listing
+  Sidebar
+  Footer
+}
+
+enum PortStatus {
   Draft
   Scheduled
   Published
+  PendingEdit
 }
 
-enum StackType {
-  Tool
-  SaaS
-  Cloud
-  ETL
-  Analytics
-  Language
-  DB
-  CI
-  Framework
-  Hosting
-  API
-  Storage
-  Monitoring
-  Messaging
-  App
-  Network
+enum ConfigStatus {
+  Draft
+  Published
+}
+
+enum SuggestionType {
+  Theme
+  Platform
+  Config
+}
+
+enum SuggestionStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+enum EditStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+enum ReportStatus {
+  Open
+  Resolved
+  Dismissed
 }
 
 enum ReportType {
   BrokenLink
-  WrongCategory
-  WrongAlternative
+  Inappropriate
   Outdated
   Other
+}
+
+enum ThemeMaintainerClaimStatus {
+  Pending
+  Approved
+  Rejected
 }
 
 model User {
@@ -68,11 +112,24 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  accounts Account[]
-  sessions Session[]
-  likes    Like[]
-  tools    Tool[]
-  reports  Report[]
+  accounts         Account[]
+  sessions         Session[]
+  likes            Like[]
+  ports            Port[]
+  reports          Report[]  @relation("ReportCreator")
+  resolvedReports  Report[]  @relation("ReportResolver")
+  comments         Comment[]
+  suggestions      Suggestion[]
+  portEdits        PortEdit[]
+  configEdits      ConfigEdit[]
+  configs          Config[]
+  maintainedThemes ThemeMaintainer[]
+  themeMaintainerClaims         ThemeMaintainerClaim[] @relation("ThemeMaintainerClaimRequester")
+  reviewedThemeMaintainerClaims ThemeMaintainerClaim[] @relation("ThemeMaintainerClaimReviewer")
+  updatedAdSpotPricing AdSpotPricing[] @relation("AdSpotPricingUpdatedBy")
+  updatedAdConfigs     AdConfig[]      @relation("AdConfigUpdatedBy")
+  updatedAdPackageConfigs AdPackageConfig[] @relation("AdPackageConfigUpdatedBy")
+  updatedAdFixedSlotOverrides AdFixedSlotOverride[] @relation("AdFixedSlotOverrideUpdatedBy")
 
   // Indexes
   @@index([id])
@@ -136,184 +193,506 @@ model Ad {
   buttonLabel    String?
   faviconUrl     String?
   type           AdType   @default(All)
+  status         AdStatus @default(Pending)
   startsAt       DateTime
   endsAt         DateTime
-  sessionId      String?
-  subscriptionId String?  @unique
+  priceCents     Int?
+  approvedAt     DateTime?
+  rejectedAt     DateTime?
+  cancelledAt    DateTime?
+  paidAt         DateTime?
+  adminNote      String?  @db.Text
+  customHtml     String?  @db.Text
+  customCss      String?  @db.Text
+  customJs       String?  @db.Text
+  billingProvider        BillingProvider?
+  billingCheckoutReferenceId String?
+  billingSubscriptionId  String? @unique
+  billingLastPaymentId   String?
+  billingCycle   AdBillingCycle?
+  packageBasePriceCents       Int?
+  packageDiscountedPriceCents Int?
+  targetingUnitPriceCents     Int?
+  targetingTargetCount        Int   @default(0)
+  targetingTotalPriceCents    Int?
+  refundAmountCents Int?
+  billingRefundId   String?
+  refundedAt        DateTime?
+  clickCount       Int      @default(0)
+  lastClickedAt    DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
-  alternatives Alternative[]
+  themes Theme[]    @relation("LegacyThemeAd")
+  targetThemes Theme[] @relation("AdTargetThemes")
+  targetPlatforms Platform[] @relation("AdTargetPlatforms")
+  fixedSlotOverrides AdFixedSlotOverride[]
+
+  // Indexes
+  @@index([status, paidAt, startsAt, endsAt])
+  @@index([billingCycle])
+  @@index([billingProvider, billingSubscriptionId])
+  @@index([billingCheckoutReferenceId])
+  @@index([billingLastPaymentId])
 }
 
-model Tool {
-  id              String     @id @default(cuid())
-  name            String     @db.Citext
-  slug            String     @unique
-  websiteUrl      String     @unique
-  affiliateUrl    String?
-  repositoryUrl   String     @unique
-  tagline         String?
-  description     String?
-  content         String?
-  stars           Int        @default(0)
-  forks           Int        @default(0)
-  score           Int        @default(0)
-  faviconUrl      String?
-  screenshotUrl   String?
-  isFeatured      Boolean    @default(false)
-  isSelfHosted    Boolean    @default(false)
-  submitterName   String?
-  submitterEmail  String?
-  submitterNote   String?
-  discountCode    String?
-  discountAmount  String?
-  firstCommitDate DateTime?
-  lastCommitDate  DateTime?
-  pageviews       Int?       @default(0)
-  status          ToolStatus @default(Draft)
-  publishedAt     DateTime?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+model BillingWebhookEvent {
+  id         String          @id @default(cuid())
+  provider   BillingProvider
+  eventId    String          @unique
+  eventType  String
+  createdAt  DateTime        @default(now())
 
-  // Relations
-  alternatives Alternative[]
-  categories   Category[]
-  topics       Topic[]
-  stacks       Stack[]
-  license      License?      @relation(fields: [licenseId], references: [id])
-  licenseId    String?
-  likes        Like[]
-  reports      Report[]
-  owner        User?         @relation(fields: [ownerId], references: [id])
-  ownerId      String?
-
-  @@index([id, slug])
-  @@index([name])
-  @@index([status])
-  @@index([isFeatured, score])
-  @@index([ownerId])
+  @@index([provider, createdAt])
 }
 
-model Alternative {
-  id             String   @id @default(cuid())
-  name           String   @db.Citext
-  slug           String   @unique
-  description    String?
-  websiteUrl     String   @unique
-  faviconUrl     String?
-  discountCode   String?
+model AdSpotPricing {
+  spot          AdType   @id
+  priceCents    Int
+  updatedById   String?
+  updatedBy     User?    @relation("AdSpotPricingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt     DateTime @updatedAt
+}
+
+model AdConfig {
+  id                    Int      @id @default(1)
+  maxDiscountPercentage Int      @default(30)
+  updatedById           String?
+  updatedBy             User?    @relation("AdConfigUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt             DateTime @updatedAt
+}
+
+model AdPackageConfig {
+  id Int @id @default(1)
+  weeklyBasePriceCents       Int @default(0)
+  weeklyDiscountedPriceCents Int @default(0)
+  monthlyBasePriceCents      Int @default(0)
+  monthlyDiscountedPriceCents Int @default(0)
+  weeklyTargetUnitPriceCents Int @default(0)
+  monthlyTargetUnitPriceCents Int @default(0)
+  updatedById String?
+  updatedBy   User? @relation("AdPackageConfigUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt
+}
+
+model AdFixedSlotOverride {
+  slot AdSlot @id
+  adId String?
+  ad   Ad?    @relation(fields: [adId], references: [id], onDelete: SetNull)
+  updatedById String?
+  updatedBy User? @relation("AdFixedSlotOverrideUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt DateTime @updatedAt
+
+  @@index([adId])
+}
+
+model Theme {
+  id            String   @id @default(cuid())
+  name          String   @db.Citext
+  slug          String   @unique
+  description   String?
+  seoTitle      String?
+  seoDescription String? @db.Text
+  seoIntro      String?  @db.Text
+  seoFaqs       String?  @db.Text
+  searchAliases String?  @db.Text
+  seoPlatformOverrides String? @db.Text
+  websiteUrl    String?
+  repositoryUrl String?
+  faviconUrl    String?
+  author        String?
+  authorUrl     String?
+  guidelines    String?  @db.Text
+  license       String?
+  isFeatured    Boolean  @default(false)
+  order         Int      @default(0)
+  discountCode  String?
   discountAmount String?
-  pageviews      Int?     @default(0)
-  adPrice        Float?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  pageviews     Int?     @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  // Relation
-  tools Tool[]
-  ad    Ad?     @relation(fields: [adId], references: [id])
-  adId  String?
+  // Relations
+  ports       Port[]
+  configThemes ConfigTheme[]
+  colors      ColorPalette[]
+  likes       Like[]
+  reports     Report[]
+  maintainers ThemeMaintainer[]
+  maintainerClaims ThemeMaintainerClaim[]
+  ad          Ad?       @relation("LegacyThemeAd", fields: [adId], references: [id])
+  adId        String?
+  targetedByAds Ad[]    @relation("AdTargetThemes")
 
   // Indexes
   @@index([slug])
   @@index([adId])
 }
 
-model Category {
-  id          String   @id @default(cuid())
-  name        String   @db.Citext
-  slug        String   @unique
-  fullPath    String   @unique @default("")
-  label       String?
-  description String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model Platform {
+  id                  String   @id @default(cuid())
+  name                String   @db.Citext
+  slug                String   @unique
+  description         String?  @db.Text
+  seoTitle            String?
+  seoDescription      String?  @db.Text
+  seoIntro            String?  @db.Text
+  seoFaqs             String?  @db.Text
+  searchAliases       String?  @db.Text
+  websiteUrl          String?
+  faviconUrl          String?
+  installInstructions String?  @db.Text
+  themeCreationDocs   String?  @db.Text
+  license             String?
+  isFeatured          Boolean  @default(false)
+  order               Int      @default(0)
+  pageviews           Int?     @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   // Relations
-  tools         Tool[]
-  parent        Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  parentId      String?
-  subcategories Category[] @relation("CategoryHierarchy")
+  ports   Port[]
+  configPlatforms ConfigPlatform[]
+  likes   Like[]
+  reports Report[]
+  targetedByAds Ad[] @relation("AdTargetPlatforms")
 
   // Indexes
   @@index([slug])
-  @@index([parentId])
 }
 
-model Topic {
+model Port {
+  id            String     @id @default(cuid())
+  slug          String     @unique
+  name          String?    @db.Citext
+  description   String?
+  seoTitle      String?
+  seoDescription String?   @db.Text
+  seoFaqs       String?    @db.Text
+  searchAliases String?    @db.Text
+  content       String?    @db.Text
+  repositoryUrl String?
+  screenshotUrl String?
+  faviconUrl    String?
+  isOfficial    Boolean    @default(false)
+  isFeatured    Boolean    @default(false)
+  isSelfHosted  Boolean    @default(false)
+  score         Int        @default(0)
+  stars         Int        @default(0)
+  forks         Int        @default(0)
+  pageviews     Int?       @default(0)
+  submitterName   String?
+  submitterEmail  String?
+  submitterNote   String?
+  discountCode    String?
+  discountAmount  String?
+  license         String?
+  affiliateUrl    String?
+  rejectionReason String?
+  firstCommitDate DateTime?
+  lastCommitDate  DateTime?
+  status        PortStatus @default(Draft)
+  publishedAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  theme        Theme    @relation(fields: [themeId], references: [id])
+  themeId      String
+  platform     Platform @relation(fields: [platformId], references: [id])
+  platformId   String
+  author       User?    @relation(fields: [authorId], references: [id])
+  authorId     String?
+
+  tags         Tag[]
+  likes        Like[]
+  comments     Comment[]
+  reports      Report[]
+  pendingEdits PortEdit[]
+
+  // Indexes
+  @@index([id, slug])
+  @@index([slug])
+  @@index([themeId])
+  @@index([platformId])
+  @@index([authorId])
+  @@index([status])
+  @@index([isFeatured, score])
+  @@index([themeId, platformId, isOfficial])
+
+  // Only one official port per theme+platform pair is enforced by a partial unique index in SQL migration.
+}
+
+model Config {
+  id             String       @id @default(cuid())
+  name           String       @db.Citext
+  slug           String       @unique
+  description    String?      @db.Text
+  seoTitle       String?
+  seoDescription String?      @db.Text
+  seoFaqs        String?      @db.Text
+  searchAliases  String?      @db.Text
+  content        String?      @db.Text
+  repositoryUrl  String?
+  websiteUrl     String?
+  screenshotUrl  String?
+  screenshots    Json?
+  fonts          Json?
+  faviconUrl     String?
+  license        String?
+  submitterNote  String?      @db.Text
+  isFeatured     Boolean      @default(false)
+  order          Int          @default(0)
+  pageviews      Int?         @default(0)
+  status         ConfigStatus @default(Draft)
+  authorId       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  author          User?          @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  configThemes    ConfigTheme[]
+  configPlatforms ConfigPlatform[]
+  likes           Like[]
+  comments        Comment[]
+  reports         Report[]
+  pendingEdits    ConfigEdit[]
+
+  // Indexes
+  @@index([authorId])
+  @@index([slug])
+  @@index([status])
+  @@index([isFeatured, order])
+}
+
+model ConfigEdit {
+  id         String     @id @default(cuid())
+  diff       Json
+  status     EditStatus @default(Pending)
+  adminNote  String?
+  config     Config     @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId   String
+  editor     User       @relation(fields: [editorId], references: [id])
+  editorId   String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([configId])
+  @@index([editorId])
+  @@index([status])
+}
+
+model ConfigTheme {
+  config    Config   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId  String
+  theme     Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  themeId   String
+  isPrimary Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([configId, themeId])
+  @@index([themeId])
+  @@index([themeId, isPrimary])
+}
+
+model ConfigPlatform {
+  config     Config   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId   String
+  platform   Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  platformId String
+  isPrimary  Boolean  @default(false)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([configId, platformId])
+  @@index([platformId])
+  @@index([platformId, isPrimary])
+}
+
+model Tag {
   slug      String   @id @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relation
-  tools Tool[]
-
-  // Indexes
-  @@index([slug])
-}
-
-model License {
-  id        String   @id @default(cuid())
-  name      String   @unique @db.Citext
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
   // Relations
-  tools Tool[]
+  ports Port[]
 
   // Indexes
   @@index([slug])
 }
 
-model Stack {
-  id          String    @id @default(cuid())
-  name        String    @db.Citext
-  slug        String    @unique
-  type        StackType @default(Language)
+model ColorPalette {
+  id          String   @id @default(cuid())
+  paletteName String   @default("Default")
+  label       String
+  hex         String
+  order       Int      @default(0)
+  theme       Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  themeId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([themeId])
+}
+
+model Suggestion {
+  id          String           @id @default(cuid())
+  type        SuggestionType
+  name        String
   description String?
-  website     String?
-  faviconUrl  String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  websiteUrl  String?
+  status      SuggestionStatus @default(Pending)
+  adminNote   String?
+  submitter   User             @relation(fields: [submitterId], references: [id])
+  submitterId String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([submitterId])
+  @@index([status])
+}
+
+model PortEdit {
+  id         String     @id @default(cuid())
+  diff       Json
+  status     EditStatus @default(Pending)
+  adminNote  String?
+  port       Port       @relation(fields: [portId], references: [id], onDelete: Cascade)
+  portId     String
+  editor     User       @relation(fields: [editorId], references: [id])
+  editorId   String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([portId])
+  @@index([editorId])
+  @@index([status])
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String    @db.Text
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  port      Port?     @relation(fields: [portId], references: [id], onDelete: Cascade)
+  portId    String?
+  config    Config?   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  parentId  String?
+  replies   Comment[] @relation("CommentReplies")
+  reports   Report[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([portId])
+  @@index([configId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model ThemeMaintainer {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  theme      Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  themeId    String
+  assignedAt DateTime @default(now())
+
+  @@unique([userId, themeId])
+  @@index([userId])
+  @@index([themeId])
+}
+
+model ThemeMaintainerClaim {
+  id            String                    @id @default(cuid())
+  claimantName  String
+  claimantEmail String
+  claimantUrl   String?
+  details       String?                   @db.Text
+  status        ThemeMaintainerClaimStatus @default(Pending)
+  adminNote     String?                   @db.Text
+  reviewedAt    DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
 
   // Relations
-  tools Tool[]
+  theme         Theme   @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  themeId       String
+  requester     User?   @relation("ThemeMaintainerClaimRequester", fields: [requesterId], references: [id], onDelete: SetNull)
+  requesterId   String?
+  reviewer      User?   @relation("ThemeMaintainerClaimReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  reviewerId    String?
 
   // Indexes
-  @@index([slug])
+  @@index([themeId])
+  @@index([requesterId])
+  @@index([reviewerId])
+  @@index([status])
 }
 
 model Report {
-  id        String     @id @default(cuid())
-  type      ReportType
-  message   String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id         String       @id @default(cuid())
+  type       ReportType
+  message    String?
+  status     ReportStatus @default(Open)
+  resolvedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
   // Relations
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String?
-  tool   Tool?   @relation(fields: [toolId], references: [id], onDelete: Cascade)
-  toolId String?
+  user       User?      @relation("ReportCreator", fields: [userId], references: [id], onDelete: Cascade)
+  userId     String?
+  resolvedBy User?      @relation("ReportResolver", fields: [resolvedById], references: [id])
+  resolvedById String?
+  port       Port?      @relation(fields: [portId], references: [id], onDelete: Cascade)
+  portId     String?
+  theme      Theme?     @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  themeId    String?
+  platform   Platform?  @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  platformId String?
+  config     Config?    @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId   String?
+  comment    Comment?   @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId  String?
 
   // Indexes
-  @@index([toolId])
+  @@index([portId])
+  @@index([themeId])
+  @@index([platformId])
+  @@index([configId])
+  @@index([commentId])
+  @@index([status])
 }
 
 model Like {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
+  id         String    @id @default(cuid())
+  createdAt  DateTime  @default(now())
 
   // Relations
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-  tool   Tool   @relation(fields: [toolId], references: [id], onDelete: Cascade)
-  toolId String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  port       Port?     @relation(fields: [portId], references: [id], onDelete: Cascade)
+  portId     String?
+  theme      Theme?    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  themeId    String?
+  platform   Platform? @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  platformId String?
+  config     Config?   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId   String?
 
   // Indexes
-  @@unique([userId, toolId])
+  @@unique([userId, portId])
+  @@unique([userId, themeId])
+  @@unique([userId, platformId])
+  @@unique([userId, configId])
   @@index([userId])
-  @@index([toolId])
+  @@index([portId])
+  @@index([themeId])
+  @@index([platformId])
+  @@index([configId])
 }

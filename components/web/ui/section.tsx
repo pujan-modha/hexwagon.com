@@ -11,12 +11,7 @@ export const SectionBase = ({ className, ...props }: ComponentProps<"div">) => {
 }
 
 export const SectionContent = ({ className, ...props }: ComponentProps<"div">) => {
-  return (
-    <div
-      className={cx("flex flex-col gap-8 md:col-span-2 md:gap-10 lg:gap-12", className)}
-      {...props}
-    />
-  )
+  return <div className={cx("flex flex-col gap-4 md:col-span-2", className)} {...props} />
 }
 
 export const SectionSidebar = ({ className, ...props }: ComponentProps<"div">) => {

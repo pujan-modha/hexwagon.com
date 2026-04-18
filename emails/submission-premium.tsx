@@ -1,4 +1,4 @@
-import type { Tool } from "@prisma/client"
+import type { Port as Tool } from "@prisma/client"
 import { Text } from "@react-email/components"
 import { EmailFeatureNudge } from "~/emails/components/feature-nudge"
 import { EmailWrapper, type EmailWrapperProps } from "~/emails/components/wrapper"
@@ -22,7 +22,7 @@ const EmailSubmissionPremium = ({ tool, ...props }: EmailProps) => {
         ) : (
           <Text>
             Thanks for featuring {tool.name}, it will now be reviewed and added to our directory{" "}
-            <strong>within 12 hours</strong>. If you want your tool published on a specific date,
+            <strong>within 12 hours</strong>. If you want your port published on a specific date,
             please let us know. We'll do our best to meet your request.
           </Text>
         )
@@ -30,7 +30,7 @@ const EmailSubmissionPremium = ({ tool, ...props }: EmailProps) => {
         <>
           <Text>
             Thanks for submitting {tool.name}, it will now be reviewed and added to our directory{" "}
-            <strong>within 24 hours</strong>. If you want your tool published on a specific date,
+            <strong>within 24 hours</strong>. If you want your port published on a specific date,
             please let us know. We'll do our best to meet your request.
           </Text>
 

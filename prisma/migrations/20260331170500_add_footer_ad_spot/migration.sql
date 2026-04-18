@@ -1,0 +1,1 @@
+ALTER TYPE "AdType" ADD VALUE IF NOT EXISTS 'Footer';

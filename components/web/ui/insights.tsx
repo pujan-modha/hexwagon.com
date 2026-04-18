@@ -1,6 +1,9 @@
+import { isExternalUrl } from "@primoui/utils"
+import type { Properties } from "posthog-js"
 import { Slot } from "radix-ui"
 import { type ComponentProps, Fragment, type ReactNode, isValidElement } from "react"
 import { Link } from "~/components/common/link"
+import { ExternalLink } from "~/components/web/external-link"
 import { cx } from "~/utils/cva"
 
 type InsightsProps = ComponentProps<"ul"> & {
@@ -10,13 +13,15 @@ type InsightsProps = ComponentProps<"ul"> & {
     link?: string
     title?: string
     icon?: ReactNode
+    eventName?: string
+    eventProps?: Properties
   }[]
 }
 
 export const Insights = ({ className, insights, ...props }: InsightsProps) => {
   return (
     <ul className={cx("w-full text-xs", className)} {...props}>
-      {insights.map(({ label, value, link, title, icon }) => {
+      {insights.map(({ label, value, link, title, icon, eventName, eventProps }) => {
         const valueComp = isValidElement(value) ? value : <span>{value}</span>
 
         return (
@@ -30,13 +35,25 @@ export const Insights = ({ className, insights, ...props }: InsightsProps) => {
               <hr className="min-w-2 flex-1" />
 
               {link ? (
-                <Link
-                  href={link}
-                  className="shrink-0 font-medium decoration-border underline hover:decoration-foreground"
-                  title={title}
-                >
-                  {value}
-                </Link>
+                isExternalUrl(link) ? (
+                  <ExternalLink
+                    href={link}
+                    className="shrink-0 font-medium decoration-border underline hover:decoration-foreground"
+                    title={title}
+                    eventName={eventName}
+                    eventProps={eventProps}
+                  >
+                    {value}
+                  </ExternalLink>
+                ) : (
+                  <Link
+                    href={link}
+                    className="shrink-0 font-medium decoration-border underline hover:decoration-foreground"
+                    title={title}
+                  >
+                    {value}
+                  </Link>
+                )
               ) : (
                 <Slot.Root className="shrink-0 font-medium tabular-nums" title={title}>
                   {valueComp}

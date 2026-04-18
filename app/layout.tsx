@@ -7,7 +7,7 @@ import { Toaster } from "~/components/common/toaster"
 import { TooltipProvider } from "~/components/common/tooltip"
 import { config } from "~/config"
 import { SearchProvider } from "~/contexts/search-context"
-import { fontDisplay, fontSans } from "~/lib/fonts"
+import { fontMono, fontSans } from "~/lib/fonts"
 
 export const metadata: Metadata = {
   metadataBase: new URL(config.site.url),
@@ -23,18 +23,15 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: "dark light",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
+  colorScheme: "dark",
+  themeColor: "black",
 }
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html
       lang="en"
-      className={`${fontSans.variable} ${fontDisplay.variable} scroll-smooth`}
+      className={`${fontSans.variable} ${fontMono.variable} scroll-smooth dark`}
       suppressHydrationWarning
     >
       <body className="min-h-dvh flex flex-col bg-background text-foreground">

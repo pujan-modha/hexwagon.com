@@ -1,39 +1,42 @@
 import type { Prisma } from "@prisma/client"
 import type { SearchParams } from "nuqs/server"
-import type { PaginationProps } from "~/components/web/pagination"
-import type { ToolListProps } from "~/components/web/tools/tool-list"
-import { ToolListing, type ToolListingProps } from "~/components/web/tools/tool-listing"
+import { Card } from "~/components/common/card"
+import { Link } from "~/components/common/link"
+import { searchPorts } from "~/server/web/ports/queries"
 import { filterParamsCache } from "~/server/web/shared/schema"
-import type { FilterSchema } from "~/server/web/shared/schema"
-import { searchTools } from "~/server/web/tools/queries"
 
-type ToolQueryProps = Omit<ToolListingProps, "list" | "pagination"> & {
+type ToolQueryProps = {
   searchParams: Promise<SearchParams>
-  overrideParams?: Partial<FilterSchema>
-  where?: Prisma.ToolWhereInput
-  list?: Partial<Omit<ToolListProps, "tools">>
-  pagination?: Partial<Omit<PaginationProps, "totalCount" | "pageSize">>
+  where?: Prisma.PortWhereInput
+  search?: {
+    placeholder?: string
+  }
 }
 
-const ToolQuery = async ({
-  searchParams,
-  overrideParams,
-  where,
-  list,
-  pagination,
-  ...props
-}: ToolQueryProps) => {
-  const parsedParams = filterParamsCache.parse(await searchParams)
-  const params = { ...parsedParams, ...overrideParams }
-  const { tools, totalCount } = await searchTools(params, where)
+export const ToolQuery = async ({ searchParams, where }: ToolQueryProps) => {
+  const parsedSearchParams = await filterParamsCache.parse(await searchParams)
+  const { ports } = await searchPorts(parsedSearchParams, where)
+
+  if (!ports.length) {
+    return <Card className="p-6 text-muted-foreground">No ports found yet.</Card>
+  }
 
   return (
-    <ToolListing
-      list={{ tools, ...list }}
-      pagination={{ totalCount, pageSize: params.perPage, ...pagination }}
-      {...props}
-    />
+    <div className="grid gap-4">
+      {ports.map(port => (
+        <Card key={port.id} className="p-5">
+          <Link
+            href={`/themes/${port.theme.slug}/${port.platform.slug}/${port.id}`}
+            className="font-semibold"
+          >
+            {port.name ?? `${port.theme.name} for ${port.platform.name}`}
+          </Link>
+
+          {port.description && (
+            <p className="mt-2 text-sm text-muted-foreground">{port.description}</p>
+          )}
+        </Card>
+      ))}
+    </div>
   )
 }
-
-export { ToolQuery, type ToolQueryProps }

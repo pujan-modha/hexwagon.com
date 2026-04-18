@@ -1,11 +1,13 @@
-import { getUrlHostname } from "@primoui/utils"
+"use client"
+
 import { zodResolver } from "@hookform/resolvers/zod"
+import { getUrlHostname } from "@primoui/utils"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 import { useServerAction } from "zsa-react"
-import { sendToolClaimOtp, verifyToolClaimOtp } from "~/actions/claim"
+import { sendPortClaimOtp, verifyPortClaimOtp } from "~/actions/claim"
 import { Button } from "~/components/common/button"
 import {
   Dialog,
@@ -83,7 +85,7 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
     return () => clearInterval(interval)
   }, [cooldownRemaining])
 
-  const { execute: sendOtp, isPending: isSendingOtp } = useServerAction(sendToolClaimOtp, {
+  const { execute: sendOtp, isPending: isSendingOtp } = useServerAction(sendPortClaimOtp, {
     onSuccess: () => {
       toast.success("OTP code sent to your email")
       setVerificationEmail(emailForm.getValues().email)
@@ -95,7 +97,7 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
     },
   })
 
-  const { execute: verifyOtp, isPending: isVerifying } = useServerAction(verifyToolClaimOtp, {
+  const { execute: verifyOtp, isPending: isVerifying } = useServerAction(verifyPortClaimOtp, {
     onSuccess: () => {
       toast.success(`You've successfully claimed ${tool.name}`)
       setIsOpen(false)
@@ -106,29 +108,39 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
   })
 
   const handleSendOtp = ({ email }: z.infer<typeof emailSchema>) => {
-    const toolDomain = getUrlHostname(tool.websiteUrl)
-    const emailDomain = email.split("@")[1]
-
-    if (toolDomain !== emailDomain) {
+    if (!tool.repositoryUrl) {
       emailForm.setError("email", {
         type: "manual",
-        message: `Email must match the website domain (${toolDomain})`,
+        message: "This listing does not have a port URL yet.",
       })
 
       return
     }
 
-    sendOtp({ toolSlug: tool.slug, email })
+    const toolDomain = getUrlHostname(tool.repositoryUrl)
+    const emailDomain = email.split("@")[1]
+    const isPublicGitHost = ["github.com", "gitlab.com", "bitbucket.org"].includes(toolDomain)
+
+    if (!isPublicGitHost && toolDomain !== emailDomain) {
+      emailForm.setError("email", {
+        type: "manual",
+        message: `Email must match the port link domain (${toolDomain})`,
+      })
+
+      return
+    }
+
+    sendOtp({ portSlug: tool.slug, email })
   }
 
   const handleVerifyOtp = (data: z.infer<typeof otpSchema>) => {
-    verifyOtp({ toolSlug: tool.slug, otp: data.otp })
+    verifyOtp({ portSlug: tool.slug, otp: data.otp })
   }
 
   const handleResendOtp = () => {
     if (cooldownRemaining > 0 || isSendingOtp) return
 
-    sendOtp({ toolSlug: tool.slug, email: verificationEmail })
+    sendOtp({ portSlug: tool.slug, email: verificationEmail })
   }
 
   const getResendButtonText = () => {
@@ -147,7 +159,7 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Claim {tool.name}</DialogTitle>
+          <DialogTitle>Claim listing</DialogTitle>
         </DialogHeader>
 
         {step === "email" ? (
@@ -155,20 +167,20 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
             <form onSubmit={emailForm.handleSubmit(handleSendOtp)} className="space-y-6">
               <DialogDescription>
                 <p>
-                  To claim this listing, you need to verify the ownership of the{" "}
-                  <strong>{getUrlHostname(tool.websiteUrl)}</strong> domain. This helps us to ensure
-                  that you represent the organization.
+                  To claim this listing, you need to verify the ownership of the port link domain:{" "}
+                  <strong>{getUrlHostname(tool.repositoryUrl ?? siteConfig.url)}</strong>. This
+                  helps us to ensure that you represent the organization.
                 </p>
 
                 <p>
-                  By claiming this tool, it will get a <strong>verified badge</strong> and you'll be
+                  By claiming this port, it will get a <strong>verified badge</strong> and you'll be
                   able to:
                 </p>
 
                 <ul className="mt-2 list-disc pl-4">
-                  <li>Update tool information</li>
-                  <li>Manage its categories and alternatives</li>
-                  <li>Promote it on {siteConfig.name}</li>
+                  <li>Update port information</li>
+                  <li>Manage its theme and platform links</li>
+                  <li>Keep listing details up to date on {siteConfig.name}</li>
                 </ul>
               </DialogDescription>
 
@@ -182,7 +194,7 @@ export const ToolClaimDialog = ({ tool, isOpen, setIsOpen }: ToolClaimDialogProp
                       <Input
                         type="email"
                         data-1p-ignore
-                        placeholder={`e.g. hello@${getUrlHostname(tool.websiteUrl)}`}
+                        placeholder={`e.g. hello@${getUrlHostname(tool.repositoryUrl ?? siteConfig.url)}`}
                         {...field}
                       />
                     </FormControl>

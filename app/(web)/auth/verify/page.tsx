@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Image from "next/image"
 import type { SearchParams } from "nuqs/server"
 import { Link } from "~/components/common/link"
 import { Stack } from "~/components/common/stack"
@@ -7,6 +6,7 @@ import { ExternalLink } from "~/components/web/external-link"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { config } from "~/config"
 import { metadataConfig } from "~/config/metadata"
+import { buildRobots } from "~/lib/seo"
 
 type PageProps = {
   searchParams: Promise<SearchParams>
@@ -15,8 +15,9 @@ type PageProps = {
 export const metadata: Metadata = {
   title: "Check your inbox",
   description: `Check your inbox to sign in to ${config.site.name}.`,
-  openGraph: { ...metadataConfig.openGraph, url: "/check-inbox" },
-  alternates: { ...metadataConfig.alternates, canonical: "/check-inbox" },
+  openGraph: { ...metadataConfig.openGraph, url: "/auth/verify" },
+  alternates: { ...metadataConfig.alternates, canonical: "/auth/verify" },
+  robots: buildRobots({ index: false, follow: true }),
 }
 
 export default async function VerifyPage({ searchParams }: PageProps) {
@@ -31,12 +32,12 @@ export default async function VerifyPage({ searchParams }: PageProps) {
     {
       provider: "Gmail",
       icon: "/gmail.svg",
-      link: "https://mail.google.com/#search/openalternative%20login",
+      link: "https://mail.google.com/#search/hexwagon%20login",
     },
     {
       provider: "Superhuman",
       icon: "/superhuman.svg",
-      link: "superhuman://mail.superhuman.com/search/openalternative%20login",
+      link: "superhuman://mail.superhuman.com/search/hexwagon%20login",
     },
   ]
 
@@ -58,7 +59,7 @@ export default async function VerifyPage({ searchParams }: PageProps) {
             title={`Open ${provider}`}
             className="size-14 flex justify-center items-center border bg-border/[0.05] rounded-xl hover:border-ring hover:bg-ring/[0.15]"
           >
-            <Image src={icon} alt={`Open ${provider}`} width="30" height="30" />
+            <img src={icon} alt={`Open ${provider}`} width={30} height={30} />
           </ExternalLink>
         ))}
       </Stack>

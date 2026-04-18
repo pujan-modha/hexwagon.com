@@ -1,14 +1,14 @@
 "use client"
 
 import { type HotkeyItem, useDebouncedState, useHotkeys } from "@mantine/hooks"
-import { getUrlHostname } from "@primoui/utils"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { posthog } from "posthog-js"
 import { type ReactNode, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import type { inferServerActionReturnData } from "zsa"
 import { useServerAction } from "zsa-react"
-import { fetchRepositoryData, indexAllData, recalculatePricesData } from "~/actions/misc"
+import { indexAllData } from "~/actions/misc"
 import { searchItems } from "~/actions/search"
 import {
   CommandDialog,
@@ -21,6 +21,7 @@ import {
 } from "~/components/common/command"
 import { Icon } from "~/components/common/icon"
 import { Kbd } from "~/components/common/kbd"
+import { Favicon } from "~/components/web/ui/favicon"
 import { useSearch } from "~/contexts/search-context"
 import { useSession } from "~/lib/auth-client"
 
@@ -65,6 +66,14 @@ type CommandSection = {
   }[]
 }
 
+const formatPortsCount = (count?: number) => {
+  if (count === undefined) {
+    return null
+  }
+
+  return `${count.toLocaleString()} port${count === 1 ? "" : "s"}`
+}
+
 export const Search = () => {
   const { data: session } = useSession()
   const router = useRouter()
@@ -73,27 +82,20 @@ export const Search = () => {
   const [results, setResults] = useState<inferServerActionReturnData<typeof searchItems>>()
   const [query, setQuery] = useDebouncedState("", 500)
   const listRef = useRef<HTMLDivElement>(null)
-
-  const [tools, alternatives, categories] = results || []
+  const normalizedQuery = query.trim()
+  const ports = results?.ports?.hits
+  const themes = results?.themes?.hits
+  const platforms = results?.platforms?.hits
+  const configs = results?.configs?.hits
   const isAdmin = session?.user.role === "admin"
   const isAdminPath = pathname.startsWith("/admin")
-  const hasQuery = !!query.length
+  const hasQuery = normalizedQuery.length > 0
 
   const actions = [
-    {
-      action: fetchRepositoryData,
-      label: "Fetch Repository Data",
-      successMessage: "Repository data fetched",
-    },
     {
       action: indexAllData,
       label: "Index All Data",
       successMessage: "Data indexed",
-    },
-    {
-      action: recalculatePricesData,
-      label: "Recalculate Prices",
-      successMessage: "Prices recalculated",
     },
   ] as const
 
@@ -131,18 +133,23 @@ export const Search = () => {
       name: "Create",
       items: [
         {
-          label: "New Tool",
-          path: "/admin/tools/new",
+          label: "New Port",
+          path: "/admin/ports/new",
           shortcut: true,
         },
         {
-          label: "New Alternative",
-          path: "/admin/alternatives/new",
+          label: "New Theme",
+          path: "/admin/themes/new",
           shortcut: true,
         },
         {
-          label: "New Category",
-          path: "/admin/categories/new",
+          label: "New Platform",
+          path: "/admin/platforms/new",
+          shortcut: true,
+        },
+        {
+          label: "New Config",
+          path: "/admin/configs/new",
           shortcut: true,
         },
       ],
@@ -157,9 +164,10 @@ export const Search = () => {
     commandSections.push({
       name: "Quick Links",
       items: [
-        { label: "Tools", path: "/" },
-        { label: "Alternatives", path: "/alternatives" },
-        { label: "Categories", path: "/categories" },
+        { label: "Ports", path: "/" },
+        { label: "Themes", path: "/themes" },
+        { label: "Platforms", path: "/platforms" },
+        { label: "Configs & Dotfiles", path: "/configs" },
       ],
     })
   }
@@ -170,7 +178,17 @@ export const Search = () => {
     onSuccess: ({ data }) => {
       setResults(data)
 
-      const q = query.toLowerCase().trim()
+      if (data?.telemetry.usedFallback) {
+        posthog.capture("search_meili_fallback", {
+          source: "command_search",
+          queryLength: data.telemetry.queryLength,
+          fallbackIndexes: data.telemetry.fallbackIndexes,
+          fallbackReasons: data.telemetry.fallbackReasons,
+          meiliFailures: data.telemetry.meiliFailures,
+        })
+      }
+
+      const q = normalizedQuery.toLowerCase()
 
       if (q.length > 1) {
         posthog.capture("search", { query: q })
@@ -185,8 +203,8 @@ export const Search = () => {
 
   useEffect(() => {
     const performSearch = async () => {
-      if (hasQuery) {
-        execute({ query })
+      if (normalizedQuery.length > 0) {
+        execute({ query: normalizedQuery })
         listRef.current?.scrollTo({ top: 0, behavior: "smooth" })
       } else {
         setResults(undefined)
@@ -194,7 +212,7 @@ export const Search = () => {
     }
 
     performSearch()
-  }, [query, execute])
+  }, [normalizedQuery, execute])
 
   return (
     <CommandDialog open={search.isOpen} onOpenChange={handleOpenChange} shouldFilter={false}>
@@ -234,47 +252,122 @@ export const Search = () => {
         )}
 
         <SearchResults
-          name="Tools"
-          items={tools?.hits}
+          name="Ports"
+          items={ports}
           onItemSelect={navigateTo}
-          getHref={({ slug }) => `${isAdminPath ? "/admin/tools" : ""}/${slug}`}
-          renderItemDisplay={({ name, faviconUrl, websiteUrl }) => (
+          getHref={({ id, slug, name, themeSlug, platformSlug }) => {
+            if (isAdminPath) {
+              return `/admin/ports/${slug}`
+            }
+
+            if (id && themeSlug && platformSlug) {
+              return `/themes/${themeSlug}/${platformSlug}/${id}`
+            }
+
+            const q = encodeURIComponent(name || slug)
+            return `/themes?q=${q}`
+          }}
+          renderItemDisplay={({ name, theme, platform, themeSlug, platformSlug }) => {
+            const themeLabel = theme ?? themeSlug ?? "Theme"
+            const platformLabel = platform ?? platformSlug ?? "Platform"
+
+            return (
+              <>
+                <span className="flex-1 truncate">{name}</span>
+                <span className="truncate text-xs text-muted-foreground/70">
+                  {themeLabel} / {platformLabel}
+                </span>
+              </>
+            )
+          }}
+        />
+
+        <SearchResults
+          name="Themes"
+          items={themes}
+          onItemSelect={navigateTo}
+          getHref={({ slug }) => `${isAdminPath ? "/admin" : ""}/themes/${slug}`}
+          renderItemDisplay={({ name, faviconUrl, portsCount }) => (
             <>
-              {faviconUrl && <img src={faviconUrl} alt="" width={16} height={16} />}
+              {faviconUrl ? (
+                <Favicon src={faviconUrl} title={name} plain className="size-4" />
+              ) : (
+                <span className="flex size-4 shrink-0 items-center justify-center rounded-sm bg-muted/50">
+                  <Icon name="lucide/star" className="size-3 text-muted-foreground" />
+                </span>
+              )}
               <span className="flex-1 truncate">{name}</span>
-              <span className="opacity-50">{getUrlHostname(websiteUrl)}</span>
+              {formatPortsCount(portsCount) ? (
+                <span className="text-xs text-muted-foreground/70">
+                  {formatPortsCount(portsCount)}
+                </span>
+              ) : null}
             </>
           )}
         />
 
         <SearchResults
-          name="Alternatives"
-          items={alternatives?.hits}
+          name="Platforms"
+          items={platforms}
           onItemSelect={navigateTo}
-          getHref={({ slug }) => `${isAdminPath ? "/admin" : ""}/alternatives/${slug}`}
-          renderItemDisplay={({ name, faviconUrl }) => (
+          getHref={({ slug }) => (isAdminPath ? `/admin/platforms/${slug}` : `/platforms/${slug}`)}
+          renderItemDisplay={({ name, faviconUrl, portsCount }) => (
             <>
-              {faviconUrl && <img src={faviconUrl} alt="" width={16} height={16} />}
+              {faviconUrl ? (
+                <Favicon src={faviconUrl} title={name} plain className="size-4" />
+              ) : (
+                <span className="flex size-4 shrink-0 items-center justify-center rounded-sm bg-muted/50">
+                  <Icon name="lucide/globe" className="size-3 text-muted-foreground" />
+                </span>
+              )}
               <span className="flex-1 truncate">{name}</span>
+              {formatPortsCount(portsCount) ? (
+                <span className="text-xs text-muted-foreground/70">
+                  {formatPortsCount(portsCount)}
+                </span>
+              ) : null}
             </>
           )}
         />
 
         <SearchResults
-          name="Categories"
-          items={categories?.hits}
+          name="Configs & Dotfiles"
+          items={configs}
           onItemSelect={navigateTo}
-          getHref={({ slug, fullPath }) =>
-            isAdminPath ? `/admin/categories/${slug}` : `/categories/${fullPath}`
-          }
-          renderItemDisplay={({ name }) => name}
+          getHref={({ slug }) => (isAdminPath ? `/admin/configs/${slug}` : `/configs/${slug}`)}
+          renderItemDisplay={({ name, faviconUrl, themesCount, platformsCount }) => (
+            <>
+              {faviconUrl ? (
+                <Favicon src={faviconUrl} title={name} plain className="size-4" />
+              ) : (
+                <span className="flex size-4 shrink-0 items-center justify-center rounded-sm bg-muted/50">
+                  <Icon name="lucide/dock" className="size-3 text-muted-foreground" />
+                </span>
+              )}
+              <span className="flex-1 truncate">{name}</span>
+              <span className="text-xs text-muted-foreground/70">
+                {themesCount ?? 0}T / {platformsCount ?? 0}P
+              </span>
+            </>
+          )}
         />
       </CommandList>
 
       {!!results && (
         <div className="px-3 py-2 text-[10px] text-muted-foreground/50 not-first:border-t">
-          Found {results.reduce((acc, curr) => acc + curr.estimatedTotalHits, 0)} results in{" "}
-          {Math.max(...results.map(r => r.processingTimeMs))}ms
+          Found{" "}
+          {(results.ports?.estimatedTotalHits ?? 0) +
+            (results.themes?.estimatedTotalHits ?? 0) +
+            (results.platforms?.estimatedTotalHits ?? 0) +
+            (results.configs?.estimatedTotalHits ?? 0)}{" "}
+          results in{" "}
+          {Math.max(
+            results.ports?.processingTimeMs ?? 0,
+            results.themes?.processingTimeMs ?? 0,
+            results.platforms?.processingTimeMs ?? 0,
+            results.configs?.processingTimeMs ?? 0,
+          )}
+          ms
         </div>
       )}
     </CommandDialog>

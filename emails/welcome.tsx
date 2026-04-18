@@ -8,7 +8,7 @@ type EmailProps = EmailWrapperProps & {
 }
 
 const EmailWelcome = ({ name = "there", ...props }: EmailProps) => {
-  const preview = `Welcome to ${config.site.name} – A collection of open source alternatives to popular software!`
+  const preview = `Welcome to ${config.site.name} – a directory of theme ports for every platform.`
 
   return (
     <EmailWrapper preview={preview} signature {...props}>
@@ -17,8 +17,8 @@ const EmailWelcome = ({ name = "there", ...props }: EmailProps) => {
       <Text>{preview}</Text>
 
       <Text>
-        {config.site.name} is more than just a platform – it's a community. Connect with like-minded
-        open source enthusiasts, share your favorite projects, and be part of the movement.
+        {config.site.name} is more than just a directory - it's a community. Discover new theme
+        ports, browse platform support, and share your favorite projects with other builders.
       </Text>
 
       <Text>Here's what you can do in {config.site.name}:</Text>
@@ -26,29 +26,29 @@ const EmailWelcome = ({ name = "there", ...props }: EmailProps) => {
       <ul>
         <li>
           <Text className="m-0">
-            <Link href={`${config.site.url}/latest`} className="underline font-medium">
-              Explore Open Source Projects
+            <Link href={`${config.site.url}/themes`} className="underline font-medium">
+              Explore Theme Ports
             </Link>{" "}
-            – Browse existing projects curated by the community. We publish new projects every week.
+            – Browse existing theme ports curated by the community.
           </Text>
         </li>
 
         <li>
           <Text className="m-0">
             <Link href={`${config.site.url}/submit`} className="underline font-medium">
-              Share Your Projects
+              Submit a Port
             </Link>{" "}
-            – Get your project in front of thousands of open source enthusiasts. It’s 100% free to
-            submit.
+            – Get your theme port in front of people looking for new platform support. It’s 100%
+            free to submit.
           </Text>
         </li>
 
         <li>
           <Text className="m-0">
             <Link href={`${config.site.url}/advertise`} className="underline font-medium">
-              Advertise on OpenAlternative
+              Advertise on HexWagon
             </Link>{" "}
-            – Choose one of the available options and promote your business or software on our
+            – Choose one of the available options and promote your business or product on our
             website.
           </Text>
         </li>

@@ -4,7 +4,7 @@ import type { NextConfig } from "next"
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   devIndicators: false,
-  allowedDevOrigins: ["openalternative.local"],
+  allowedDevOrigins: ["hexwagon.local"],
 
   experimental: {
     ppr: true,
@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
   },
 
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   images: {
@@ -27,69 +27,62 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 31536000,
     deviceSizes: [640, 768, 1024],
     remotePatterns: [
-      { hostname: `${process.env.S3_BUCKET}.s3.${process.env.S3_REGION}.amazonaws.com` },
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+      },
+      {
+        hostname: `${process.env.S3_BUCKET}.s3.${process.env.S3_REGION}.amazonaws.com`,
+      },
     ],
   },
 
   rewrites: async () => {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
     const posthogUrl = process.env.NEXT_PUBLIC_POSTHOG_HOST
+    const posthogAssetsUrl = posthogUrl
+      ?.replace("://us.i.", "://us-assets.i.")
+      .replace("://eu.i.", "://eu-assets.i.")
 
-    return [
+    const rewrites = [
       // RSS rewrites
       {
         source: "/rss.xml",
-        destination: `${siteUrl}/rss/tools.xml`,
+        destination: `${siteUrl}/rss/ports.xml`,
       },
       {
-        source: "/alternatives/rss.xml",
-        destination: `${siteUrl}/rss/alternatives.xml`,
-      },
-
-      // for posthog proxy
-      {
-        source: "/_proxy/posthog/ingest/static/:path*",
-        destination: `${posthogUrl?.replace("us", "us-assets")}/static/:path*`,
+        source: "/themes/rss.xml",
+        destination: `${siteUrl}/rss/themes.xml`,
       },
       {
-        source: "/_proxy/posthog/ingest/:path*",
-        destination: `${posthogUrl}/:path*`,
+        source: "/platforms/rss.xml",
+        destination: `${siteUrl}/rss/platforms.xml`,
       },
       {
-        source: "/_proxy/posthog/ingest/decide",
-        destination: `${posthogUrl}/decide`,
+        source: "/configs/rss.xml",
+        destination: `${siteUrl}/rss/configs.xml`,
       },
     ]
-  },
 
-  redirects: async () => {
-    return [
-      {
-        source: "/latest",
-        destination: "/?sort=publishedAt.desc",
-        permanent: true,
-      },
-      {
-        source: "/newsletter",
-        destination: "/",
-        permanent: true,
-      },
-      {
-        source: "/hoarder",
-        destination: "/karakeep",
-        permanent: true,
-      },
-      {
-        source: "/kelia",
-        destination: "/keila",
-        permanent: true,
-      },
-      {
-        source: "/advertise/alternatives",
-        destination: "/advertise?alternative=",
-        permanent: true,
-      },
-    ]
+    // Add PostHog proxy rewrites only if the host is configured
+    if (posthogUrl) {
+      rewrites.push(
+        {
+          source: "/api/ins/static/:path*",
+          destination: `${posthogAssetsUrl}/static/:path*`,
+        },
+        {
+          source: "/api/ins/:path*",
+          destination: `${posthogUrl}/:path*`,
+        },
+      )
+    }
+
+    return rewrites
   },
 }
 

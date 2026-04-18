@@ -1,19 +1,20 @@
-import { Geist } from "next/font/google"
-import localFont from "next/font/local"
+import { Geist, Geist_Mono } from "next/font/google"
 import type { FontWeight } from "satori"
 
 export const fontSans = Geist({
-  variable: "--font-sans",
-  display: "swap",
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  weight: "variable",
+  display: "swap",
 })
 
-export const fontDisplay = localFont({
-  variable: "--font-display",
+export const fontMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
   display: "swap",
-  src: [{ path: "../public/fonts/ABCDiatype-Bold.woff2", weight: "700", style: "normal" }],
 })
+
+// Backward-compatible alias for components still referencing display font.
+export const fontDisplay = fontSans
 
 export const loadGoogleFont = async (font: string, weight: FontWeight) => {
   const url = `https://fonts.googleapis.com/css2?family=${font}:wght@${weight}`

@@ -13,13 +13,29 @@ type PricingItem = {
   duration?: number
 }
 
+export const defaultMaxAdDiscountPercentage = 30
+
+export const adStatus = {
+  Pending: "Pending",
+  PendingEdit: "PendingEdit",
+  Approved: "Approved",
+  Rejected: "Rejected",
+  Cancelled: "Cancelled",
+} as const
+
+export type AdStatusValue = (typeof adStatus)[keyof typeof adStatus]
+
 /**
  * Calculate the ads price based on the duration
  * @param selections - An array of { price, duration } objects
  * @param basePrice - The base price of the ads
  * @returns The price, full price, discount amount, discount percentage, and duration
  */
-export const calculateAdsPrice = (selections: PricingItem[], basePrice: number) => {
+export const calculateAdsPrice = (
+  selections: PricingItem[],
+  basePrice: number,
+  maxDiscountPercentage = defaultMaxAdDiscountPercentage,
+) => {
   // Calculate raw total before discounts
   const totalPrice = selections.reduce(
     (sum, { price, duration }) => sum + price * (duration || 0),
@@ -27,12 +43,12 @@ export const calculateAdsPrice = (selections: PricingItem[], basePrice: number) 
   )
 
   // Convert total value to equivalent days at base price
-  const equivalentDays = Math.round(totalPrice / basePrice)
+  const equivalentDays = basePrice > 0 ? Math.round(totalPrice / basePrice) : 0
 
-  // Apply volume discount (max 30%)
+  // Apply volume discount with a configurable cap
   const discountPercentage = Math.min(
     Math.max(equivalentDays - 1, 0), // Ensure non-negative
-    30, // Cap at 30%
+    maxDiscountPercentage, // Cap at the configured maximum
   )
 
   // Calculate final price with discount

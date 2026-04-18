@@ -5,15 +5,18 @@ import { cx } from "~/utils/cva"
 type FaviconProps = ComponentProps<"div"> & {
   src: string | null
   title?: string | null
+  plain?: boolean
 }
 
-const Favicon = ({ className, src, title, ...props }: FaviconProps) => {
-  if (!src) return null
+const Favicon = ({ className, src, title, plain, ...props }: FaviconProps) => {
+  if (!src?.trim()) return null
 
   return (
     <div
       className={cx(
-        "flex size-9 items-center justify-center shrink-0 rounded-md border bg-accent p-1",
+        plain
+          ? "flex size-9 items-center justify-center shrink-0 rounded-sm"
+          : "flex size-9 items-center justify-center shrink-0 rounded-md border bg-accent p-1",
         className,
       )}
       {...props}
@@ -29,7 +32,7 @@ type FaviconImageProps = Omit<ComponentProps<typeof Image>, "src" | "alt"> & {
 }
 
 const FaviconImage = ({ className, src, title, ...props }: FaviconImageProps) => {
-  if (!src) return null
+  if (!src?.trim()) return null
 
   return (
     <Image
@@ -38,6 +41,7 @@ const FaviconImage = ({ className, src, title, ...props }: FaviconImageProps) =>
       loading="lazy"
       width="64"
       height="64"
+      unoptimized
       className={cx(
         "aspect-square size-9 rounded-sm mix-blend-multiply dark:mix-blend-normal",
         className,

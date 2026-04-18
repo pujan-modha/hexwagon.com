@@ -1,40 +1,35 @@
 import { formatNumber } from "@primoui/utils"
-import { ToolStatus } from "@prisma/client"
-import { subDays } from "date-fns"
+import { PortStatus } from "@prisma/client"
 import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from "next/cache"
-import plur from "plur"
 import { Badge } from "~/components/common/badge"
-import { Link } from "~/components/common/link"
 import { Ping } from "~/components/common/ping"
 import { db } from "~/services/db"
+
+const getRoundedPortFloor = (count: number) => {
+  if (count < 100) return Math.max(10, Math.floor(count / 10) * 10)
+  if (count < 1000) return Math.floor(count / 50) * 50
+  if (count < 10000) return Math.floor(count / 100) * 100
+  return Math.floor(count / 1000) * 1000
+}
 
 const getCounts = async () => {
   "use cache"
 
-  cacheTag("tools-count")
+  cacheTag("ports-count")
   cacheLife("minutes")
 
-  return await db.$transaction([
-    db.tool.count({
-      where: { status: ToolStatus.Published },
-    }),
-
-    db.tool.count({
-      where: { status: ToolStatus.Published, publishedAt: { gte: subDays(new Date(), 7) } },
-    }),
-  ])
+  return db.port.count({
+    where: { status: PortStatus.Published },
+  })
 }
 
 const CountBadge = async () => {
-  const [count, newCount] = await getCounts()
+  const count = await getCounts()
+  const roundedCount = getRoundedPortFloor(count)
 
   return (
-    <Badge prefix={<Ping />} className="order-first" asChild>
-      <Link href="/latest">
-        {newCount
-          ? `${formatNumber(newCount)} new ${plur("tool", newCount)} added`
-          : `${formatNumber(count)}+ open source tools`}
-      </Link>
+    <Badge prefix={<Ping />} className="order-first">
+      {`${formatNumber(roundedCount)}+ ports`}
     </Badge>
   )
 }

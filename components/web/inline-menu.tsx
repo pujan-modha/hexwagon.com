@@ -2,6 +2,7 @@
 
 import type { ComponentProps } from "react"
 import { Button, type ButtonProps } from "~/components/common/button"
+import { Link } from "~/components/common/link"
 import { Stack } from "~/components/common/stack"
 import { type InlineMenuItem, useInlineMenu } from "~/hooks/use-inline-menu"
 import { cx } from "~/utils/cva"
@@ -41,7 +42,7 @@ export const InlineMenu = ({ children, className, items, ...props }: InlineMenuP
             {...props}
             asChild
           >
-            <a href={`#${id}`}>{title}</a>
+            <Link href={`#${id}`}>{title}</Link>
           </Button>
         ))}
 

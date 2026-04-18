@@ -1,5 +1,3 @@
-"use client"
-
 import { formatNumber } from "@primoui/utils"
 import type { ComponentProps } from "react"
 import {
@@ -15,9 +13,12 @@ import { Tooltip } from "~/components/common/tooltip"
 import { BuiltWith } from "~/components/web/built-with"
 import { ExternalLink } from "~/components/web/external-link"
 import { NewsletterForm } from "~/components/web/newsletter-form"
-import { NavLink, navLinkVariants } from "~/components/web/ui/nav-link"
+import { NavLink } from "~/components/web/ui/nav-link"
 import { config } from "~/config"
 import { cx } from "~/utils/cva"
+
+const footerLinkClassName =
+  "group flex items-center gap-2 p-0.5 -m-0.5 cursor-pointer disabled:opacity-50 text-muted-foreground hover:text-foreground"
 
 type FooterProps = ComponentProps<"div"> & {
   hideNewsletter?: boolean
@@ -43,8 +44,8 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
             </H5>
 
             <p className="-mt-2 px-0.5 text-xs text-muted-foreground first:mt-0">
-              Join {formatNumber(config.stats.subscribers + config.stats.stars, "standard")}+ other
-              members and get updates on new open source tools.
+              Join {formatNumber(config.stats.subscribers, "standard")}+ other members and get
+              updates on new theme ports.
             </p>
 
             <NewsletterForm medium="footer_form" />
@@ -53,7 +54,7 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
           <Stack className="text-xl opacity-75">
             <DropdownMenu modal={false}>
               <Tooltip tooltip="RSS Feeds">
-                <DropdownMenuTrigger aria-label="RSS Feeds">
+                <DropdownMenuTrigger id="footer-rss-menu-trigger" aria-label="RSS Feeds">
                   <Icon name="lucide/rss" className="text-muted-foreground hover:text-foreground" />
                 </DropdownMenuTrigger>
               </Tooltip>
@@ -61,7 +62,7 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
               <DropdownMenuContent align="start" side="top">
                 {config.links.feeds.map(({ url, title }) => (
                   <DropdownMenuItem key={url} asChild>
-                    <ExternalLink href={url} className={navLinkVariants()}>
+                    <ExternalLink href={url} className={footerLinkClassName}>
                       RSS &raquo; {title}
                     </ExternalLink>
                   </DropdownMenuItem>
@@ -70,90 +71,51 @@ export const Footer = ({ children, className, hideNewsletter, ...props }: Footer
             </DropdownMenu>
 
             <Tooltip tooltip="Contact us">
-              <ExternalLink href={`mailto:${config.site.email}`} className={navLinkVariants()}>
+              <ExternalLink href={`mailto:${config.site.email}`} className={footerLinkClassName}>
                 <Icon name="lucide/at-sign" />
               </ExternalLink>
             </Tooltip>
 
             <Tooltip tooltip="Follow us on X/Twitter">
-              <ExternalLink href={config.links.twitter} className={navLinkVariants()}>
+              <ExternalLink href={config.links.twitter} className={footerLinkClassName}>
                 <Icon name="tabler/brand-x" />
               </ExternalLink>
             </Tooltip>
 
-            <Tooltip tooltip="Follow us on Bluesky">
-              <ExternalLink href={config.links.bluesky} className={navLinkVariants()}>
-                <Icon name="tabler/brand-bluesky" />
-              </ExternalLink>
-            </Tooltip>
-
-            <Tooltip tooltip="Follow us on Mastodon">
-              <ExternalLink href={config.links.mastodon} className={navLinkVariants()}>
-                <Icon name="tabler/brand-mastodon" />
-              </ExternalLink>
-            </Tooltip>
-
-            <Tooltip tooltip="Follow us on LinkedIn">
-              <ExternalLink href={config.links.linkedin} className={navLinkVariants()}>
-                <Icon name="tabler/brand-linkedin" />
+            {/* <Tooltip tooltip="Join us on Discord">
+              <ExternalLink
+                href={config.links.discord}
+                className={footerLinkClassName}
+              >
+                <Icon name="custom/brand-discord" />
               </ExternalLink>
             </Tooltip>
 
             <Tooltip tooltip="Join our community on Reddit">
-              <ExternalLink href={config.links.reddit} className={navLinkVariants()}>
+              <ExternalLink
+                href={config.links.reddit}
+                className={footerLinkClassName}
+              >
                 <Icon name="tabler/brand-reddit" />
               </ExternalLink>
-            </Tooltip>
+            </Tooltip> */}
           </Stack>
         </Stack>
 
-        <Stack direction="column" className="text-sm md:col-span-3 md:col-start-8">
-          <H6 as="strong">Browse:</H6>
-
-          <NavLink href="/alternatives">Alternatives</NavLink>
-          <NavLink href="/categories">Categories</NavLink>
-          <NavLink href="/self-hosted">Self-hosted</NavLink>
-          <NavLink href="/stacks">Tech Stacks</NavLink>
-          <NavLink href="/topics">Topics</NavLink>
-          <NavLink href="/licenses">Licenses</NavLink>
-        </Stack>
-
-        <Stack direction="column" className="text-sm md:col-span-3">
-          <H6 as="strong">Quick Links:</H6>
+        <Stack direction="column" className="text-sm md:col-span-3 md:col-start-14">
+          <H6 as="strong">Quick Links</H6>
 
           <NavLink href="/about">About Us</NavLink>
           <NavLink href="/blog">Blog</NavLink>
           <NavLink href="/advertise">Advertise</NavLink>
-          <NavLink href="/submit">Add a Free Listing</NavLink>
-        </Stack>
-
-        <Stack direction="column" className="text-sm md:col-span-3">
-          <H6 as="strong">Other Products:</H6>
-
-          {config.links.family.map(({ href, title, description }) => (
-            <ExternalLink
-              key={href}
-              href={href}
-              title={description}
-              className={navLinkVariants()}
-              doFollow
-            >
-              {title}
-            </ExternalLink>
-          ))}
+          <NavLink href="/submit">Submit</NavLink>
         </Stack>
       </div>
 
       <div className="flex flex-row flex-wrap items-end justify-between gap-x-4 gap-y-2 w-full text-sm text-muted-foreground **:[&[href]]:font-medium **:[&[href]]:text-foreground **:[&[href]]:hover:text-secondary-foreground">
-        <BuiltWith medium="footer" />
+        {/* <BuiltWith medium="footer" /> */}
 
-        <p>
-          Made by{" "}
-          <ExternalLink href={config.links.author} data-link doFollow>
-            Piotr Kulpinski
-          </ExternalLink>
-          . Website may contain affiliate links.
-        </p>
+        <p>Made with 🍕 and 🥤. Website may contain affiliate links.</p>
       </div>
 
       {children}

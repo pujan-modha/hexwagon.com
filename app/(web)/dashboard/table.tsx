@@ -1,9 +1,9 @@
 "use client"
 
 import { formatDate } from "@primoui/utils"
-import { type Tool, ToolStatus } from "@prisma/client"
+import { PortStatus } from "@prisma/client"
 import type { ColumnDef } from "@tanstack/react-table"
-import { differenceInDays, formatDistanceToNowStrict } from "date-fns"
+import { formatDistanceToNowStrict } from "date-fns"
 import { useQueryStates } from "nuqs"
 import { use, useMemo } from "react"
 import { Button } from "~/components/common/button"
@@ -16,33 +16,49 @@ import { DataTableColumnHeader } from "~/components/data-table/data-table-column
 import { DataTableLink } from "~/components/data-table/data-table-link"
 import { DataTableToolbar } from "~/components/data-table/data-table-toolbar"
 import { useDataTable } from "~/hooks/use-data-table"
+import { canonicalPortHref } from "~/lib/catalogue"
 import type { findTools } from "~/server/admin/tools/queries"
 import { toolsTableParamsSchema } from "~/server/admin/tools/schema"
 import type { DataTableFilterField } from "~/types"
+import { PortEditDialog } from "./port-edit-dialog"
+
+type DashboardRow = Awaited<ReturnType<typeof findTools>>["ports"][number]
 
 type DashboardTableProps = {
   toolsPromise: ReturnType<typeof findTools>
+  showMaintainerConsoleButton: boolean
 }
 
-export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
-  const { tools, pageCount } = use(toolsPromise)
+export const DashboardTable = ({
+  toolsPromise,
+  showMaintainerConsoleButton,
+}: DashboardTableProps) => {
+  const { ports, pageCount } = use(toolsPromise) as {
+    ports: DashboardRow[]
+    pageCount: number
+  }
   const [{ perPage, sort }] = useQueryStates(toolsTableParamsSchema)
 
   // Memoize the columns so they don't re-render on every render
-  const columns = useMemo((): ColumnDef<Tool>[] => {
+  const columns = useMemo((): ColumnDef<DashboardRow>[] => {
     return [
       {
         accessorKey: "name",
         enableHiding: false,
         header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
         cell: ({ row }) => {
-          const { name, slug, status, faviconUrl } = row.original
+          const { id, name, slug, status, theme, platform } = row.original
 
-          if (status === ToolStatus.Draft) {
+          if (status === PortStatus.Draft) {
             return <Note className="font-medium">{name}</Note>
           }
 
-          return <DataTableLink href={`/${slug}`} image={faviconUrl} title={name} />
+          return (
+            <DataTableLink
+              href={canonicalPortHref(theme.slug, platform.slug, id)}
+              title={name ?? slug}
+            />
+          )
         },
       },
       {
@@ -53,7 +69,7 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
           const { status, publishedAt } = row.original
 
           switch (status) {
-            case ToolStatus.Published:
+            case PortStatus.Published:
               return (
                 <Stack size="sm" wrap={false}>
                   <Icon
@@ -63,7 +79,7 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
                   <Note className="font-medium">{formatDate(publishedAt!)}</Note>
                 </Stack>
               )
-            case ToolStatus.Scheduled:
+            case PortStatus.Scheduled:
               return (
                 <Stack size="sm" wrap={false} title={formatDate(publishedAt!)}>
                   <Icon
@@ -80,11 +96,23 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
                   </Note>
                 </Stack>
               )
-            case ToolStatus.Draft:
+            case PortStatus.Draft:
               return (
                 <Stack size="sm" wrap={false}>
                   <Icon name="lucide/circle-dashed" className="stroke-3 text-muted-foreground/75" />
                   <span className="text-muted-foreground/75">Awaiting review</span>
+                </Stack>
+              )
+            case PortStatus.PendingEdit:
+              return (
+                <Stack size="sm" wrap={false}>
+                  <Icon
+                    name="lucide/clock"
+                    className="stroke-3 text-amber-700/75 dark:text-amber-500/75"
+                  />
+                  <span className="text-amber-700/75 dark:text-amber-500/75">
+                    Edit pending review
+                  </span>
                 </Stack>
               )
             default:
@@ -93,52 +121,17 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
         },
       },
       {
-        accessorKey: "pageviews",
-        enableHiding: false,
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Views (last 30d)" />,
-        cell: ({ row }) => <Note>{row.getValue<number>("pageviews")?.toLocaleString()}</Note>,
-      },
-      {
-        accessorKey: "createdAt",
-        enableHiding: false,
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" />,
-        cell: ({ row }) => <Note>{formatDate(row.getValue<Date>("createdAt"))}</Note>,
-      },
-      {
         id: "actions",
+        enableSorting: false,
         enableHiding: false,
-        cell: ({ row }) => {
-          const { slug, isFeatured, publishedAt } = row.original
-          const isLongQueue = !publishedAt || differenceInDays(publishedAt, new Date()) >= 7
-
-          return (
-            <Stack size="sm" className="float-right -my-1">
-              {isLongQueue && (
-                <Button size="sm" variant="secondary" asChild>
-                  <Link href={`/submit/${slug}`}>Expedite</Link>
-                </Button>
-              )}
-
-              {!isFeatured && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  prefix={<Icon name="lucide/sparkles" className="text-inherit" />}
-                  className="text-blue-600 dark:text-blue-400"
-                  asChild
-                >
-                  <Link href={`/submit/${slug}`}>Promote</Link>
-                </Button>
-              )}
-            </Stack>
-          )
-        },
+        header: () => <span>Actions</span>,
+        cell: ({ row }) => <PortEditDialog port={row.original} />,
       },
     ]
   }, [])
 
   // Search filters
-  const filterFields: DataTableFilterField<Tool>[] = [
+  const filterFields: DataTableFilterField<any>[] = [
     {
       id: "name",
       label: "Name",
@@ -147,7 +140,7 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
   ]
 
   const { table } = useDataTable({
-    data: tools,
+    data: ports as any,
     columns,
     pageCount,
     filterFields,
@@ -156,18 +149,32 @@ export const DashboardTable = ({ toolsPromise }: DashboardTableProps) => {
     initialState: {
       pagination: { pageIndex: 0, pageSize: perPage },
       sorting: sort,
-      columnPinning: { right: ["actions"] },
       columnVisibility: { createdAt: false },
     },
     getRowId: originalRow => originalRow.slug,
   })
 
   return (
-    <DataTable table={table} emptyState="No tools found. Submit or claim a tool to get started.">
+    <DataTable table={table} emptyState="No ports found. Submit a port or config to get started.">
       <DataTableToolbar table={table} filterFields={filterFields}>
         <Button size="md" variant="primary" prefix={<Icon name="lucide/plus" />} asChild>
-          <Link href="/submit">Submit a tool</Link>
+          <Link href="/submit">Submit</Link>
         </Button>
+
+        <Button size="md" variant="secondary" prefix={<Icon name="lucide/badge-check" />} asChild>
+          <Link href="/dashboard/ads">Manage ads</Link>
+        </Button>
+
+        {showMaintainerConsoleButton ? (
+          <Button
+            size="md"
+            variant="primary"
+            prefix={<Icon name="lucide/layout-dashboard" />}
+            asChild
+          >
+            <Link href="/dashboard/maintainer">Maintainer Console</Link>
+          </Button>
+        ) : null}
       </DataTableToolbar>
     </DataTable>
   )

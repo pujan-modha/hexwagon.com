@@ -33,13 +33,13 @@ const DialogContent = ({
     <DialogPortal>
       <DialogOverlay />
 
-      <div className="fixed inset-0 z-50 flex h-screen items-start justify-center px-4 py-6 sm:pt-[25vh]">
+      <div className="fixed inset-0 z-50 flex h-screen items-center justify-center px-4 py-6">
         <DialogPrimitive.Content
           className={cx(
-            "relative max-h-full w-full max-w-lg grid gap-4 border bg-background p-4 rounded-md shadow-lg overflow-y-auto overscroll-contain sm:p-6 sm:rounded-lg",
+            "relative max-h-[calc(100vh-3rem)] w-full max-w-lg grid gap-4 border bg-background p-4 rounded-md shadow-lg overflow-y-auto overscroll-contain sm:p-6 sm:rounded-lg",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
-            "data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:slide-out-to-bottom-4",
+            "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
             className,
           )}
           {...props}

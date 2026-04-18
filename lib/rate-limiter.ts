@@ -1,35 +1,15 @@
 "use server"
 
-import { Ratelimit } from "@upstash/ratelimit"
 import { headers } from "next/headers"
 import { isDev } from "~/env"
 import { redis } from "~/services/redis"
-import { tryCatch } from "~/utils/helpers"
 
 const limiters = {
-  submission: new Ratelimit({
-    redis,
-    analytics: true,
-    limiter: Ratelimit.slidingWindow(5, "24 h"), // 5 submissions per day
-  }),
-
-  report: new Ratelimit({
-    redis,
-    analytics: true,
-    limiter: Ratelimit.slidingWindow(5, "1 h"), // 5 submissions per hour
-  }),
-
-  newsletter: new Ratelimit({
-    redis,
-    analytics: true,
-    limiter: Ratelimit.slidingWindow(3, "24 h"), // 3 attempts per day
-  }),
-
-  claim: new Ratelimit({
-    redis,
-    analytics: true,
-    limiter: Ratelimit.slidingWindow(5, "1 h"), // 5 attempts per hour
-  }),
+  submission: { limit: 5, windowSeconds: 24 * 60 * 60 }, // 5 submissions per day
+  report: { limit: 5, windowSeconds: 60 * 60 }, // 5 submissions per hour
+  newsletter: { limit: 3, windowSeconds: 24 * 60 * 60 }, // 3 attempts per day
+  claim: { limit: 5, windowSeconds: 60 * 60 }, // 5 attempts per hour
+  comment: { limit: 10, windowSeconds: 60 * 60 }, // 10 comments per hour
 }
 
 /**
@@ -59,12 +39,20 @@ export const isRateLimited = async (id: string, action: keyof typeof limiters) =
     return false // Disable rate limiting in development
   }
 
-  const { data, error } = await tryCatch(limiters[action].limit(id))
+  const limiter = limiters[action]
+  const currentWindow = Math.floor(Date.now() / (limiter.windowSeconds * 1000))
+  const key = `rate-limit:${action}:${id}:${currentWindow}`
 
-  if (error) {
+  try {
+    const count = await redis.incr(key)
+
+    if (count === 1) {
+      await redis.expire(key, limiter.windowSeconds)
+    }
+
+    return count > limiter.limit
+  } catch (error) {
     console.error("Rate limiter error:", error)
     return false // Fail open to prevent blocking legitimate users
   }
-
-  return !data.success
 }

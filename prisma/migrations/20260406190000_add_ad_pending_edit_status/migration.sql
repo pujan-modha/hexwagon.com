@@ -1,0 +1,1 @@
+ALTER TYPE "AdStatus" ADD VALUE IF NOT EXISTS 'PendingEdit';

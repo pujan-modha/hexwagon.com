@@ -1,11 +1,24 @@
 import { useState } from "react"
-import type Stripe from "stripe"
 
 export type ProductInterval = "month" | "year"
 
-const getPriceForInterval = (prices: Stripe.Price[], interval?: ProductInterval) => {
+type PlanPrice = {
+  id: string
+  unit_amount?: number | null
+  recurring?: {
+    interval?: ProductInterval
+  } | null
+  type?: string | null
+}
+
+type PlanCoupon = {
+  percent_off?: number | null
+  amount_off?: number | null
+}
+
+const getPriceForInterval = (prices: PlanPrice[], interval?: ProductInterval) => {
   if (prices.length === 0) {
-    return { unit_amount: 0, id: "" } satisfies Partial<Stripe.Price>
+    return { unit_amount: 0, id: "" } satisfies Partial<PlanPrice>
   }
 
   const selectedPrice = prices.find(p => p.recurring?.interval === interval)
@@ -13,9 +26,9 @@ const getPriceForInterval = (prices: Stripe.Price[], interval?: ProductInterval)
 }
 
 const calculatePrices = (
-  prices: Stripe.Price[],
+  prices: PlanPrice[],
   interval: ProductInterval,
-  coupon?: Stripe.Coupon | null,
+  coupon?: PlanCoupon | null,
 ) => {
   const isSubscription = prices.some(p => p.type === "recurring")
   const currentPrice = getPriceForInterval(prices, isSubscription ? interval : undefined)
@@ -38,7 +51,7 @@ const calculatePrices = (
   return { isSubscription, currentPrice, price, fullPrice, discount }
 }
 
-const calculateCouponDiscount = (initialPrice: number, coupon?: Stripe.Coupon | null) => {
+const calculateCouponDiscount = (initialPrice: number, coupon?: PlanCoupon | null) => {
   if (!coupon) return 0
   if (coupon.percent_off) return (initialPrice * coupon.percent_off) / 100
   if (coupon.amount_off) return coupon.amount_off / 100
@@ -49,7 +62,7 @@ const calculateDiscount = (basePrice: number, price: number) => {
   return basePrice > 0 ? Math.round(((basePrice - price) / basePrice) * 100) : 0
 }
 
-export function usePlanPrices(prices: Stripe.Price[], coupon?: Stripe.Coupon | null) {
+export function usePlanPrices(prices: PlanPrice[], coupon?: PlanCoupon | null) {
   const [interval, setInterval] = useState<ProductInterval>("month")
   const calculatedPrices = calculatePrices(prices, interval, coupon)
 

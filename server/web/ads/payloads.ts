@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client"
 
 export const adOnePayload = Prisma.validator<Prisma.AdSelect>()({
+  id: true,
   name: true,
   description: true,
   websiteUrl: true,

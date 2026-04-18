@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "AdType" ADD VALUE IF NOT EXISTS 'Listing';
+ALTER TYPE "AdType" ADD VALUE IF NOT EXISTS 'Sidebar';

@@ -5,6 +5,7 @@ import { type PropsWithChildren, Suspense } from "react"
 import type { Graph } from "schema-dts"
 import Providers from "~/app/(web)/providers"
 import { AdBanner } from "~/components/web/ads/ad-banner"
+import { AdFloatingFooter } from "~/components/web/ads/ad-floating-footer"
 import { Bottom } from "~/components/web/bottom"
 import { FeedbackWidget } from "~/components/web/feedback-widget"
 import { Footer } from "~/components/web/footer"
@@ -13,6 +14,8 @@ import { Container } from "~/components/web/ui/container"
 import { config } from "~/config"
 import { env } from "~/env"
 import { getServerSession } from "~/lib/auth"
+
+export const dynamic = "force-dynamic"
 
 export default async function RootLayout({ children }: PropsWithChildren) {
   const url = config.site.url
@@ -24,12 +27,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
         "@id": `${url}/#/schema/organization/1`,
         name: config.site.name,
         url: `${url}/`,
-        sameAs: [
-          config.links.twitter,
-          config.links.bluesky,
-          config.links.mastodon,
-          config.links.linkedin,
-        ],
+        sameAs: [config.links.twitter],
         logo: {
           "@type": "ImageObject",
           "@id": `${url}/#/schema/image/1`,
@@ -42,7 +40,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
       {
         "@type": "Person",
         "@id": `${url}/#/schema/person/1`,
-        name: "Piotr Kulpinski",
+        name: "Pujan Modha",
         sameAs: [config.links.author],
       },
       {
@@ -55,7 +53,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
           "@type": "SearchAction",
           target: {
             "@type": "EntryPoint",
-            urlTemplate: `${url}/?q={search_term_string}`,
+            urlTemplate: `${url}/search?q={search_term_string}`,
           },
           "query-input": "required name=search_term_string",
         } as any,
@@ -69,7 +67,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
   const session = hasSessionCookie ? await getServerSession() : null
 
   return (
-    <Providers>
+    <Providers openPanelClientId={env.OPENPANEL_CLIENT_ID}>
       <div className="flex flex-col min-h-dvh overflow-clip pt-(--header-offset)">
         <Header session={session} />
         <HeaderBackdrop />
@@ -88,19 +86,15 @@ export default async function RootLayout({ children }: PropsWithChildren) {
       </div>
 
       <Bottom />
+      <Suspense>
+        <AdFloatingFooter />
+      </Suspense>
       <FeedbackWidget />
 
       {/* JSON-LD */}
       <Script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
-      {/* Plausible */}
-      <Script
-        defer
-        data-domain={env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
-        src={`${env.NEXT_PUBLIC_PLAUSIBLE_URL}/js/script.js`}
       />
     </Providers>
   )

@@ -1,5 +1,5 @@
 import { formatDate, formatNumber, isTruthy } from "@primoui/utils"
-import { formatDistanceToNowStrict, formatISO } from "date-fns"
+import { formatDistanceToNowStrict } from "date-fns"
 import type { ComponentProps } from "react"
 import { Button } from "~/components/common/button"
 import { Card } from "~/components/common/card"
@@ -31,7 +31,9 @@ export const RepositoryDetails = ({ className, tool, ...props }: RepositoryDetai
     tool.lastCommitDate
       ? {
           label: "Last commit",
-          value: formatDistanceToNowStrict(tool.lastCommitDate, { addSuffix: true }),
+          value: formatDistanceToNowStrict(tool.lastCommitDate, {
+            addSuffix: true,
+          }),
           title: formatDate(tool.lastCommitDate),
           icon: <Icon name="lucide/timer" />,
         }
@@ -47,17 +49,8 @@ export const RepositoryDetails = ({ className, tool, ...props }: RepositoryDetai
     tool.license
       ? {
           label: "License",
-          value: tool.license.name,
-          link: `/licenses/${tool.license.slug}`,
+          value: tool.license,
           icon: <Icon name="lucide/copyright" />,
-        }
-      : undefined,
-    tool.isSelfHosted
-      ? {
-          label: "Self-hosted",
-          value: "Yes",
-          link: "/self-hosted",
-          icon: <Icon name="lucide/server" />,
         }
       : undefined,
   ]
@@ -92,18 +85,11 @@ export const RepositoryDetails = ({ className, tool, ...props }: RepositoryDetai
             eventName="click_repository"
             eventProps={{ url: tool.repositoryUrl }}
           >
-            View Repository
+            Open Port Link
           </ExternalLink>
         </Button>
       )}
-
-      <p className="text-muted-foreground/75 text-[11px]">
-        Auto-fetched from GitHub{" "}
-        <time dateTime={formatISO(tool.updatedAt)} className="font-medium text-muted-foreground">
-          {formatDistanceToNowStrict(tool.updatedAt, { addSuffix: true })}
-        </time>
-        .
-      </p>
+      <p className="text-muted-foreground/75 text-[11px]">Auto-fetched from GitHub.</p>
     </Card>
   )
 }
