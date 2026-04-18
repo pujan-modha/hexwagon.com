@@ -1,134 +1,117 @@
-![OpenAlternative](https://openalternative.co/opengraph.png)
+# HexWagon
 
-<p align="center"></p>
+HexWagon is theme-port directory built with Next.js App Router. It helps users discover theme
+ports across platforms like VS Code, Ghostty, Neovim, Zed, and more.
 
-<p align="center">
-  Discover open source alternatives to popular software.
-  <br />
-  <a href="https://openalternative.co"><strong>Learn more »</strong></a>
-  <br />
-  <br />
-  <a href="https://openalternative.co">Website</a>
-  ·
-  <a href="https://github.com/piotrkulpinski/openalternative/issues">Issues</a>
-</p>
+## Stack
 
-<p align="center">
-   <a href="https://github.com/piotrkulpinski/openalternative/stargazers"><img src="https://img.shields.io/github/stars/piotrkulpinski/openalternative" alt="Github Stars" /></a>
-   <a href="https://uptime.betterstack.com/?utm_source=status_badge"><img src="https://uptime.betterstack.com/status-badges/v1/monitor/1lyos.svg" alt="Better Stack" /></a>
-   <a href="https://github.com/piotrkulpinski/openalternative/blob/main/LICENSE"><img src="https://img.shields.io/github/license/piotrkulpinski/openalternative" alt="License" /></a>
-   <a href="https://github.com/piotrkulpinski/openalternative/pulse"><img src="https://img.shields.io/github/commit-activity/m/piotrkulpinski/openalternative" alt="Commits-per-month" /></a>
-   <a href="https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/piotrkulpinski/openalternative">
-   <img alt="open in devcontainer" src="https://img.shields.io/static/v1?label=Dev%20Containers&message=Enabled&color=blue&logo=visualstudiocode" />
-   </a>
-   <a href="https://news.ycombinator.com/item?id=39639386"><img src="https://img.shields.io/badge/Hacker%20News-156-%23FF6600" alt="Hacker News" /></a>
-</p>
-
-<p align="center">
-  <a href="https://www.producthunt.com/posts/openalternative?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-openalternative" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=443404&theme=light&period=daily" alt="OpenAlternative - Discover open source alternatives to popular software | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-  <a href="https://www.producthunt.com/posts/openalternative?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-openalternative" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=443404&theme=light" alt="OpenAlternative - Discover open source alternatives to popular software | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-</p>
-
-## About this project
-
-OpenAlternative is a community driven list of **open source alternatives to proprietary software** and applications.
-
-Our goal is to be your first stop when researching for a new open source service to help you grow your business. We will help you **find alternatives** of the products you already use.
-
-Join us in creating the biggest **directory of open source software**.
-
-## Other projects
-
-We are also working on other projects you might be interested in:
-
-- [Dirstarter](https://dirstarter.com) - A Next.js boilerplate for creating directory websites.
-- [EuroAlternative](https://euroalternative.co) - A directory of European alternatives to Big Tech giants.
-- [DevSuite](https://devsuite.co) - A collection of tools for developers.
-
-## Sponsoring
-
-OpenAlternative is an GPL-3.0-licensed open source project with its ongoing development made possible entirely by the support of our awesome backers. If you'd like to join them, please consider [sponsoring OpenAlternative's development](https://openalternative.co/sponsor).
-
-If you'd like to support the project, you could also consider [buying our Next.js boilerplate](https://dirstarter.com) which is the foundation of creating directory websites, just like this one.
+- Next.js 15 App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Prisma
+- Better Auth
+- Bun
 
 ## Project Structure
 
-OpenAlternative is built in Next.js App Router. The project structure is organized as follows:
-
-- `/app` - Application routes and layouts (Next.js App Router)
-- `/components` - Reusable React components
-- `/lib` - Core utilities and business logic
-- `/actions` - Server actions
-- `/utils` - Helper functions and utilities
-- `/hooks` - React hooks
-- `/contexts` - React context providers
-- `/services` - Service integrations
-- `/emails` - Email templates
-- `/server` - Server-side code
-- `/functions` - Utility functions
-- `/config` - Configuration files
-- `/content` - Content management
-- `/prisma` - Prisma schema and utilities
-- `/types` - TypeScript type definitions
-- `/public` - Static assets
-- `/docs` - Contributor documentation (including analytics event map)
-
-### Analytics
-
-For analytics naming and payload conventions, see:
-
-- [`docs/analytics-event-map.md`](docs/analytics-event-map.md)
+- `/app` - routes, layouts, API handlers
+- `/components` - reusable UI and feature components
+- `/lib` - shared business logic and helpers
+- `/actions` - server actions
+- `/services` - external service integrations
+- `/server` - server-only queries, schemas, actions
+- `/config` - app configuration and metadata
+- `/content` - content source files
+- `/emails` - React Email templates
+- `/prisma` - schema and migrations
+- `/docs` - project docs
 
 ## Development
 
-This project uses [Bun](https://bun.sh/) as the package manager and runtime. Make sure you have Bun installed before proceeding.
-
-To set up the project for development:
-
-1. Clone the repository
-2. Run `bun install` to install all dependencies
-3. Set up the required environment variables (see below)
-4. Run `bun run db:push` to push the Prisma schema to the database
-5. Run `bun run dev` to start the application in development mode
-
-### Environment Variables
-
-Refer to the `.env.example` file for a complete list of required variables.
-
-Copy the `.env.example` file to `.env` and update the variables as needed:
+Install dependencies:
 
 ```bash
-cp .env.example .env
+bun install
 ```
 
-## 🧞 Commands
+Create local env file:
 
-All commands are run from the root of the project, from a terminal:
+```bash
+cp .env.example .env.local
+```
 
-| Command               | Action                                      |
-| :-------------------- | :------------------------------------------ |
-| `bun install`         | Installs dependencies                       |
-| `bun run dev`         | Starts local dev server at `localhost:5173` |
-| `bun run build`       | Build production application                |
-| `bun run start`       | Preview production build locally            |
-| `bun run lint`        | Run linter                                  |
-| `bun run format`      | Format code                                 |
-| `bun run typecheck`   | Run TypeScript type checking                |
-| `bun run db:generate` | Generate Prisma client                      |
-| `bun run db:studio`   | Start Prisma Studio                         |
-| `bun run db:push`     | Push Prisma schema to database              |
-| `bun run db:pull`     | Pull Prisma schema from database            |
-| `bun run db:reset`    | Reset Prisma schema                         |
+Start local dependencies if needed:
+
+```bash
+docker compose up -d
+```
+
+Apply Prisma schema:
+
+```bash
+bun run db:push
+```
+
+Start dev server:
+
+```bash
+bun run dev
+```
+
+App runs on `http://localhost:5173`.
+
+## Environment Variables
+
+See [.env.example](.env.example) for full template.
+
+Some integrations are optional for local development depending on which flows you want to test,
+but production expects full configuration.
+
+## Commands
+
+| Command                | Action                                 |
+| :--------------------- | :------------------------------------- |
+| `bun run dev`          | Start dev server on port `5173`        |
+| `bun run build`        | Build production app                   |
+| `bun run start`        | Start production server                |
+| `bun run lint`         | Run Biome checks with writes           |
+| `bun run format`       | Format project with Biome              |
+| `bun run typecheck`    | Run TypeScript typecheck               |
+| `bun run icons`        | Rebuild generated icon assets          |
+| `bun run db:generate`  | Generate Prisma client                 |
+| `bun run db:migrate`   | Run Prisma dev migrations              |
+| `bun run db:deploy`    | Apply Prisma migrations                |
+| `bun run db:studio`    | Open Prisma Studio                     |
+| `bun run db:push`      | Push Prisma schema without migration   |
+| `bun run db:reset`     | Reset database via Prisma              |
+| `bun run search:reindex` | Reindex search data                  |
 
 ## Deployment
 
-The project is set up for deployment on Vercel. To deploy manually:
+Primary target is Vercel.
 
-1. Build the project: `bun run build`
-2. Start the production server: `bun run start`
+Build locally:
 
-Ensure all environment variables are properly set in your production environment.
+```bash
+bun run build
+```
+
+Run production server locally:
+
+```bash
+bun run start
+```
+
+## Attribution
+
+HexWagon is based on [OpenAlternative](https://github.com/piotrkulpinski/openalternative)'s open
+source code.
+
+That upstream repository no longer includes original codebase. Last snapshot of GPL-3.0 licensed
+code used as reference is available here:
+[pujan-modha/openalternative](https://github.com/pujan-modha/openalternative).
 
 ## License
 
-OpenAlternative is licensed under the [GPL-3.0 License](LICENSE).
+HexWagon is licensed under the [GPL-3.0 License](LICENSE).
