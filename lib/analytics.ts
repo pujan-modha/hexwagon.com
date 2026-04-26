@@ -1,4 +1,4 @@
-import type { Logger } from "inngest/middleware/logger"
+import type { Logger } from "inngest"
 import { env } from "~/env"
 import { OpenPanelInsightsError, fetchOpenPanelInsights } from "~/services/openpanel"
 import { tryCatch } from "~/utils/helpers"
