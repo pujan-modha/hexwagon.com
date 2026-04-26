@@ -1,6 +1,5 @@
 import { PortStatus, type Prisma } from "@prisma/client"
 import type { Metadata } from "next"
-import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense, cache } from "react"
@@ -25,7 +24,7 @@ import { Section } from "~/components/web/ui/section"
 import { VerifiedBadge } from "~/components/web/verified-badge"
 import { config } from "~/config"
 import { metadataConfig } from "~/config/metadata"
-import { auth } from "~/lib/auth"
+import { getServerSessionIfCookie } from "~/lib/auth"
 import { buildKeywords, buildRobots, hasSeoQueryState, parseSearchAliases } from "~/lib/seo"
 import { findConfigsByTheme } from "~/server/web/configs/queries"
 import {
@@ -109,7 +108,7 @@ export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
 
 export default async function ThemePage(props: PageProps) {
   const [theme, searchParams] = await Promise.all([getTheme(props), props.searchParams])
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getServerSessionIfCookie()
 
   const q = Array.isArray(searchParams.q) ? (searchParams.q[0] ?? "") : (searchParams.q ?? "")
   const sort = Array.isArray(searchParams.sort)

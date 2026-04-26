@@ -1,5 +1,5 @@
-import { revalidateTag } from "next/cache"
 import { z } from "zod"
+import { getIPFromHeaders, isRateLimited } from "~/lib/rate-limiter"
 import { db } from "~/services/db"
 
 const adClickSchema = z.object({
@@ -10,6 +10,11 @@ const adClickSchema = z.object({
 })
 
 export const POST = async (request: Request) => {
+  const ip = getIPFromHeaders(request.headers)
+  if (await isRateLimited(`ad-click:${ip}`, "adClickWrite")) {
+    return new Response(null, { status: 204 })
+  }
+
   const payload = await request
     .json()
     .then(value => adClickSchema.safeParse(value))
@@ -31,8 +36,6 @@ export const POST = async (request: Request) => {
       lastClickedAt: new Date(),
     },
   })
-
-  revalidateTag("ads", "max")
 
   return new Response(null, { status: 204 })
 }

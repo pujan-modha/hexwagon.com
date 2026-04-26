@@ -1,6 +1,12 @@
+import { getIPFromHeaders, isRateLimited } from "~/lib/rate-limiter"
 import { db } from "~/services/db"
 
 export const GET = async (req: Request) => {
+  const ip = getIPFromHeaders(req.headers)
+  if (await isRateLimited(`checkout-status:${ip}`, "checkoutStatusRead")) {
+    return Response.json({ ok: false, error: "Too many requests." }, { status: 429 })
+  }
+
   const { searchParams } = new URL(req.url)
   const checkoutReferenceId = searchParams.get("checkoutReferenceId")
 

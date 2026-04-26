@@ -1,8 +1,10 @@
-"use server"
-
 import { headers } from "next/headers"
 import { isDev } from "~/env"
 import { redis } from "~/services/redis"
+
+type HeaderSource = {
+  get: (name: string) => string | null
+}
 
 const limiters = {
   submission: { limit: 5, windowSeconds: 24 * 60 * 60 }, // 5 submissions per day
@@ -10,22 +12,47 @@ const limiters = {
   newsletter: { limit: 3, windowSeconds: 24 * 60 * 60 }, // 3 attempts per day
   claim: { limit: 5, windowSeconds: 60 * 60 }, // 5 attempts per hour
   comment: { limit: 10, windowSeconds: 60 * 60 }, // 10 comments per hour
+  adSlotRead: { limit: 120, windowSeconds: 60 }, // 120 requests per minute
+  checkoutStatusRead: { limit: 90, windowSeconds: 60 }, // 90 requests per minute
+  adClickWrite: { limit: 180, windowSeconds: 60 }, // 180 clicks per minute
+  healthRead: { limit: 30, windowSeconds: 60 }, // 30 checks per minute
+}
+
+const FALLBACK_IP_ADDRESS = "0.0.0.0"
+
+const getForwardedIp = (headerValue: string | null) => {
+  if (!headerValue) return null
+  const firstIp = headerValue.split(",")[0]?.trim()
+  return firstIp || null
 }
 
 /**
  * Get the IP address of the client
+ * @param source - Header source
+ * @returns IP address
+ */
+export const getIPFromHeaders = (source: HeaderSource) => {
+  const forwardedFor = getForwardedIp(source.get("x-forwarded-for"))
+  if (forwardedFor) return forwardedFor
+
+  const realIp = source.get("x-real-ip")
+  if (realIp) return realIp
+
+  const flyClientIp = source.get("fly-client-ip")
+  if (flyClientIp) return flyClientIp
+
+  const cfConnectingIp = source.get("cf-connecting-ip")
+  if (cfConnectingIp) return cfConnectingIp
+
+  return FALLBACK_IP_ADDRESS
+}
+
+/**
+ * Get the IP address of the current request
  * @returns IP address
  */
 export const getIP = async () => {
-  const FALLBACK_IP_ADDRESS = "0.0.0.0"
-  const headersList = await headers()
-  const forwardedFor = headersList.get("x-forwarded-for")
-
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0] ?? FALLBACK_IP_ADDRESS
-  }
-
-  return headersList.get("x-real-ip") ?? FALLBACK_IP_ADDRESS
+  return getIPFromHeaders(await headers())
 }
 
 /**

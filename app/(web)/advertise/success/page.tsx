@@ -1,6 +1,5 @@
 import type { Prisma } from "@prisma/client"
 import type { Metadata } from "next"
-import { headers } from "next/headers"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { type SearchParams, createLoader, parseAsString } from "nuqs/server"
@@ -14,7 +13,7 @@ import { Section } from "~/components/web/ui/section"
 import { metadataConfig } from "~/config/metadata"
 import { getAdPackageCheckoutDraft } from "~/lib/ad-package-checkout-draft"
 import { verifyAdPackageDraftToken } from "~/lib/ad-package-draft-token"
-import { auth } from "~/lib/auth"
+import { getServerSessionIfCookie } from "~/lib/auth"
 import { buildRobots } from "~/lib/seo"
 import { getAdPackagePricing } from "~/server/web/ads/queries"
 import { db } from "~/services/db"
@@ -135,7 +134,7 @@ export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
 
 export default async function SuccessPage({ searchParams }: PageProps) {
   const state = await getPageState({ searchParams })
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getServerSessionIfCookie()
 
   if (!state) {
     return notFound()

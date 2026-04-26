@@ -6,6 +6,13 @@ import { db } from "~/services/db"
 import { tryCatch } from "~/utils/helpers"
 import { addSearchParams } from "~/utils/search-params"
 
+const RSS_CACHE_SECONDS = 60 * 60 * 4
+const RSS_STALE_SECONDS = 60 * 60 * 24
+const RSS_CACHE_CONTROL = `public, max-age=0, s-maxage=${RSS_CACHE_SECONDS}, stale-while-revalidate=${RSS_STALE_SECONDS}`
+
+export const dynamic = "force-static"
+export const revalidate = 14400
+
 export const GET = async () => {
   const { url, name, tagline } = config.site
   const rssSearchParams = {
@@ -54,7 +61,7 @@ export const GET = async () => {
     headers: {
       "Content-Type": "application/xml",
       "X-Content-Type-Options": "nosniff",
-      "Cache-Control": "public, max-age=14400",
+      "Cache-Control": RSS_CACHE_CONTROL,
     },
   })
 }

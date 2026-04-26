@@ -3,12 +3,23 @@ import { config } from "~/config"
 import { indexConfigs, indexPlatforms, indexPorts, indexThemes } from "~/lib/indexing"
 import { inngest } from "~/services/inngest"
 
+const INDEX_CRON_SCHEDULE = process.env.INDEX_CRON_SCHEDULE ?? "TZ=Europe/Warsaw 0 * * * *"
+const isIndexCronEnabled = process.env.ENABLE_INDEX_CRON !== "false"
+const indexLookbackMinutes = Number.parseInt(process.env.INDEX_LOOKBACK_MINUTES ?? "90", 10)
+
 export const indexData = inngest.createFunction(
   { id: `${config.site.slug}.index-data`, retries: 0 },
-  { cron: "TZ=Europe/Warsaw */15 * * * *" }, // Every 15 minutes
+  { cron: INDEX_CRON_SCHEDULE },
 
   async ({ step, db }) => {
-    const timeThreshold = new Date(Date.now() - 15 * millisecondsInMinute)
+    if (!isIndexCronEnabled) {
+      return
+    }
+
+    const safeLookbackMinutes = Number.isFinite(indexLookbackMinutes)
+      ? Math.max(indexLookbackMinutes, 15)
+      : 90
+    const timeThreshold = new Date(Date.now() - safeLookbackMinutes * millisecondsInMinute)
 
     await Promise.all([
       step.run("index-ports", async () => {

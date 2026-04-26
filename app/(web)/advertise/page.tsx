@@ -1,4 +1,3 @@
-import { headers } from "next/headers"
 import Link from "next/link"
 import type { Metadata } from "next/types"
 import { AdvertisePickers } from "~/app/(web)/advertise/pickers"
@@ -12,7 +11,7 @@ import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { config } from "~/config"
 import { metadataConfig } from "~/config/metadata"
 import { siteConfig } from "~/config/site"
-import { auth } from "~/lib/auth"
+import { getServerSessionIfCookie } from "~/lib/auth"
 
 export const metadata: Metadata = {
   title: `Advertise on ${siteConfig.name}`,
@@ -22,7 +21,7 @@ export const metadata: Metadata = {
 }
 
 export default async function AdvertisePage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getServerSessionIfCookie()
   const trackingHref = session?.user ? "/dashboard" : "/auth/login?next=/dashboard"
 
   return (

@@ -47,6 +47,7 @@ export const env = createEnv({
     PAYPAL_MONTHLY_PLAN_ID: z.string().min(1),
     INNGEST_SIGNING_KEY: z.string().optional(),
     INNGEST_EVENT_KEY: z.string().optional(),
+    HEALTHCHECK_SECRET: z.string().optional(),
     BEEHIIV_API_KEY: z.string().min(1),
     BEEHIIV_PUBLICATION_ID: z.string().min(1),
   },

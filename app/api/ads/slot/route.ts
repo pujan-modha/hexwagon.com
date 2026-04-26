@@ -1,6 +1,7 @@
 import type { AdSlot } from "@prisma/client"
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { getIPFromHeaders, isRateLimited } from "~/lib/rate-limiter"
 import { findAllocatedSlotAd } from "~/server/web/ads/queries"
 
 const schema = z.object({
@@ -12,6 +13,11 @@ const schema = z.object({
 })
 
 export async function GET(request: Request) {
+  const ip = getIPFromHeaders(request.headers)
+  if (await isRateLimited(`ads-slot:${ip}`, "adSlotRead")) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+  }
+
   const url = new URL(request.url)
   const parsed = schema.safeParse({
     slot: url.searchParams.get("slot"),

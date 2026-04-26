@@ -6,6 +6,13 @@ import { getToolSuffix } from "~/lib/tools"
 import { db } from "~/services/db"
 import { tryCatch } from "~/utils/helpers"
 
+const LLMSTXT_CACHE_SECONDS = 60 * 30
+const LLMSTXT_STALE_SECONDS = 60 * 60 * 24
+const LLMSTXT_CACHE_CONTROL = `public, max-age=0, s-maxage=${LLMSTXT_CACHE_SECONDS}, stale-while-revalidate=${LLMSTXT_STALE_SECONDS}`
+
+export const dynamic = "force-static"
+export const revalidate = 1800
+
 export const GET = async () => {
   const tools = await db.port.findMany({
     where: { status: PortStatus.Published },
@@ -52,7 +59,7 @@ ${allPosts.map(post => `- [${post.title}](${siteConfig.url}/blog/${post._meta.pa
   return new NextResponse(content, {
     headers: {
       "Content-Type": "text/plain",
-      "Cache-Control": "no-store",
+      "Cache-Control": LLMSTXT_CACHE_CONTROL,
     },
   })
 }

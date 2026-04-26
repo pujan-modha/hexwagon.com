@@ -328,6 +328,7 @@ model Theme {
   // Indexes
   @@index([slug])
   @@index([adId])
+  @@index([updatedAt])
 }
 
 model Platform {
@@ -360,6 +361,7 @@ model Platform {
 
   // Indexes
   @@index([slug])
+  @@index([updatedAt])
 }
 
 model Port {
@@ -418,6 +420,7 @@ model Port {
   @@index([platformId])
   @@index([authorId])
   @@index([status])
+  @@index([status, updatedAt])
   @@index([isFeatured, score])
   @@index([themeId, platformId, isOfficial])
 
@@ -463,6 +466,7 @@ model Config {
   @@index([authorId])
   @@index([slug])
   @@index([status])
+  @@index([status, updatedAt])
   @@index([isFeatured, order])
 }
 

@@ -2,6 +2,7 @@ import { getRandomDigits } from "@primoui/utils"
 import { betterAuth } from "better-auth"
 import { prismaAdapter } from "better-auth/adapters/prisma"
 import { createAuthMiddleware } from "better-auth/api"
+import { getSessionCookie } from "better-auth/cookies"
 import { admin, magicLink, oneTimeToken } from "better-auth/plugins"
 import { revalidatePath } from "next/cache"
 import { headers } from "next/headers"
@@ -91,5 +92,18 @@ export const auth = betterAuth({
 export const getServerSession = cache(async () => {
   return auth.api.getSession({
     headers: await headers(),
+  })
+})
+
+export const getServerSessionIfCookie = cache(async () => {
+  const requestHeaders = await headers()
+  const hasSessionCookie = getSessionCookie(new Headers(requestHeaders))
+
+  if (!hasSessionCookie) {
+    return null
+  }
+
+  return auth.api.getSession({
+    headers: requestHeaders,
   })
 })
