@@ -45,7 +45,7 @@
     "cva": "beta",
     "date-fns": "^4.1.0",
     "github-markdown-css": "^5.9.0",
-    "inngest": "^3.39.2",
+    "inngest": "^3.54.0",
     "ioredis": "^5.7.0",
     "meilisearch": "^0.50.0",
     "motion": "^12.18.1",
