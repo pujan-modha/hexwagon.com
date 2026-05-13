@@ -19,14 +19,13 @@ const submitThemeClaimSchema = z.object({
 export const submitThemeMaintainerClaim = createServerAction()
   .input(submitThemeClaimSchema)
   .handler(async ({ input }) => {
+    const session = await auth.api.getSession({ headers: await headers() })
     const ip = await getIP()
     const rateLimitKey = `theme-claim:${ip}`
 
-    if (await isRateLimited(rateLimitKey, "claim")) {
+    if (await isRateLimited(rateLimitKey, "claim", { bypass: session?.user.role === "admin" })) {
       throw new Error("Too many requests. Please try again later")
     }
-
-    const session = await auth.api.getSession({ headers: await headers() })
 
     const theme = await db.theme.findUnique({
       where: { id: input.themeId },

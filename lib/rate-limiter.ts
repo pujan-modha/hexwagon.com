@@ -6,6 +6,10 @@ type HeaderSource = {
   get: (name: string) => string | null
 }
 
+type RateLimitOptions = {
+  bypass?: boolean
+}
+
 const limiters = {
   submission: { limit: 5, windowSeconds: 24 * 60 * 60 }, // 5 submissions per day
   report: { limit: 5, windowSeconds: 60 * 60 }, // 5 submissions per hour
@@ -61,8 +65,12 @@ export const getIP = async () => {
  * @param action - The action to check
  * @returns True if the user is rate limited, false otherwise
  */
-export const isRateLimited = async (id: string, action: keyof typeof limiters) => {
-  if (isDev) {
+export const isRateLimited = async (
+  id: string,
+  action: keyof typeof limiters,
+  options: RateLimitOptions = {},
+) => {
+  if (options.bypass || isDev) {
     return false // Disable rate limiting in development
   }
 

@@ -13,7 +13,7 @@ export const addComment = userProcedure
   .handler(async ({ input: { portId, configId, parentId, content }, ctx: { user } }) => {
     const ip = await getIP()
 
-    if (await isRateLimited(`comment:${ip}`, "comment")) {
+    if (await isRateLimited(`comment:${ip}`, "comment", { bypass: user.role === "admin" })) {
       throw new Error("Too many comments. Please try again later.")
     }
 

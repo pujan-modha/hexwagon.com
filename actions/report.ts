@@ -32,7 +32,7 @@ export const reportPort = userProcedure
     const ip = await getIP()
     const rateLimitKey = `report:${ip}`
 
-    if (await isRateLimited(rateLimitKey, "report")) {
+    if (await isRateLimited(rateLimitKey, "report", { bypass: user.role === "admin" })) {
       throw new Error("Too many requests. Please try again later.")
     }
 
@@ -67,7 +67,7 @@ export const reportTheme = userProcedure
     const ip = await getIP()
     const rateLimitKey = `report:${ip}`
 
-    if (await isRateLimited(rateLimitKey, "report")) {
+    if (await isRateLimited(rateLimitKey, "report", { bypass: user.role === "admin" })) {
       throw new Error("Too many requests. Please try again later.")
     }
 
@@ -102,7 +102,7 @@ export const reportPlatform = userProcedure
     const ip = await getIP()
     const rateLimitKey = `report:${ip}`
 
-    if (await isRateLimited(rateLimitKey, "report")) {
+    if (await isRateLimited(rateLimitKey, "report", { bypass: user.role === "admin" })) {
       throw new Error("Too many requests. Please try again later.")
     }
 
@@ -137,7 +137,7 @@ export const reportConfig = userProcedure
     const ip = await getIP()
     const rateLimitKey = `report:${ip}`
 
-    if (await isRateLimited(rateLimitKey, "report")) {
+    if (await isRateLimited(rateLimitKey, "report", { bypass: user.role === "admin" })) {
       throw new Error("Too many requests. Please try again later.")
     }
 
@@ -172,7 +172,7 @@ export const reportComment = userProcedure
     const ip = await getIP()
     const rateLimitKey = `report:${ip}`
 
-    if (await isRateLimited(rateLimitKey, "report")) {
+    if (await isRateLimited(rateLimitKey, "report", { bypass: user.role === "admin" })) {
       throw new Error("Too many requests. Please try again later.")
     }
 
@@ -207,7 +207,7 @@ export const reportFeedback = createServerAction()
     const ip = await getIP()
     const rateLimitKey = `report:${ip}`
 
-    if (await isRateLimited(rateLimitKey, "report")) {
+    if (await isRateLimited(rateLimitKey, "report", { bypass: session?.user.role === "admin" })) {
       throw new Error("Too many requests. Please try again later.")
     }
 
