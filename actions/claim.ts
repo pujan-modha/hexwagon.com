@@ -16,11 +16,11 @@ import { db } from "~/services/db"
 /**
  * Check rate limiting for claim actions
  */
-const checkRateLimit = async (action: string) => {
+const checkRateLimit = async (action: string, options: { bypass?: boolean } = {}) => {
   const ip = await getIP()
   const rateLimitKey = `claim-${action}:${ip}`
 
-  if (await isRateLimited(rateLimitKey, "claim")) {
+  if (await isRateLimited(rateLimitKey, "claim", options)) {
     throw new Error("Too many requests. Please try again later")
   }
 
@@ -101,9 +101,9 @@ const claimPortForUser = async (portId: string, userId: string, slug: string) =>
 export const sendPortClaimOtp = userProcedure
   .createServerAction()
   .input(z.object({ portSlug: z.string(), email: z.string().email() }))
-  .handler(async ({ input: { portSlug: slug, email } }) => {
+  .handler(async ({ input: { portSlug: slug, email }, ctx: { user } }) => {
     // Check rate limiting
-    await checkRateLimit("otp")
+    await checkRateLimit("otp", { bypass: user.role === "admin" })
 
     // Get and validate port
     const port = await getClaimablePort(slug)
@@ -127,21 +127,21 @@ export const sendPortClaimOtp = userProcedure
 export const verifyPortClaimOtp = userProcedure
   .createServerAction()
   .input(z.object({ portSlug: z.string(), otp: z.string() }))
-  .handler(async ({ input: { portSlug: slug, otp } }) => {
+  .handler(async ({ input: { portSlug: slug, otp }, ctx: { user } }) => {
     // Check rate limiting
-    await checkRateLimit("verify")
+    await checkRateLimit("verify", { bypass: user.role === "admin" })
 
     // Get and validate port
     const port = await getClaimablePort(slug)
 
     // Verify otp
-    const { user } = await auth.api.verifyOneTimeToken({
+    const { user: verifiedUser } = await auth.api.verifyOneTimeToken({
       body: { token: otp },
       headers: await headers(),
     })
 
     // Claim port and revalidate
-    await claimPortForUser(port.id, user.id, slug)
+    await claimPortForUser(port.id, verifiedUser.id, slug)
 
     return { success: true }
   })

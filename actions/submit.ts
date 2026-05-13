@@ -4,7 +4,7 @@ import { slugify } from "@primoui/utils"
 import { ConfigStatus, PortStatus, Prisma } from "@prisma/client"
 import { revalidatePath, revalidateTag } from "next/cache"
 import { after } from "next/server"
-import { subscribeToNewsletter } from "~/actions/subscribe"
+import { subscribeEmailToNewsletter } from "~/actions/subscribe"
 import { notifySubmitterOfPortApproved, notifySubmitterOfPortSubmitted } from "~/lib/notifications"
 import { isRateLimited } from "~/lib/rate-limiter"
 import { userProcedure } from "~/lib/safe-actions"
@@ -44,7 +44,7 @@ export const submitPort = userProcedure
     const submitterEmail = user.email?.trim() || null
 
     const rateLimitKey = `submission:${user.id}`
-    if (await isRateLimited(rateLimitKey, "submission")) {
+    if (await isRateLimited(rateLimitKey, "submission", { bypass: user.role === "admin" })) {
       throw new Error("Too many submissions. Please try again later.")
     }
 
@@ -63,11 +63,14 @@ export const submitPort = userProcedure
       )
 
     if (newsletterOptIn && submitterEmail) {
-      await subscribeToNewsletter({
-        value: submitterEmail,
-        utm_medium: "submit_form",
-        send_welcome_email: false,
-      })
+      await subscribeEmailToNewsletter(
+        {
+          value: submitterEmail,
+          utm_medium: "submit_form",
+          send_welcome_email: false,
+        },
+        { bypassRateLimit: user.role === "admin" },
+      )
     }
 
     // Check for duplicate submission (same user + theme + platform with pending status)
@@ -146,7 +149,7 @@ export const submitConfig = userProcedure
       ctx: { user },
     }) => {
       const rateLimitKey = `submission:${user.id}`
-      if (await isRateLimited(rateLimitKey, "submission")) {
+      if (await isRateLimited(rateLimitKey, "submission", { bypass: user.role === "admin" })) {
         throw new Error("Too many submissions. Please try again later.")
       }
 
@@ -156,11 +159,14 @@ export const submitConfig = userProcedure
       const normalizedLicense = data.license?.trim() || null
 
       if (newsletterOptIn && submitterEmail) {
-        await subscribeToNewsletter({
-          value: submitterEmail,
-          utm_medium: "submit_form",
-          send_welcome_email: false,
-        })
+        await subscribeEmailToNewsletter(
+          {
+            value: submitterEmail,
+            utm_medium: "submit_form",
+            send_welcome_email: false,
+          },
+          { bypassRateLimit: user.role === "admin" },
+        )
       }
 
       const existingConfig = await db.config.findFirst({

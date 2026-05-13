@@ -14,7 +14,7 @@ export const submitSuggestion = userProcedure
     const ip = await getIP()
 
     // Rate limit: max 5 suggestions per user per 24h
-    if (await isRateLimited(`suggestion:${ip}`, "submission")) {
+    if (await isRateLimited(`suggestion:${ip}`, "submission", { bypass: user.role === "admin" })) {
       throw new Error("Too many suggestions. Please try again later.")
     }
 
