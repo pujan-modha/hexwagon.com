@@ -9,12 +9,14 @@ import { PlatformCard } from "~/components/catalogue/platform-card"
 import { PortCard } from "~/components/catalogue/port-card"
 import { ThemeCard } from "~/components/catalogue/theme-card"
 import { EntitySearchForm } from "~/components/web/entity-search-form"
+import { MissingSuggestionCard } from "~/components/web/missing-suggestion-card"
 import { Breadcrumbs } from "~/components/web/ui/breadcrumbs"
 import { Intro, IntroDescription, IntroTitle } from "~/components/web/ui/intro"
 import { metadataConfig } from "~/config/metadata"
 import { searchPageSortOptions } from "~/lib/search-page"
 import { buildRobots } from "~/lib/seo"
 import { searchConfigs } from "~/server/web/configs/queries"
+import { findMissingSuggestionDemand } from "~/server/web/missing-suggestions/queries"
 import { findPlatforms, searchPlatforms } from "~/server/web/platforms/queries"
 import { searchPorts } from "~/server/web/ports/queries"
 import { findThemes, searchThemes } from "~/server/web/themes/queries"
@@ -83,8 +85,10 @@ const buildPortTextQuery = ({
 export default async function SearchPage(props: PageProps) {
   const search = await props.searchParams
   const genericQuery = normalize(readParam(search.q))
-  const themeQuery = normalize(readParam(search.themeQuery)) || genericQuery
-  const platformQuery = normalize(readParam(search.platformQuery)) || genericQuery
+  const explicitThemeQuery = normalize(readParam(search.themeQuery))
+  const explicitPlatformQuery = normalize(readParam(search.platformQuery))
+  const themeQuery = explicitThemeQuery || genericQuery
+  const platformQuery = explicitPlatformQuery || genericQuery
   const selectedThemeSlug = normalize(readParam(search.theme))
   const selectedPlatformSlug = normalize(readParam(search.platform))
   const requestedSort = normalize(readParam(search.sort)) || "default"
@@ -203,6 +207,60 @@ export default async function SearchPage(props: PageProps) {
       : Promise.resolve({ configs: [], totalCount: 0 }),
   ])
 
+  const themeSuggestionLabel = selectedTheme?.name ?? themeQuery
+  const platformSuggestionLabel = selectedPlatform?.name ?? platformQuery
+  const configSuggestionLabel =
+    genericQuery || portTextQuery || themeSuggestionLabel || platformSuggestionLabel
+  const hasPortSuggestionIntent = Boolean(
+    (selectedTheme?.slug || explicitThemeQuery) &&
+      (selectedPlatform?.slug || explicitPlatformQuery),
+  )
+
+  const shouldSuggestTheme =
+    hasCriteria && !selectedTheme && Boolean(themeQuery) && themeResults.totalCount === 0
+  const shouldSuggestPlatform =
+    hasCriteria && !selectedPlatform && Boolean(platformQuery) && platformResults.totalCount === 0
+  const shouldSuggestPort =
+    hasCriteria &&
+    hasPortSuggestionIntent &&
+    Boolean(themeSuggestionLabel) &&
+    Boolean(platformSuggestionLabel) &&
+    portResults.totalCount === 0
+  const shouldSuggestConfig =
+    hasCriteria && Boolean(configSuggestionLabel) && configResults.totalCount === 0
+
+  const [themeDemand, platformDemand, portDemand, configDemand] = await Promise.all([
+    shouldSuggestTheme
+      ? findMissingSuggestionDemand({
+          type: "Theme",
+          label: themeSuggestionLabel,
+        })
+      : Promise.resolve({ count: 0 }),
+    shouldSuggestPlatform
+      ? findMissingSuggestionDemand({
+          type: "Platform",
+          label: platformSuggestionLabel,
+        })
+      : Promise.resolve({ count: 0 }),
+    shouldSuggestPort
+      ? findMissingSuggestionDemand({
+          type: "Port",
+          label: `${themeSuggestionLabel} for ${platformSuggestionLabel}`,
+          themeName: themeSuggestionLabel,
+          platformName: platformSuggestionLabel,
+        })
+      : Promise.resolve({ count: 0 }),
+    shouldSuggestConfig
+      ? findMissingSuggestionDemand({
+          type: "Config",
+          label: configSuggestionLabel,
+          themeName: selectedTheme?.name,
+          platformName: selectedPlatform?.name,
+          configName: configSuggestionLabel,
+        })
+      : Promise.resolve({ count: 0 }),
+  ])
+
   const resultCount =
     themeResults.totalCount +
     platformResults.totalCount +
@@ -271,6 +329,16 @@ export default async function SearchPage(props: PageProps) {
                   <PortCard key={port.id} port={port} />
                 ))}
               </CatalogueGrid>
+            ) : shouldSuggestPort ? (
+              <MissingSuggestionCard
+                type="Port"
+                label={`${themeSuggestionLabel} for ${platformSuggestionLabel}`}
+                themeName={themeSuggestionLabel}
+                platformName={platformSuggestionLabel}
+                themeId={selectedTheme?.id}
+                platformId={selectedPlatform?.id}
+                initialCount={portDemand.count}
+              />
             ) : (
               <EmptySectionMessage message="No ports match this search yet." />
             )}
@@ -301,6 +369,17 @@ export default async function SearchPage(props: PageProps) {
                   <ConfigCard key={config.id} config={config} />
                 ))}
               </ExpandableCatalogueGrid>
+            ) : shouldSuggestConfig ? (
+              <MissingSuggestionCard
+                type="Config"
+                label={configSuggestionLabel}
+                themeName={selectedTheme?.name}
+                platformName={selectedPlatform?.name}
+                configName={configSuggestionLabel}
+                themeId={selectedTheme?.id}
+                platformId={selectedPlatform?.id}
+                initialCount={configDemand.count}
+              />
             ) : (
               <EmptySectionMessage message="No configs or dotfiles match this search yet." />
             )}
@@ -323,6 +402,12 @@ export default async function SearchPage(props: PageProps) {
                   <ThemeCard key={theme.id} theme={theme} showCount />
                 ))}
               </ExpandableCatalogueGrid>
+            ) : shouldSuggestTheme ? (
+              <MissingSuggestionCard
+                type="Theme"
+                label={themeSuggestionLabel}
+                initialCount={themeDemand.count}
+              />
             ) : (
               <EmptySectionMessage message="No themes match this search yet." />
             )}
@@ -348,6 +433,12 @@ export default async function SearchPage(props: PageProps) {
                   <PlatformCard key={platform.id} platform={platform} showCount />
                 ))}
               </ExpandableCatalogueGrid>
+            ) : shouldSuggestPlatform ? (
+              <MissingSuggestionCard
+                type="Platform"
+                label={platformSuggestionLabel}
+                initialCount={platformDemand.count}
+              />
             ) : (
               <EmptySectionMessage message="No platforms match this search yet." />
             )}

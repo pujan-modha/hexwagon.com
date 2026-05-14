@@ -1,4 +1,4 @@
-import { PortStatus, ReportType, SuggestionType } from "@prisma/client"
+import { MissingSuggestionType, PortStatus, ReportType, SuggestionType } from "@prisma/client"
 import {
   createSearchParamsCache,
   parseAsArrayOf,
@@ -83,6 +83,33 @@ export const submitSuggestionSchema = z.object({
   websiteUrl: z.string().url().optional().or(z.literal("")),
 })
 
+const missingSuggestionBaseSchema = z.object({
+  type: z.nativeEnum(MissingSuggestionType),
+  label: z.string().trim().min(1).max(160),
+  themeName: z.string().trim().max(160).optional(),
+  platformName: z.string().trim().max(160).optional(),
+  configName: z.string().trim().max(160).optional(),
+  themeId: z.string().optional(),
+  platformId: z.string().optional(),
+})
+
+export const missingSuggestionSchema = missingSuggestionBaseSchema.refine(
+  value => value.type !== "Port" || (value.themeName && value.platformName),
+  {
+    message: "Port suggestions require both theme and platform",
+    path: ["label"],
+  },
+)
+
+export const missingSuggestionLinkSchema = missingSuggestionBaseSchema
+  .extend({
+    url: z.string().trim().url("Please enter a valid URL"),
+  })
+  .refine(value => value.type !== "Port" || (value.themeName && value.platformName), {
+    message: "Port suggestions require both theme and platform",
+    path: ["label"],
+  })
+
 export const commentSchema = z
   .object({
     content: z.string().min(1, "Comment cannot be empty").max(2000),
@@ -140,6 +167,8 @@ export const adDetailsSchema = z.object({
 export type SubmitPortSchema = z.infer<typeof submitPortSchema>
 export type SubmitConfigSchema = z.infer<typeof submitConfigSchema>
 export type SubmitSuggestionSchema = z.infer<typeof submitSuggestionSchema>
+export type MissingSuggestionSchema = z.infer<typeof missingSuggestionSchema>
+export type MissingSuggestionLinkSchema = z.infer<typeof missingSuggestionLinkSchema>
 export type CommentSchema = z.infer<typeof commentSchema>
 export type NewsletterSchema = z.infer<typeof newsletterSchema>
 export type ReportSchema = z.infer<typeof reportSchema>
