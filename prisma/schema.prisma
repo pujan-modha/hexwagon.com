@@ -73,6 +73,26 @@ enum SuggestionStatus {
   Rejected
 }
 
+enum MissingSuggestionType {
+  Theme
+  Platform
+  Port
+  Config
+}
+
+enum MissingSuggestionStatus {
+  Open
+  Planned
+  Fulfilled
+  Dismissed
+}
+
+enum MissingSuggestionLinkStatus {
+  Pending
+  Approved
+  Rejected
+}
+
 enum EditStatus {
   Pending
   Approved
@@ -319,6 +339,7 @@ model Theme {
   colors      ColorPalette[]
   likes       Like[]
   reports     Report[]
+  missingSuggestions MissingSuggestion[]
   maintainers ThemeMaintainer[]
   maintainerClaims ThemeMaintainerClaim[]
   ad          Ad?       @relation("LegacyThemeAd", fields: [adId], references: [id])
@@ -357,6 +378,7 @@ model Platform {
   configPlatforms ConfigPlatform[]
   likes   Like[]
   reports Report[]
+  missingSuggestions MissingSuggestion[]
   targetedByAds Ad[] @relation("AdTargetPlatforms")
 
   // Indexes
@@ -557,6 +579,65 @@ model Suggestion {
   updatedAt   DateTime         @updatedAt
 
   @@index([submitterId])
+  @@index([status])
+}
+
+model MissingSuggestion {
+  id                 String                  @id @default(cuid())
+  type               MissingSuggestionType
+  label              String
+  normalizedLabel    String
+  themeName          String?
+  normalizedTheme    String                  @default("")
+  platformName       String?
+  normalizedPlatform String                  @default("")
+  configName         String?
+  normalizedConfig   String                  @default("")
+  status             MissingSuggestionStatus @default(Open)
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  theme              Theme?                  @relation(fields: [themeId], references: [id], onDelete: SetNull)
+  themeId            String?
+  platform           Platform?               @relation(fields: [platformId], references: [id], onDelete: SetNull)
+  platformId         String?
+  votes              MissingSuggestionVote[]
+  links              MissingSuggestionLink[]
+
+  @@unique([type, normalizedLabel, normalizedTheme, normalizedPlatform, normalizedConfig])
+  @@index([type])
+  @@index([status])
+  @@index([themeId])
+  @@index([platformId])
+  @@index([updatedAt])
+}
+
+model MissingSuggestionVote {
+  id                  String            @id @default(cuid())
+  visitorKeyHash      String
+  createdAt           DateTime          @default(now())
+
+  missingSuggestion   MissingSuggestion @relation(fields: [missingSuggestionId], references: [id], onDelete: Cascade)
+  missingSuggestionId String
+
+  @@unique([missingSuggestionId, visitorKeyHash])
+  @@index([visitorKeyHash])
+  @@index([missingSuggestionId])
+}
+
+model MissingSuggestionLink {
+  id                  String                      @id @default(cuid())
+  url                 String
+  visitorKeyHash      String
+  status              MissingSuggestionLinkStatus @default(Pending)
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+
+  missingSuggestion   MissingSuggestion           @relation(fields: [missingSuggestionId], references: [id], onDelete: Cascade)
+  missingSuggestionId String
+
+  @@index([missingSuggestionId])
+  @@index([visitorKeyHash])
   @@index([status])
 }
 

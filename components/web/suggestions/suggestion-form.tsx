@@ -1,16 +1,17 @@
 "use client"
 
-import type { SuggestionType } from "@prisma/client"
+import type { MissingSuggestionType } from "@prisma/client"
 import { useState } from "react"
 import { toast } from "sonner"
-import { submitSuggestion } from "~/actions/suggest"
+import {
+  submitMissingSuggestionLink,
+  upsertMissingSuggestionVote,
+} from "~/actions/missing-suggestion"
 import { Button } from "~/components/common/button"
 import { Input } from "~/components/common/input"
 import { Label } from "~/components/common/label"
-import { Link } from "~/components/common/link"
 import { RadioGroup, RadioGroupItem } from "~/components/common/radio-group"
 import { Textarea } from "~/components/common/textarea"
-import { useAuth } from "~/lib/auth-client"
 
 type SuggestionFormProps = {
   defaultType?: "Theme" | "Platform" | "Config"
@@ -18,8 +19,7 @@ type SuggestionFormProps = {
 }
 
 const SuggestionForm = ({ defaultType = "Theme", onSuccess }: SuggestionFormProps) => {
-  const { user } = useAuth()
-  const [type, setType] = useState<SuggestionType>(defaultType)
+  const [type, setType] = useState<MissingSuggestionType>(defaultType)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [websiteUrl, setWebsiteUrl] = useState("")
@@ -35,12 +35,21 @@ const SuggestionForm = ({ defaultType = "Theme", onSuccess }: SuggestionFormProp
 
     setIsLoading(true)
     try {
-      await submitSuggestion({
+      const input = {
         type,
-        name: name.trim(),
-        description: description.trim() || undefined,
-        websiteUrl: websiteUrl.trim() || undefined,
-      })
+        label: name.trim(),
+        configName: type === "Config" ? name.trim() : undefined,
+      }
+
+      await upsertMissingSuggestionVote(input)
+
+      if (websiteUrl.trim()) {
+        await submitMissingSuggestionLink({
+          ...input,
+          url: websiteUrl.trim(),
+        })
+      }
+
       setName("")
       setDescription("")
       setWebsiteUrl("")
@@ -53,24 +62,13 @@ const SuggestionForm = ({ defaultType = "Theme", onSuccess }: SuggestionFormProp
     }
   }
 
-  if (!user) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        <Link href="/auth/login" className="underline">
-          Sign in
-        </Link>{" "}
-        to submit a suggestion.
-      </p>
-    )
-  }
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 min-w-md mx-auto">
       <div className="flex flex-col gap-2">
         <Label>What are you suggesting?</Label>
         <RadioGroup
           value={type}
-          onValueChange={value => setType(value as SuggestionType)}
+          onValueChange={value => setType(value as MissingSuggestionType)}
           className="flex gap-4"
         >
           <div className="flex items-center gap-2">

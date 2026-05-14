@@ -88,6 +88,11 @@ export const Sidebar = () => {
           prefix: <Icon name="lucide/smile-plus" />,
         },
         {
+          title: "Missing",
+          href: "/admin/missing-suggestions",
+          prefix: <Icon name="lucide/search" />,
+        },
+        {
           title: "Theme Claims",
           href: "/admin/theme-claims",
           prefix: <Icon name="lucide/shield" />,

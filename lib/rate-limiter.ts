@@ -16,6 +16,8 @@ const limiters = {
   newsletter: { limit: 3, windowSeconds: 24 * 60 * 60 }, // 3 attempts per day
   claim: { limit: 5, windowSeconds: 60 * 60 }, // 5 attempts per hour
   comment: { limit: 10, windowSeconds: 60 * 60 }, // 10 comments per hour
+  missingSuggestionVote: { limit: 10, windowSeconds: 24 * 60 * 60 }, // 10 votes per day
+  missingSuggestionLink: { limit: 5, windowSeconds: 60 * 60 }, // 5 links per hour
   adSlotRead: { limit: 120, windowSeconds: 60 }, // 120 requests per minute
   checkoutStatusRead: { limit: 90, windowSeconds: 60 }, // 90 requests per minute
   adClickWrite: { limit: 180, windowSeconds: 60 }, // 180 clicks per minute
